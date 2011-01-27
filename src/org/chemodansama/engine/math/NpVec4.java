@@ -14,14 +14,13 @@ public final class NpVec4 {
         setValues(0, 0, 0, 1);
     }
 
-    public NpVec4(final float aX, final float aY, final float aZ, 
-            final float aW) {
+    public NpVec4(float aX, float aY, float aZ, float aW) {
         super();
 
         setValues(aX, aY, aZ, aW);
     }
 
-    public NpVec4(final float[] a) {
+    public NpVec4(float[] a) {
         super();
 
         if (a.length == 4) {
@@ -31,13 +30,13 @@ public final class NpVec4 {
         }
     }
 
-    public NpVec4(final NpVec4 v) {
+    public NpVec4(NpVec4 v) {
         super();
 
         setValues(v);
     }
 
-    public final boolean clip() {
+    public boolean clip() {
         
         if (Math.abs(mValues[3]) > NpMath.ZERO) {
         
@@ -54,35 +53,34 @@ public final class NpVec4 {
         }
     }
     
-    public final float[] getArray() {
+    public float[] getArray() {
         return mValues;
     }
 
-    public final float getW() {
+    public float getW() {
         return mValues[3];
     }
 
-    public final float getX() {
+    public float getX() {
         return mValues[0];
     }
     
-    public final float getY() {
+    public float getY() {
         return mValues[1];
     }
     
-    public final float getZ() {
+    public float getZ() {
         return mValues[2];
     }
 
-    public final void setValues(final float aX, final float aY, final float aZ, 
-            final float aW) {
+    public void setValues(float aX, float aY, float aZ, float aW) {
         mValues[0] = aX;
         mValues[1] = aY;
         mValues[2] = aZ;
-        mValues[3] = aZ;
+        mValues[3] = aW;
     }
 
-    public final void setValues(NpVec4 v) {
+    public void setValues(NpVec4 v) {
         setValues(v.getX(), v.getY(), v.getZ(), v.getW());
     }
 }

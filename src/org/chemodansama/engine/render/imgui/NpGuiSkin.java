@@ -5,8 +5,10 @@ import java.util.HashMap;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.apache.http.util.EncodingUtils;
 import org.chemodansama.engine.math.NpVec2;
 import org.chemodansama.engine.math.NpVec2i;
+import org.chemodansama.engine.math.NpVec4;
 import org.chemodansama.engine.render.NpTexture;
 import org.chemodansama.engine.render.NpTextureHeader;
 
@@ -53,19 +55,20 @@ class NpFontWithName {
     }
 }
 
-public class NpGuiSkin {
+public final class NpGuiSkin implements NpGuiReturnConsts, NpGuiAlignConsts {
+
+    static private NpGuiPolyBuffer mPolyBuffer;
+    static private HashMap<String, NpFont> mFontsMap;
+    static private NpFontWithName mActiveFont;
     
-    static private NpGuiPolyBuffer mPolyBuffer = new NpGuiPolyBuffer();
-    
-    static private HashMap<String, NpFont> mFontsMap = new HashMap<String, NpFont>();
-    static private NpFontWithName mActiveFont = new NpFontWithName();
+    static {
+        mPolyBuffer = new NpGuiPolyBuffer();
+        mFontsMap   = new HashMap<String, NpFont>();
+        mActiveFont = new NpFontWithName();
+    }
     
     static private NpTexture mSkinTex = null;
-    
-    static public byte ALIGN_LEFT   = 0;
-    static public byte ALIGN_CENTER = 1;
-    static public byte ALIGN_RIGHT  = 2;
-    
+   
     static public boolean activateFont(GL10 gl, String name) {
         
         if (mActiveFont.containsFont(name)) {
@@ -113,8 +116,76 @@ public class NpGuiSkin {
             return f.computeTextRect(height, s);
         } else {
             // return zeroes 
+            // TODO: somehow remove "new" statement;
             return new NpVec2();
         }
+    }
+    
+    static public int doLabel(GL10 gl, int id, float x, float y, 
+            String text, String font, 
+            NpVec4 fontColor, float fontHeight, byte align) {
+        
+        return doLabel(gl, id, x, y, EncodingUtils.getAsciiBytes(text), font, 
+                       fontColor, fontHeight, align);
+    }
+    
+    static public int doLabel(GL10 gl, int id, float x, float y, 
+            byte[] asciiText, String font, 
+            NpVec4 fontColor, float fontHeight, byte align) {
+        
+        int ret = 0;
+    
+        activateFont(gl, font);
+        
+        NpVec2 r = computeTextRect(font, fontHeight, asciiText);
+        
+        float offs = 0;
+        
+        if (align == ALIGN_CENTER) {
+            offs = r.getX() * 0.5f;
+        } else if (align == ALIGN_RIGHT) {
+            offs = r.getX();
+        };
+        
+        boolean hit = NpGuiState.regionHit(x - offs, y, 
+                                   r.getX(), r.getY());
+        
+        if (hit) {
+            if (NpGuiState.mHotItem != id) {
+                ret |= GUI_RETURN_FLAG_MOUSE_MOVED_IN; 
+                NpGuiState.mHotItem = id;
+            }
+            
+            if ((NpGuiState.mActiveItem == 0) && NpGuiState.mMouseDown) {
+                NpGuiState.mActiveItem = id;
+            }
+        } else if (NpGuiState.mHotItem == id) {
+            NpGuiState.mHotItem = 0;
+            ret |= GUI_RETURN_FLAG_MOUSE_MOVED_OUT;
+        }
+        
+        ret |= GUI_RETURN_FLAG_NORMAL;
+        
+        if (NpGuiState.mHotItem == id) {
+            ret |= GUI_RETURN_FLAG_HOT;
+            if (NpGuiState.mActiveItem == id) {
+                ret |= GUI_RETURN_FLAG_ACTIVE;
+            }
+        } else if (NpGuiState.mActiveItem == id) {
+            ret |= GUI_RETURN_FLAG_ACTIVE;
+        }
+
+        gl.glColor4f(fontColor.getX(), fontColor.getY(), fontColor.getZ(), 
+                     fontColor.getW());
+        
+        drawString(gl, asciiText, x, y, fontHeight, r.getX(), align);
+        
+        if (!NpGuiState.mMouseDown && (NpGuiState.mHotItem == id) 
+                && (NpGuiState.mActiveItem == id)) {
+            ret |= GUI_RETURN_FLAG_CLICKED;
+        }
+        
+        return ret;
     }
     
     static private void drawChar(GL10 gl, byte ansiChar, float x, 
@@ -151,10 +222,9 @@ public class NpGuiSkin {
 
             if (align == ALIGN_CENTER) {
                 gl.glTranslatef(-textWidth * 0.5f, 0.0f, 0.0f);
-            } else
-                if (align == ALIGN_RIGHT) {
-                    gl.glTranslatef(-textWidth, 0.0f, 0.0f);
-                }
+            } else if (align == ALIGN_RIGHT) {
+                gl.glTranslatef(-textWidth, 0.0f, 0.0f);
+            }
 
             NpTextureHeader fontTexHeader = f.getTexture().getHeader(); 
 

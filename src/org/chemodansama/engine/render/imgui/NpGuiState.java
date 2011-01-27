@@ -87,6 +87,11 @@ public final class NpGuiState {
         gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
     }
     
+    static public boolean regionHit(float x, float y, float w, float h) {
+        return (mMouseX > x) && (mMouseX < x + w) 
+            && (mMouseY > y) && (mMouseY < y + h);
+    }
+    
     private NpGuiState() {
         super();
         
