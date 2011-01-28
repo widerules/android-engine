@@ -12,6 +12,8 @@ import org.chemodansama.engine.math.NpVec4;
 import org.chemodansama.engine.render.NpTexture;
 import org.chemodansama.engine.render.NpTextureHeader;
 
+import android.content.res.AssetManager;
+
 class NpFontWithName {
     
     private NpFont mFont = null;
@@ -20,13 +22,12 @@ class NpFontWithName {
     NpFontWithName() {
     }
     
-    void setValues(String s, NpFont f) {
-        mFont = f;
-        mName = s;
+    boolean containsFont(String name) {
+        return ((mName != null) && (mName.equals(name)));
     }
     
-    String getName() {
-        return mName;
+    NpFont getFont() {
+        return mFont;
     }
     
     NpFont getFont(String name) {
@@ -37,21 +38,22 @@ class NpFontWithName {
         }
     }
     
-    NpFont getFont() {
-        return mFont;
-    }
-    
-    boolean containsFont(String name) {
-        return ((mName != null) && (mName.equals(name)));
-    }
-    
-    boolean valid() {
-        return (mFont != null) && (mName != null);
+    String getName() {
+        return mName;
     }
     
     void reset() {
         mFont = null;
         mName = null;
+    }
+    
+    void setValues(String s, NpFont f) {
+        mFont = f;
+        mName = s;
+    }
+    
+    boolean valid() {
+        return (mFont != null) && (mName != null);
     }
 }
 
@@ -61,12 +63,15 @@ public final class NpGuiSkin implements NpGuiReturnConsts, NpGuiAlignConsts {
     static private HashMap<String, NpFont> mFontsMap;
     static private NpFontWithName mActiveFont;
     
+    @SuppressWarnings("unused")
+    static private NpGuiSkinScheme mScheme = null;
+    
     static {
         mPolyBuffer = new NpGuiPolyBuffer();
         mFontsMap   = new HashMap<String, NpFont>();
         mActiveFont = new NpFontWithName();
     }
-    
+
     static private NpTexture mSkinTex = null;
    
     static public boolean activateFont(GL10 gl, String name) {
@@ -119,14 +124,6 @@ public final class NpGuiSkin implements NpGuiReturnConsts, NpGuiAlignConsts {
             // TODO: somehow remove "new" statement;
             return new NpVec2();
         }
-    }
-    
-    static public int doLabel(GL10 gl, int id, float x, float y, 
-            String text, String font, 
-            NpVec4 fontColor, float fontHeight, byte align) {
-        
-        return doLabel(gl, id, x, y, EncodingUtils.getAsciiBytes(text), font, 
-                       fontColor, fontHeight, align);
     }
     
     static public int doLabel(GL10 gl, int id, float x, float y, 
@@ -186,6 +183,14 @@ public final class NpGuiSkin implements NpGuiReturnConsts, NpGuiAlignConsts {
         }
         
         return ret;
+    }
+    
+    static public int doLabel(GL10 gl, int id, float x, float y, 
+            String text, String font, 
+            NpVec4 fontColor, float fontHeight, byte align) {
+        
+        return doLabel(gl, id, x, y, EncodingUtils.getAsciiBytes(text), font, 
+                       fontColor, fontHeight, align);
     }
     
     static private void drawChar(GL10 gl, byte ansiChar, float x, 
@@ -266,11 +271,19 @@ public final class NpGuiSkin implements NpGuiReturnConsts, NpGuiAlignConsts {
         }
     }
     
-    static void prepare(GL10 gl) {
-        mActiveFont.reset();
+    static void finish(GL10 gl) {
     }
     
-    static void finish(GL10 gl) {
+    static public boolean loadScheme(GL10 gl, AssetManager assets, 
+            String schemeFileName) {
+        
+        mScheme = new NpGuiSkinScheme(gl, assets, schemeFileName);
+        
+        return true;
+    }
+    
+    static void prepare(GL10 gl) {
+        mActiveFont.reset();
     }
     
     static public void setSkinTex(NpTexture texture) {
