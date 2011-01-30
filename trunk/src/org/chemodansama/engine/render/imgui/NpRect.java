@@ -1,6 +1,6 @@
 package org.chemodansama.engine.render.imgui;
 
-public class NpRect {
+public final class NpRect {
     
     private float mX;
     private float mY;
@@ -25,15 +25,31 @@ public class NpRect {
         return mX;
     }
     
+    public void setX(float x) {
+        mX = x;
+    }
+    
     public float getY() {
         return mY;
+    }
+    
+    public void setY(float y) {
+        mY = y;
     }
     
     public float getW() {
         return mW;
     }
     
+    public void setW(float w) {
+        mW = w;
+    }
+    
     public float getH() {
         return mH;
+    }
+    
+    public void setH(float h) {
+        mH = h;
     }
 }

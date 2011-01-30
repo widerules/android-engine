@@ -1,13 +1,10 @@
 package org.chemodansama.engine.render.imgui;
 
-import org.chemodansama.engine.render.imgui.NpSkinImageSet.NpSkinImage;
-
 final class NpWidgetDim {
     final private NpWidgetDimType mType;
     final private float mValue;
     final private NpWidgetDimSource mSource;
-    final private String mImageSet;
-    final private String mImage;
+    final private String mArea;
     
     private NpWidgetDimOp mOp = null;
     
@@ -21,8 +18,7 @@ final class NpWidgetDim {
         mValue = value;
         
         mSource = NpWidgetDimSource.WIDTH;
-        mImageSet = "";
-        mImage = "";
+        mArea = "";
     }
 
     /**
@@ -36,22 +32,16 @@ final class NpWidgetDim {
         mSource = source;
         mValue = value;
         
-        mImageSet = "";
-        mImage = "";
+        mArea = "";
     }
     
     /**
      * Creates Dim with image scale DimType
-     * 
-     * @param imageSet image holder name
-     * @param image specifies Image where from Dim should get source
-     * @param source specifies the source of the Dim (width, height, etc.)
      */
-    public NpWidgetDim(String imageSet, String image, 
+    public NpWidgetDim(String area, 
             NpWidgetDimSource source) {
       mType = NpWidgetDimType.IMAGE;
-      mImage = image;
-      mImageSet = imageSet;
+      mArea = area;
       mSource = source;
       
       mValue = 0.0f;
@@ -61,26 +51,36 @@ final class NpWidgetDim {
         mOp = op;
     }
     
-    private float getBaseImageValue(NpSkinScheme skinScheme) {
+    private float getBaseImageValue(NpSkinScheme skinScheme, 
+            NpWidgetStatelook stateLook) {
 
-        NpSkinImageSet i = skinScheme.getImageSet(mImageSet);
+        NpWidgetImage im = null;
         
-        if (i != null) {
-            NpSkinImage im = i.getImage(mImage);
-            
-            if (im != null) {
-                switch (mSource) {
-                case HEIGHT:
-                    return im.getHeight();
-                case WIDTH:
-                    return im.getWidth();
-                default:
-                    return 0;
-                }
-            } else {
-                return 0;
+        for (NpWidgetImage i : stateLook.getImages()) {
+            if (i.getArea().equals(mArea)) {
+                im = i;
+                break;
             }
-        } else {
+        }
+
+        NpSkinImageSet is = skinScheme.getImageSet(im.getImageset());
+
+        if (is == null) {
+            return 0.0f;
+        }
+        
+        NpSkinImageSet.NpSkinImage image = is.getImage(im.getImage());
+        
+        if (image == null) {
+            return 0.0f;
+        }
+        
+        switch (mSource) {
+        case HEIGHT:
+            return image.getHeight();
+        case WIDTH:
+            return image.getWidth();
+        default:
             return 0;
         }
     }
@@ -100,14 +100,15 @@ final class NpWidgetDim {
         }
     }
     
-    private float getBaseValue(NpSkinScheme skinScheme, NpRect instanceRect) {
+    private float getBaseValue(NpSkinScheme skinScheme, 
+            NpWidgetStatelook stateLook, NpRect instanceRect) {
 
         switch (mType) {
         case ABSOLUTE:
             return mValue;
             
         case IMAGE:
-            return getBaseImageValue(skinScheme);
+            return getBaseImageValue(skinScheme, stateLook);
             
         case SCALE:
             return getBaseScaleValue(skinScheme, instanceRect);
@@ -117,14 +118,15 @@ final class NpWidgetDim {
         }
     }
     
-    private float applyOp(float baseValue, NpSkinScheme skinScheme, 
-            NpRect instanceRect) {
+    private float applyOp(float baseValue, NpSkinScheme skinScheme,
+            NpWidgetStatelook stateLook, NpRect instanceRect) {
         
         float r = baseValue;
         
         if (mOp != null) {
             
-            float subValue = mOp.getDim().getValue(skinScheme, instanceRect);
+            float subValue = mOp.getDim().getValue(skinScheme, stateLook, 
+                                                   instanceRect);
             
             switch (mOp.getOpType()) {
             case ADD:
@@ -151,13 +153,14 @@ final class NpWidgetDim {
         return r;
     }
     
-    public float getValue(NpSkinScheme skinScheme, NpRect instanceRect) {
+    public float getValue(NpSkinScheme skinScheme, NpWidgetStatelook stateLook,
+            NpRect instanceRect) {
         
         // base value for this dimension, with no applied operation yet
-        float r = getBaseValue(skinScheme, instanceRect);
+        float r = getBaseValue(skinScheme, stateLook, instanceRect);
 
         // applying specified operation for this dim
-        r = applyOp(r, skinScheme, instanceRect);
+        r = applyOp(r, skinScheme, stateLook, instanceRect);
         
         return r;
     }

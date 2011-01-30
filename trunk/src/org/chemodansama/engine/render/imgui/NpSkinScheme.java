@@ -78,15 +78,12 @@ final public class NpSkinScheme {
 
             if (dimType.equalsIgnoreCase("Image")) {
 
-                String imageSet = attribs.getValue("ImageSet");
-                String image = attribs.getValue("Image");
-
-                String sourceStr = attribs.getValue("Source");
+                String area = attribs.getValue("Area");
 
                 NpWidgetDimSource source = 
-                    NpWidgetDimSource.parseStr(sourceStr);
+                    NpWidgetDimSource.parseStr(attribs.getValue("Source"));
 
-                return new NpWidgetDim(imageSet, image, source);
+                return new NpWidgetDim(area, source);
                 
             } else if (dimType.equalsIgnoreCase("Scale")) {
 
@@ -185,7 +182,7 @@ final public class NpSkinScheme {
                 mAreaName = attributes.getValue("Name");
             } else if (localName.equalsIgnoreCase("dim")) {
 
-                NpWidgetDim mCurrentDim = createWidgetDim(attributes);
+                mCurrentDim = createWidgetDim(attributes);
 
                 if (mDim == null) {
                     mDim = mCurrentDim;

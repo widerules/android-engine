@@ -42,4 +42,13 @@ final class NpWidgetStatelook {
             }
         };
     }
+    
+    Iterable<NpWidgetImage> getImages() {
+        return new Iterable<NpWidgetImage>() {
+            @Override
+            public Iterator<NpWidgetImage> iterator() {
+                return mImages.iterator();
+            }
+        };
+    }
 }

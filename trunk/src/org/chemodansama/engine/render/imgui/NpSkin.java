@@ -79,7 +79,8 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         } else {
             NpFont f = mFontsMap.get(name);
             
-            if ((f != null) && activateTexture(gl, f.getTexture())) {
+            if (f != null) {
+                activateTexture(gl, f.getTexture());
                 mActiveFont.setValues(name, f);
                 return true;
             }
@@ -101,9 +102,11 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             
             texture.bindGL10(gl);
             mActiveTexture = texture;
+            
+            return true;
         }
         
-        return true;
+        return false;
     }
     
     static public void addFont(String name, GL10 gl, InputStream texStream, 
@@ -202,7 +205,9 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         int ret = 0;
     
-        activateFont(gl, font);
+        if (!activateFont(gl, font)) {
+            return ret;
+        }
         
         NpVec2 r = computeTextRect(font, fontHeight, asciiText);
         
@@ -215,7 +220,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         };
         
         boolean hit = NpGuiState.regionHit(x - offs, y, 
-                                   r.getX(), r.getY());
+                                           r.getX(), r.getY());
         
         if (hit) {
             if (NpGuiState.mHotItem != id) {
@@ -363,6 +368,9 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             return;
         }
         
+        mPolyBuffer.flushRender(gl);
+        gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+        
         for (NpWidgetArea area : stateLook.getAreas()) {
             
             NpWidgetImage image = stateLook.findImageByArea(area.getName());
@@ -389,26 +397,30 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
                 continue;
             }
 
-            float x = area.getX().getValue(mScheme, rect);
-            float y = area.getY().getValue(mScheme, rect);
-            float w = area.getWidth().getValue(mScheme, rect);
-            float h = area.getHeight().getValue(mScheme, rect);
+            float x = area.getX().getValue(mScheme, stateLook, rect);
+            float y = area.getY().getValue(mScheme, stateLook, rect);
+            float w = area.getWidth().getValue(mScheme, stateLook, rect);
+            float h = area.getHeight().getValue(mScheme, stateLook, rect);
             
             int tw = texture.getHeader().getWidth();
             int th = texture.getHeader().getHeight();
             
             if (activateTexture(gl, texture)) {
-                drawRect(gl, rect.getX() + x, rect.getY() + y, w, h, 
-                         (float) im.getXPos() / tw, 
-                         1.0f - (float) im.getYPos() / th, 
-                         (float) im.getWidth() / tw, 
-                         -(float) im.getHeight() / th);
+                mActiveFont.reset();
             }
+            
+            drawRect(gl, rect.getX() + x, rect.getY() + y, w, h, 
+                     (float) im.getXPos() / tw, 
+                     1.0f - (float) im.getYPos() / th, 
+                     (float) im.getWidth() / tw, 
+                     -(float) im.getHeight() / th);
+
         }
         
     }
     
     static void finish(GL10 gl) {
+        mPolyBuffer.flushRender(gl);
     }
     
     static public boolean loadScheme(GL10 gl, AssetManager assets, 
