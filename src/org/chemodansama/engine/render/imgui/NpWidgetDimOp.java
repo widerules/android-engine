@@ -1,0 +1,23 @@
+package org.chemodansama.engine.render.imgui;
+
+class NpWidgetDimOp {
+    private NpWidgetDimOpType mOpType;
+    private NpWidgetDim mDim;
+    
+    public NpWidgetDimOp(NpWidgetDimOpType type) {
+        mOpType = type;
+        mDim = null;
+    }
+    
+    NpWidgetDimOpType getOpType() {
+        return mOpType;
+    }
+    
+    void setDim(NpWidgetDim dim) {
+        mDim = dim;
+    }
+    
+    NpWidgetDim getDim() {
+        return mDim;
+    }
+}

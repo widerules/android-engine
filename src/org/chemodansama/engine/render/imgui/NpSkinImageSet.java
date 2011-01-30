@@ -14,9 +14,9 @@ import android.content.res.AssetManager;
 import android.util.Xml;
 import android.util.Xml.Encoding;
 
-public final class NpGuiImageSet {
+public final class NpSkinImageSet {
     
-    public class NpGuiImage {
+    public class NpSkinImage {
         /* Specifies the name that will be used to identify
            the image within the Imageset. Required attribute. */
         private String mName = null;
@@ -41,7 +41,7 @@ public final class NpGuiImageSet {
          * rendering the image. Optional attribute, default is 0. */
         private int mYOffset = 0;
         
-        private NpGuiImage(String name, int x, int y, int w, int h) {
+        private NpSkinImage(String name, int x, int y, int w, int h) {
             mName = name;
             mXPos = x;
             mYPos = y;
@@ -118,14 +118,14 @@ public final class NpGuiImageSet {
                 int w = Integer.parseInt(attributes.getValue("Width"));
                 int h = Integer.parseInt(attributes.getValue("Height"));
                 
-                mImages.put(name, new NpGuiImage(name, x, y, w, h));
+                mImages.put(name, new NpSkinImage(name, x, y, w, h));
             }
         }
     }
     
     private String mName = "";
     
-    private HashMap<String, NpGuiImage> mImages;
+    private HashMap<String, NpSkinImage> mImages;
     
     private NpTexture mTexture = null;
 
@@ -133,10 +133,10 @@ public final class NpGuiImageSet {
     
     // initialization block goes here.
     {
-        mImages = new HashMap<String, NpGuiImageSet.NpGuiImage>();
+        mImages = new HashMap<String, NpSkinImageSet.NpSkinImage>();
     }
     
-    public NpGuiImageSet(GL10 gl, AssetManager assets, String imageSetFileName) {
+    public NpSkinImageSet(GL10 gl, AssetManager assets, String imageSetFileName) {
         
         mAssets = assets;
         
@@ -150,8 +150,8 @@ public final class NpGuiImageSet {
         }
     }
     
-    public HashMap<String, NpGuiImage> getImages() {
-        return mImages;
+    public NpSkinImage getImage(String imageName) {
+        return mImages.get(imageName);
     }
     
     public String getName() {
