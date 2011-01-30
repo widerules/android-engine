@@ -18,7 +18,7 @@ public final class NpGuiState {
             mActiveItem = -1;
         }
         
-        NpGuiSkin.finish(gl);
+        NpSkin.finish(gl);
         
         finishRender(gl);
     }
@@ -64,7 +64,7 @@ public final class NpGuiState {
     static public void prepare(GL10 gl, int orthoX, int orthoY) {
         prepareRender(gl, orthoX, orthoY);
         
-        NpGuiSkin.prepare(gl);
+        NpSkin.prepare(gl);
     }
     
     static private void prepareRender(GL10 gl, int orthoX, int orthoY) {

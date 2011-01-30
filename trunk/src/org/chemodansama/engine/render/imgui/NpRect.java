@@ -1,17 +1,24 @@
 package org.chemodansama.engine.render.imgui;
 
-public class NpGuiRect {
+public class NpRect {
     
     private float mX;
     private float mY;
     private float mW;
     private float mH;
     
-    public NpGuiRect() {
+    public NpRect() {
         mX = 0;
         mY = 0;
         mW = 0;
         mH = 0;
+    }
+    
+    public NpRect(float x, float y, float w, float h) {
+        mX = x;
+        mY = y;
+        mW = w;
+        mH = h;
     }
     
     public float getX() {

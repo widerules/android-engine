@@ -7,7 +7,7 @@ import java.nio.ShortBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
 
-class NpGuiPolyBuffer {
+class NpPolyBuffer {
     
     static final private int QUADS_LIMIT = 16;
     
@@ -20,7 +20,7 @@ class NpGuiPolyBuffer {
     private FloatBuffer mVertBuffer;
     private ShortBuffer mIndices;
     
-    NpGuiPolyBuffer() {
+    NpPolyBuffer() {
         ByteBuffer vbb = ByteBuffer.allocateDirect(mVertArray.length * 4);
         vbb.order(ByteOrder.nativeOrder());
         mVertBuffer = vbb.asFloatBuffer();
