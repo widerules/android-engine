@@ -14,106 +14,34 @@ import org.chemodansama.engine.render.NpTextureHeader;
 
 import android.content.res.AssetManager;
 
-class NpFontWithName {
-    
-    private NpFont mFont = null;
-    private String mName = null;
-    
-    NpFontWithName() {
-    }
-    
-    boolean containsFont(String name) {
-        return ((mName != null) && (mName.equals(name)));
-    }
-    
-    NpFont getFont() {
-        return mFont;
-    }
-    
-    NpFont getFont(String name) {
-        if ((mName != null) && (mName.equals(name))) {
-            return mFont;
-        } else {
-            return null;
-        }
-    }
-    
-    String getName() {
-        return mName;
-    }
-    
-    void reset() {
-        mFont = null;
-        mName = null;
-    }
-    
-    void setValues(String s, NpFont f) {
-        mFont = f;
-        mName = s;
-    }
-    
-    boolean valid() {
-        return (mFont != null) && (mName != null);
-    }
-}
-
+/**
+ * NpSkin - takes care of all rendering aspects of the gui. 
+ *          Client code must call the prepare() method at start of the gui 
+ *          render and call finish() method when its done. 
+ *          Also, client code must use only NpSkin methods to work with 
+ *          gapi state (no texture bindings or other state changes between 
+ *          prepare() and finish() calls).
+ */
 public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
 
     static private NpPolyBuffer mPolyBuffer;
     static private HashMap<String, NpFont> mFontsMap;
-    static private NpFontWithName mActiveFont;
-    static private NpTexture mActiveTexture = null;
     
     static private NpSkinScheme mScheme = null;
+    
+    static private NpTextureCache mTextureCache = null;
     
     static {
         mPolyBuffer = new NpPolyBuffer();
         mFontsMap   = new HashMap<String, NpFont>();
-        mActiveFont = new NpFontWithName();
-    }
-    
-    static private boolean activateFont(GL10 gl, String name) {
-        
-        if (mActiveFont.containsFont(name)) {
-            return true;
-        } else {
-            NpFont f = mFontsMap.get(name);
-            
-            if (f != null) {
-                activateTexture(gl, f.getTexture());
-                mActiveFont.setValues(name, f);
-                return true;
-            }
-        }
-        
-        return false;
-    }
-
-    static private boolean activateTexture(GL10 gl, NpTexture texture) {
-        
-        if (texture == null) {
-            return false;
-        }
-        
-        if (!texture.equalsToTexture(mActiveTexture)) {
-            
-            // flush buffered quads on each texture change
-            mPolyBuffer.flushRender(gl);
-            
-            texture.bindGL10(gl);
-            mActiveTexture = texture;
-            
-            return true;
-        }
-        
-        return false;
+        mTextureCache = new NpTextureCache(mFontsMap, mPolyBuffer);
     }
     
     static public void addFont(String name, GL10 gl, InputStream texStream, 
             InputStream charsStream) {
         
         if (!mFontsMap.containsKey(name)) {
-            NpFont f = new NpFont(gl, texStream, charsStream);
+            NpFont f = new NpFont(gl, name, texStream, charsStream);
             
             mFontsMap.put(name, f);
         }
@@ -124,7 +52,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         NpFont f = null;
         
-        if ((f = mActiveFont.getFont(fontName)) == null) {
+        if ((f = mTextureCache.getFont(fontName)) == null) {
             f = mFontsMap.get(fontName);
         }
         
@@ -132,7 +60,6 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             return f.computeTextRect(height, text);
         } else {
             // return zeroes 
-            // TODO: somehow remove "new" statement;
             return new NpVec2();
         }
     }
@@ -179,9 +106,9 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         drawWidget(gl, state, widgetLookName, rect);
      
-        if (activateFont(gl, fontName)) {
+        if (mTextureCache.activateFont(gl, fontName)) {
             
-            NpFont f = mActiveFont.getFont();
+            NpFont f = mTextureCache.getFont();
             
             if (f == null) {
                 return ret;
@@ -205,7 +132,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         int ret = 0;
     
-        if (!activateFont(gl, font)) {
+        if (!mTextureCache.activateFont(gl, font)) {
             return ret;
         }
         
@@ -288,7 +215,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     static public void drawString(GL10 gl, byte[] s, float x, float y, 
             float fontSize, NpVec4 fontColor, float textWidth, byte align) {
         
-        NpFont f = mActiveFont.getFont();
+        NpFont f = mTextureCache.getFont();
         
         if (f == null) {
             return;
@@ -405,18 +332,14 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             int tw = texture.getHeader().getWidth();
             int th = texture.getHeader().getHeight();
             
-            if (activateTexture(gl, texture)) {
-                mActiveFont.reset();
-            }
+            mTextureCache.activateTexture(gl, texture);
             
             drawRect(gl, rect.getX() + x, rect.getY() + y, w, h, 
                      (float) im.getXPos() / tw, 
                      1.0f - (float) im.getYPos() / th, 
                      (float) im.getWidth() / tw, 
                      -(float) im.getHeight() / th);
-
         }
-        
     }
     
     static void finish(GL10 gl) {
@@ -432,11 +355,111 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     }
     
     static void prepare(GL10 gl) {
-        mActiveFont.reset();
-        mActiveTexture = null;
+        mTextureCache.reset();
     }
     
     private NpSkin() {
         
+    }
+}
+
+/**
+ * NpTextureCache - caches active texture and font (since any font has exactly 
+ *                  one texture).   
+ */
+final class NpTextureCache {
+    private NpFont mActiveFont = null;
+    private NpTexture mActiveTexture = null;
+    
+    private NpPolyBuffer mPolyBuffer = null;
+    private HashMap<String, NpFont> mFontsMap = null;
+    
+    NpTextureCache(HashMap<String, NpFont> fontsMap, NpPolyBuffer polyBuffer) {
+        mFontsMap = fontsMap;
+        mPolyBuffer = polyBuffer;
+    }
+    
+    /**
+     * activateFont binds font with gl state
+     * @param gl 
+     * @param name alias of the font
+     * @return returns true if specified font is bound to gapi, 
+     *         otherwise returns false
+     */
+    public boolean activateFont(GL10 gl, String name) {
+        
+        if ((mActiveFont != null) && (mActiveFont.hasName(name))) {
+            return true;
+        } else {
+            mActiveFont = mFontsMap.get(name);
+            
+            if (mActiveFont != null) {
+                doActivateTexture(gl, mActiveFont.getTexture());
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    public boolean activateTexture(GL10 gl, NpTexture texture) {
+
+        if (doActivateTexture(gl, texture)) {
+            mActiveFont = null;
+        }
+        
+        return mActiveTexture.equalsToTexture(texture);
+    }
+    
+    public void activateTextureNoRet(GL10 gl, NpTexture texture) {
+        
+        if (doActivateTexture(gl, texture)) {
+            mActiveFont = null;
+        }
+    }
+    
+    /**
+     * doActivateTexture binds texture with gl state
+     * @param gl
+     * @param texture
+     * @return returns true if texture activating has been occurred, 
+     *         otherwise returns false
+     */
+    private boolean doActivateTexture(GL10 gl, NpTexture texture) {
+
+        if (texture == null) {
+            return false;
+        }
+        
+        if (!texture.equalsToTexture(mActiveTexture)) {
+            
+            // flush buffered quads on each texture change
+            mPolyBuffer.flushRender(gl);
+            
+            texture.bindGL10(gl);
+            mActiveTexture = texture;
+            
+            return true;
+        }
+        
+        return false;
+    }
+    
+    public NpFont getFont() {
+        return mActiveFont;
+    }
+    
+    public NpFont getFont(String name) {
+        
+        if ((mActiveFont != null) && (mActiveFont.hasName(name))) {
+            return mActiveFont;
+        } else {
+            return null;
+        }
+    }
+    
+    public void reset() {
+        mActiveFont = null;
+        mActiveTexture = null;
     }
 }

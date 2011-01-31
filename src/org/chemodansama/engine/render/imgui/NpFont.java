@@ -13,6 +13,8 @@ import org.chemodansama.engine.utils.NpEndianness;
 
 public class NpFont {
     
+    final private String mName;
+    
     private NpTexture mTex = null;
     private NpVec2i[] mCharSize = new NpVec2i[256];
     
@@ -39,8 +41,11 @@ public class NpFont {
         return true;
     }
     
-    public NpFont(GL10 gl, InputStream texStream, InputStream charsStream) {
+    public NpFont(GL10 gl, String name, InputStream texStream, 
+            InputStream charsStream) {
 
+        mName = name;
+        
         loadChars(charsStream);
         
         mTex = new NpTexture();
@@ -48,6 +53,14 @@ public class NpFont {
         if (mTex.initFromStream(texStream)) {
             mTex.initGL10(gl);
         }
+    }
+    
+    public String getName() {
+        return mName;
+    }
+    
+    public boolean hasName(String name) {
+        return ((mName != null) && (mName.equals(name))) ? true : false;
     }
     
     public NpVec2 computeTextRect(float height, byte[] s) {
