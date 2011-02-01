@@ -21,7 +21,7 @@ final class NpWidgetStatelook {
      * Finds widget image by the area name via linear lookup. 
      * @param area specifies name of the area to find
      * @return Returns widget image if such area was found.
-     * Returns null if not.
+     *         Returns null if not.
      */ 
     NpWidgetImage findImageByArea(String area) {
         

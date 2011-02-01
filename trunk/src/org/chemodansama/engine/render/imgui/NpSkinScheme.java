@@ -1,6 +1,7 @@
 package org.chemodansama.engine.render.imgui;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -56,9 +57,34 @@ final public class NpSkinScheme {
             mGL = gl;
         }
         
-        private void addFont(String alias, String fontFileName, 
+        private boolean addFont(String alias, String fontFileName, 
                 String charsFileName) {
-            //TODO: fill the procedure body
+            InputStream fontTexStream = null;
+
+            try {
+                fontTexStream = mAssets.open(fontFileName);
+            } catch (IOException e) {
+                return false;
+            }
+            
+            InputStream fontCharsStream = null;
+
+            try {
+                fontCharsStream = mAssets.open(charsFileName);
+            } catch (IOException e) {
+                return false;
+            }
+            
+            //NpSkin.addFont(alias, mGL, fontTexStream, fontCharsStream);
+            
+            if (!mFontsMap.containsKey(alias)) {
+                NpFont f = new NpFont(mGL, alias, fontTexStream, 
+                                      fontCharsStream);
+                
+                mFontsMap.put(alias, f);
+            }
+            
+            return true;
         }
         
         private void addImageSet(String alias, String imageSetFileName) {
@@ -101,12 +127,6 @@ final public class NpSkinScheme {
 
                 return new NpWidgetDim(value);
             } 
-        }
-        
-        private void resetCurrentDimAndOp() {
-            mDim = null;
-            mCurrentDim = null;
-            mCurrentOp = null;
         }
         
         @Override
@@ -154,6 +174,12 @@ final public class NpSkinScheme {
             }  
         }
         
+        private void resetCurrentDimAndOp() {
+            mDim = null;
+            mCurrentDim = null;
+            mCurrentOp = null;
+        }
+        
         @Override
         public void startElement(String uri, String localName, String qName,
                 Attributes attributes) throws SAXException {
@@ -167,7 +193,7 @@ final public class NpSkinScheme {
                             attributes.getValue("Filename"));
             } else if (localName.equalsIgnoreCase("font")) {
                 addFont(attributes.getValue("Name"), 
-                        attributes.getValue("Filename"),
+                        attributes.getValue("File"),
                         attributes.getValue("Chars"));
             } else if (localName.equalsIgnoreCase("widget")) {
                 mWidgetName = attributes.getValue("Name");
@@ -209,6 +235,9 @@ final public class NpSkinScheme {
         }
     }
     
+    final private HashMap<String, NpFont> mFontsMap = 
+        new HashMap<String, NpFont>();
+    
     final private HashMap<String, NpSkinImageSet> mImageSets = 
         new HashMap<String, NpSkinImageSet>();
 
@@ -228,6 +257,10 @@ final public class NpSkinScheme {
         } catch (SAXException e) {
             return;
         }
+    }
+    
+    public HashMap<String, NpFont> getFonts() {
+        return mFontsMap;
     }
     
     public NpSkinImageSet getImageSet(String imageSetName) {
