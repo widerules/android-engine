@@ -7,20 +7,27 @@ import java.nio.ShortBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
 
-class NpPolyBuffer {
+final class NpPolyBuffer {
     
-    static final private int QUADS_LIMIT = 16;
-    
-    private float[] mVertArray = new float[QUADS_LIMIT * 4 * 3];
-    private float[] mTexCoordArray = new float[QUADS_LIMIT * 4 * 2];
-    private short[] mIndicesArray = new short[QUADS_LIMIT * 6];
     private short mQuadsCount = 0;
+    final private int mQuadsLimit;
     
-    private FloatBuffer mTexCoordBuffer;
-    private FloatBuffer mVertBuffer;
-    private ShortBuffer mIndices;
+    final private float[] mVertArray;
+    final private float[] mTexCoordArray;
+    final private short[] mIndicesArray;
     
-    NpPolyBuffer() {
+    final private FloatBuffer mTexCoordBuffer;
+    final private FloatBuffer mVertBuffer;
+    final private ShortBuffer mIndices;
+    
+    NpPolyBuffer(int quadsLimit) {
+        
+        mQuadsLimit = quadsLimit;
+        
+        mVertArray = new float[mQuadsLimit * 4 * 3];
+        mTexCoordArray = new float[mQuadsLimit * 4 * 2];
+        mIndicesArray = new short[mQuadsLimit * 6];
+        
         ByteBuffer vbb = ByteBuffer.allocateDirect(mVertArray.length * 4);
         vbb.order(ByteOrder.nativeOrder());
         mVertBuffer = vbb.asFloatBuffer();
@@ -100,7 +107,6 @@ class NpPolyBuffer {
         mTexCoordArray[offs + 0] = tx;
         mTexCoordArray[offs + 1] = ty + th;
         
-        
         offs = mQuadsCount * 6;
         
         int i = mQuadsCount * 4;
@@ -115,7 +121,7 @@ class NpPolyBuffer {
         
         mQuadsCount++;
         
-        if (mQuadsCount >= QUADS_LIMIT) {
+        if (mQuadsCount >= mQuadsLimit) {
             flushRender(gl);
         }
     }

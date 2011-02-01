@@ -1,6 +1,5 @@
 package org.chemodansama.engine.render.imgui;
 
-import java.io.InputStream;
 import java.util.HashMap;
 
 import javax.microedition.khronos.opengles.GL10;
@@ -25,26 +24,12 @@ import android.content.res.AssetManager;
 public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
 
     static private NpPolyBuffer mPolyBuffer;
-    static private HashMap<String, NpFont> mFontsMap;
-    
     static private NpSkinScheme mScheme = null;
-    
     static private NpTextureCache mTextureCache = null;
     
     static {
-        mPolyBuffer = new NpPolyBuffer();
-        mFontsMap   = new HashMap<String, NpFont>();
-        mTextureCache = new NpTextureCache(mFontsMap, mPolyBuffer);
-    }
-    
-    static public void addFont(String name, GL10 gl, InputStream texStream, 
-            InputStream charsStream) {
-        
-        if (!mFontsMap.containsKey(name)) {
-            NpFont f = new NpFont(gl, name, texStream, charsStream);
-            
-            mFontsMap.put(name, f);
-        }
+        mPolyBuffer = new NpPolyBuffer(16);
+        mTextureCache = new NpTextureCache(mPolyBuffer);
     }
     
     static public NpVec2 computeTextRect(String fontName, float height, 
@@ -52,8 +37,8 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         NpFont f = null;
         
-        if ((f = mTextureCache.getFont(fontName)) == null) {
-            f = mFontsMap.get(fontName);
+        if ((f = mTextureCache.getActiveFont(fontName)) == null) {
+            f = mScheme.getFonts().get(fontName);
         }
         
         if (f != null) {
@@ -108,7 +93,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
      
         if (mTextureCache.activateFont(gl, fontName)) {
             
-            NpFont f = mTextureCache.getFont();
+            NpFont f = mTextureCache.getActiveFont();
             
             if (f == null) {
                 return ret;
@@ -215,7 +200,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     static public void drawString(GL10 gl, byte[] s, float x, float y, 
             float fontSize, NpVec4 fontColor, float textWidth, byte align) {
         
-        NpFont f = mTextureCache.getFont();
+        NpFont f = mTextureCache.getActiveFont();
         
         if (f == null) {
             return;
@@ -351,11 +336,13 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         mScheme = new NpSkinScheme(gl, assets, schemeFileName);
         
+        mTextureCache.setFonts(gl, mScheme.getFonts());
+        
         return true;
     }
     
     static void prepare(GL10 gl) {
-        mTextureCache.reset();
+        mTextureCache.reset(gl);
     }
     
     private NpSkin() {
@@ -374,9 +361,12 @@ final class NpTextureCache {
     private NpPolyBuffer mPolyBuffer = null;
     private HashMap<String, NpFont> mFontsMap = null;
     
-    NpTextureCache(HashMap<String, NpFont> fontsMap, NpPolyBuffer polyBuffer) {
-        mFontsMap = fontsMap;
+    NpTextureCache(NpPolyBuffer polyBuffer) {
         mPolyBuffer = polyBuffer;
+        
+        if (mPolyBuffer == null) {
+            throw new NullPointerException();
+        }
     }
     
     /**
@@ -391,7 +381,9 @@ final class NpTextureCache {
         if ((mActiveFont != null) && (mActiveFont.hasName(name))) {
             return true;
         } else {
-            mActiveFont = mFontsMap.get(name);
+            if (mFontsMap != null) {
+                mActiveFont = mFontsMap.get(name);
+            }
             
             if (mActiveFont != null) {
                 doActivateTexture(gl, mActiveFont.getTexture());
@@ -445,11 +437,11 @@ final class NpTextureCache {
         return false;
     }
     
-    public NpFont getFont() {
+    public NpFont getActiveFont() {
         return mActiveFont;
     }
     
-    public NpFont getFont(String name) {
+    public NpFont getActiveFont(String name) {
         
         if ((mActiveFont != null) && (mActiveFont.hasName(name))) {
             return mActiveFont;
@@ -458,8 +450,16 @@ final class NpTextureCache {
         }
     }
     
-    public void reset() {
+    public void reset(GL10 gl) {
+        
+        mPolyBuffer.flushRender(gl);
+        
         mActiveFont = null;
         mActiveTexture = null;
+    }
+    
+    public void setFonts(GL10 gl, HashMap<String, NpFont> fonts) {
+        reset(gl);
+        mFontsMap = fonts;
     }
 }
