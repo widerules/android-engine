@@ -6,18 +6,20 @@ public final class NpGuiState {
     
     static private int mMouseX = 0;
     static private int mMouseY = 0;
-    static int mHotItem = -1;
-    static int mActiveItem = -1;
-    static boolean mMouseDown = false;
+    static private int mHotItem = 0;
+    static private int mHotItemTemp = 0;
+    static int mActiveItem = 0;
+    static private boolean mMouseDown = false;
     
     static public void finish(GL10 gl) {
-        if (!mMouseDown) {
-            mActiveItem = 0;
-        } else
-        if (mActiveItem == 0) {
-            mActiveItem = -1;
-        }
-        
+
+        // Introduce one-render-frame lag here to get a correct hot id.
+        // Assume widgets rendering goes in z-order, 
+        // so the correct hot id is the last one assigned to mHotItemTemp
+        // between prepare() and finish() calls.
+        mHotItem = mHotItemTemp;
+        mHotItemTemp = 0;
+
         NpSkin.finish(gl);
         
         finishRender(gl);
@@ -46,6 +48,14 @@ public final class NpGuiState {
     
     static int getMouseY() {
         return mMouseY;
+    }
+    
+    static void setHotItem(int id) {
+        mHotItemTemp = id;
+    }
+    
+    static int getHotItem() {
+        return mHotItem;
     }
     
     static public void onMouseDown() {
