@@ -49,124 +49,138 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         }
     }
     
-    static public int doButton(GL10 gl, int id, String widgetLookName, 
-            String fontName, byte[] caption, float fontHeight, 
-            NpVec4 fontColor, NpRect rect) {
+    static private int getRectWidgetRetCode(int id, NpRect rect) {
+        
+        boolean r = rect.overlapsPoint(NpGuiState.getMouseX(), 
+                                       NpGuiState.getMouseY());
         
         int ret = 0;
         
-        if (NpGuiState.regionHit(rect.getX(), rect.getY(), 
-                                 rect.getW(), rect.getH())) {
-            NpGuiState.mHotItem = id;
+        if (NpGuiState.getMouseDown()) {
             
-            if ((NpGuiState.mActiveItem == 0) && (NpGuiState.mMouseDown)) {
-                NpGuiState.mActiveItem = id;
+            if (r) {
+               
+                if ((NpGuiState.getHotItem() == id) 
+                        && (NpGuiState.mActiveItem == 0)) {
+                
+                    NpGuiState.mActiveItem = id;
+                
+                }
+                
+                NpGuiState.setHotItem(id);
+            } else {
+                if (NpGuiState.getHotItem() == id) {
+                    NpGuiState.setHotItem(0);
+                    
+                    ret |= GUI_RETURN_FLAG_MOUSE_MOVED_OUT;
+                }
+            }
+        } else {
+            
+            if (NpGuiState.mActiveItem == id) {
+
+                NpGuiState.mActiveItem = 0;
+                
+                if (NpGuiState.getHotItem() == id) {
+                    NpGuiState.setHotItem(0);
+                    ret |= GUI_RETURN_FLAG_CLICKED;
+                }
             }
         }
         
         ret |= GUI_RETURN_FLAG_NORMAL;
-        
-        if (NpGuiState.mHotItem == id) {
+
+        if (NpGuiState.getHotItem() == id) {
             ret |= GUI_RETURN_FLAG_HOT;
         } 
-        
+
         if (NpGuiState.mActiveItem == id) {
             ret |= GUI_RETURN_FLAG_ACTIVE;
         }
-
-        if ((!NpGuiState.mMouseDown) && (NpGuiState.mHotItem == id) 
-                && (NpGuiState.mActiveItem == id)) {
-            ret |= GUI_RETURN_FLAG_CLICKED;
-        }
+        
+        return ret;
+    }
+    
+    static private void drawButtonImage(GL10 gl, int id, String widgetLookName, 
+            NpRect rect) {
         
         NpWidgetState state;
         
-        if ((ret & GUI_RETURN_FLAG_ACTIVE) > 0) {
+        if (NpGuiState.mActiveItem == id) {
             state = NpWidgetState.WS_PUSHED; 
-        } else if ((ret & GUI_RETURN_FLAG_HOT) > 0) {
+        } else if (NpGuiState.getHotItem() == id) {
             state = NpWidgetState.WS_HOVER;
         } else {
             state = NpWidgetState.WS_NORMAL;
         }
         
         drawWidget(gl, state, widgetLookName, rect);
-     
-        if (mTextureCache.activateFont(gl, fontName)) {
-            
-            NpFont f = mTextureCache.getActiveFont();
-            
-            if (f == null) {
-                return ret;
-            }
-            
-            NpVec2 textRect = f.computeTextRect(fontHeight, caption);
-            
-            drawString(gl, caption, 
-                       rect.getX() + (rect.getW() - textRect.getX()) * 0.5f, 
-                       rect.getY() + (rect.getH() - textRect.getY()) * 0.5f, 
-                       fontHeight, fontColor, 
-                       rect.getW(), ALIGN_LEFT);
-        }
+    }
+    
+    static private void drawButtonText(GL10 gl, int id, 
+            String fontName, byte[] caption, float fontHeight, 
+            NpVec4 fontColor, NpRect rect) {
         
-        return ret;
+        if (!mTextureCache.activateFont(gl, fontName)) {
+            return;
+        }
+
+        NpFont f = mTextureCache.getActiveFont();
+
+        if (f == null) {
+            return;
+        }
+
+        NpVec2 textRect = f.computeTextRect(fontHeight, caption);
+
+        drawString(gl, caption, 
+                   rect.getX() + (rect.getW() - textRect.getX()) * 0.5f, 
+                   rect.getY() + (rect.getH() - textRect.getY()) * 0.5f, 
+                   fontHeight, fontColor, 
+                   rect.getW(), ALIGN_LEFT);
+    }
+    
+    static private int getButtonRetCode(int id, NpRect rect) {
+
+        return getRectWidgetRetCode(id, rect);
+        
+    }
+    
+    static public int doButton(GL10 gl, int id, String widgetLookName, 
+            String fontName, byte[] caption, float fontHeight, 
+            NpVec4 fontColor, NpRect rect) {
+        
+        drawButtonImage(gl, id, widgetLookName, rect);
+     
+        drawButtonText(gl, id, fontName, caption, fontHeight, fontColor, rect);
+
+        return getButtonRetCode(id, rect);
     }
     
     static public int doLabel(GL10 gl, int id, float x, float y, 
             byte[] asciiText, String font, 
             NpVec4 fontColor, float fontHeight, byte align) {
         
-        int ret = 0;
-    
         if (!mTextureCache.activateFont(gl, font)) {
-            return ret;
+            return 0;
         }
         
         NpVec2 r = computeTextRect(font, fontHeight, asciiText);
         
-        float offs = 0;
+        drawString(gl, asciiText, x, y, fontHeight, fontColor, r.getX(), align);
+
+        float offs;
         
         if (align == ALIGN_CENTER) {
             offs = r.getX() * 0.5f;
         } else if (align == ALIGN_RIGHT) {
             offs = r.getX();
-        };
-        
-        boolean hit = NpGuiState.regionHit(x - offs, y, 
-                                           r.getX(), r.getY());
-        
-        if (hit) {
-            if (NpGuiState.mHotItem != id) {
-                ret |= GUI_RETURN_FLAG_MOUSE_MOVED_IN; 
-                NpGuiState.mHotItem = id;
-            }
-            
-            if ((NpGuiState.mActiveItem == 0) && NpGuiState.mMouseDown) {
-                NpGuiState.mActiveItem = id;
-            }
-        } else if (NpGuiState.mHotItem == id) {
-            NpGuiState.mHotItem = 0;
-            ret |= GUI_RETURN_FLAG_MOUSE_MOVED_OUT;
+        } else {
+            offs = 0;
         }
         
-        ret |= GUI_RETURN_FLAG_NORMAL;
-        
-        if (NpGuiState.mHotItem == id) {
-            ret |= GUI_RETURN_FLAG_HOT;
-            if (NpGuiState.mActiveItem == id) {
-                ret |= GUI_RETURN_FLAG_ACTIVE;
-            }
-        } else if (NpGuiState.mActiveItem == id) {
-            ret |= GUI_RETURN_FLAG_ACTIVE;
-        }
-
-        drawString(gl, asciiText, x, y, fontHeight, fontColor, r.getX(), align);
-        
-        if (!NpGuiState.mMouseDown && (NpGuiState.mHotItem == id) 
-                && (NpGuiState.mActiveItem == id)) {
-            ret |= GUI_RETURN_FLAG_CLICKED;
-        }
-        
-        return ret;
+        return getRectWidgetRetCode(id, new NpRect(x - offs, y, 
+                                                   r.getX(), r.getY()));
     }
     
     static public int doLabel(GL10 gl, int id, float x, float y, 

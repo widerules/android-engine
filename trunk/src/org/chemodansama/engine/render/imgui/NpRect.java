@@ -52,4 +52,9 @@ public final class NpRect {
     public void setH(float h) {
         mH = h;
     }
+    
+    public boolean overlapsPoint(float x, float y) {
+        return (x > mX) && (x < mX + mW) 
+            && (y > mY) && (y < mY + mH);
+    }
 }
