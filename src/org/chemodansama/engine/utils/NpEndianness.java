@@ -7,4 +7,8 @@ public class NpEndianness {
             | value << 8 & 0x00FF0000
             | value >>> 24;
     }
+    
+    public final static char convertChar(char value) {
+        return (char) (value << 8 | value >>> 8);
+    }
 }
