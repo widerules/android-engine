@@ -4,12 +4,11 @@ import java.util.HashMap;
 
 import javax.microedition.khronos.opengles.GL10;
 
-import org.apache.http.util.EncodingUtils;
 import org.chemodansama.engine.math.NpVec2;
-import org.chemodansama.engine.math.NpVec2i;
 import org.chemodansama.engine.math.NpVec4;
 import org.chemodansama.engine.render.NpTexture;
 import org.chemodansama.engine.render.NpTextureHeader;
+import org.chemodansama.engine.render.imgui.NpFont.NpFontCharStruct;
 
 import android.content.res.AssetManager;
 
@@ -33,7 +32,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     }
     
     static public NpVec2 computeTextRect(String fontName, float height, 
-            byte[] text) {
+            String text) {
         
         NpFont f = null;
         
@@ -118,7 +117,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     }
     
     static private void drawButtonText(GL10 gl, int id, 
-            String fontName, byte[] caption, float fontHeight, 
+            String fontName, String caption, float fontHeight, 
             NpVec4 fontColor, NpRect rect) {
         
         if (!mTextureCache.activateFont(gl, fontName)) {
@@ -147,7 +146,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     }
     
     static public int doButton(GL10 gl, int id, String widgetLookName, 
-            String fontName, byte[] caption, float fontHeight, 
+            String fontName, String caption, float fontHeight, 
             NpVec4 fontColor, NpRect rect) {
         
         drawButtonImage(gl, id, widgetLookName, rect);
@@ -158,7 +157,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     }
     
     static public int doLabel(GL10 gl, int id, float x, float y, 
-            byte[] asciiText, String font, 
+            String asciiText, String font, 
             NpVec4 fontColor, float fontHeight, byte align) {
         
         if (!mTextureCache.activateFont(gl, font)) {
@@ -183,35 +182,12 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
                                                    r.getX(), r.getY()));
     }
     
-    static public int doLabel(GL10 gl, int id, float x, float y, 
-            String text, String font, 
-            NpVec4 fontColor, float fontHeight, byte align) {
-        
-        return doLabel(gl, id, x, y, EncodingUtils.getAsciiBytes(text), font, 
-                       fontColor, fontHeight, align);
-    }
-    
-    static private void drawChar(GL10 gl, byte ansiChar, float x, 
-            float fontSize, float rectSize, 
-            float InvTexWidth, float InvTexHeight, 
-            float charTH, float charTW) {
-        
-        float xTexCoord = (ansiChar % 16) * rectSize;
-        
-        float yTexCoord = (ansiChar / 16) * rectSize;
-        
-        drawRect(gl, x, 0.0f, fontSize, fontSize, 
-                 xTexCoord * InvTexWidth, 
-                 1.0f - (yTexCoord + rectSize) * InvTexHeight, 
-                 charTW, charTH);
-    }
-    
     static void drawRect(GL10 gl, float x, float y, float w, float h, 
             float tx, float ty, float tw, float th) {
         mPolyBuffer.pushQuad(gl, x, y, w, h, tx, ty, tw, th);
     }
     
-    static public void drawString(GL10 gl, byte[] s, float x, float y, 
+    static public void drawString(GL10 gl, String s, float x, float y, 
             float fontSize, NpVec4 fontColor, float textWidth, byte align) {
         
         NpFont f = mTextureCache.getActiveFont();
@@ -238,37 +214,44 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
 
         NpTextureHeader fontTexHeader = f.getTexture().getHeader(); 
 
-        int rectSize = fontTexHeader.getWidth() / 16;
+        int rectSizeX = fontTexHeader.getWidth() / f.getColumnsCount();
+        int rectSizeY = fontTexHeader.getHeight() / f.getRowsCount();
 
-        float Ky = fontSize / rectSize;
-
-        NpVec2i CSPrev = f.getSize(s[0]);
+        float Ky = fontSize / f.getSize();
 
         float InvTexWidth = 1.0f / fontTexHeader.getWidth();
         float InvTexHeight = 1.0f / fontTexHeader.getHeight();
 
         float tx = 0.0f;
 
-        float charTW = rectSize * InvTexWidth;
-        float charTH = rectSize * InvTexHeight;
+        float charTW = rectSizeX * InvTexWidth;
+        float charTH = rectSizeY * InvTexHeight;
 
-        if (s.length > 0) {
-            for (int i = 0; i < s.length - 1; i++) {
-
-                drawChar(gl, s[i], tx, fontSize, rectSize, 
-                         InvTexWidth, InvTexHeight, 
-                         charTW, charTH);
-
-                NpVec2i CSNext = f.getSize(s[i + 1]);
-
-                tx += Ky * (CSNext.getX() + CSPrev.getX()) * 0.5f;
-                CSPrev = CSNext;
+        for (int i = 0; i < s.length(); i++) {
+            
+            NpFontCharStruct cs = f.getChar(s.charAt(i));
+            
+            if (cs == null) {
+                continue;
             }
+            
+            float xTexCoord = cs.getPos().getX() * rectSizeX;
+            float yTexCoord = cs.getPos().getY() * rectSizeY;
+            
+            float charW = cs.getSize().getX() * Ky;
+            float charH = cs.getSize().getY() * Ky;
 
-            drawChar(gl, s[s.length - 1], tx, fontSize, rectSize, 
-                     InvTexWidth, InvTexHeight, charTW, charTH);
+            drawRect(gl, tx - Ky * (rectSizeX - cs.getSize().getX()) * 0.5f,
+                     0.0f, rectSizeX * Ky, charH,
+                     xTexCoord * InvTexWidth, 
+                     1.0f - (yTexCoord + rectSizeY) * InvTexHeight, 
+                     charTW, charTH);
+        
+            mPolyBuffer.flushRender(gl);
+            
+            tx += charW;
         }
-
+        
         // flush render on matrix change 
         mPolyBuffer.flushRender(gl);
 
@@ -364,7 +347,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     }
 }
 
-/**
+/** 
  * NpTextureCache - caches active texture and font (since any font has exactly 
  *                  one texture).   
  */
