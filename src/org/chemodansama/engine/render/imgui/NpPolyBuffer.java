@@ -65,47 +65,47 @@ final class NpPolyBuffer {
         }
     }
     
-    void pushQuad(GL10 gl, float x, float y, float w, float h, 
-            float tx, float ty, float tw, float th) {
+    void pushQuad(GL10 gl, float x1, float y1, float x2, float y2,  
+            float tx1, float ty1, float tx2, float ty2) {
        
         int offs = mQuadsCount * 4 * 3; 
        
-        mVertArray[offs + 0] = x;
-        mVertArray[offs + 1] = y;
+        mVertArray[offs + 0] = x1;
+        mVertArray[offs + 1] = y1;
         mVertArray[offs + 2] = 0.0f;
         offs += 3;
         
-        mVertArray[offs + 0] = x + w;
-        mVertArray[offs + 1] = y;
+        mVertArray[offs + 0] = x2;
+        mVertArray[offs + 1] = y1;
         mVertArray[offs + 2] = 0.0f;
         offs += 3;
         
-        mVertArray[offs + 0] = x + w;
-        mVertArray[offs + 1] = y + h;
+        mVertArray[offs + 0] = x2;
+        mVertArray[offs + 1] = y2;
         mVertArray[offs + 2] = 0.0f;
         offs += 3;
         
-        mVertArray[offs + 0] = x;
-        mVertArray[offs + 1] = y + h;
+        mVertArray[offs + 0] = x1;
+        mVertArray[offs + 1] = y2;
         mVertArray[offs + 2] = 0.0f;
         
         
         offs = mQuadsCount * 4 * 2;
         
-        mTexCoordArray[offs + 0] = tx;
-        mTexCoordArray[offs + 1] = ty;
+        mTexCoordArray[offs + 0] = tx1;
+        mTexCoordArray[offs + 1] = ty1;
         offs += 2;
         
-        mTexCoordArray[offs + 0] = tx + tw;
-        mTexCoordArray[offs + 1] = ty;
+        mTexCoordArray[offs + 0] = tx2;
+        mTexCoordArray[offs + 1] = ty1;
         offs += 2;
         
-        mTexCoordArray[offs + 0] = tx + tw;
-        mTexCoordArray[offs + 1] = ty + th;
+        mTexCoordArray[offs + 0] = tx2;
+        mTexCoordArray[offs + 1] = ty2;
         offs += 2;
         
-        mTexCoordArray[offs + 0] = tx;
-        mTexCoordArray[offs + 1] = ty + th;
+        mTexCoordArray[offs + 0] = tx1;
+        mTexCoordArray[offs + 1] = ty2;
         
         offs = mQuadsCount * 6;
         
@@ -124,5 +124,10 @@ final class NpPolyBuffer {
         if (mQuadsCount >= mQuadsLimit) {
             flushRender(gl);
         }
+    }
+    
+    void pushQuadWH(GL10 gl, float x, float y, float w, float h, 
+            float tx, float ty, float tw, float th) {
+        pushQuad(gl, x, y, x + w, y + h, tx, ty, tx + tw, ty + th);
     }
 }

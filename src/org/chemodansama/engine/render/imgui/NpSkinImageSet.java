@@ -5,12 +5,14 @@ import java.util.HashMap;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.chemodansama.engine.LogTag;
 import org.chemodansama.engine.render.NpTexture;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import android.content.res.AssetManager;
+import android.util.Log;
 import android.util.Xml;
 import android.util.Xml.Encoding;
 
@@ -104,8 +106,17 @@ public final class NpSkinImageSet {
                     try {
                         if (mTexture.initFromStream(mAssets.open(imageFile))) {
                             mTexture.initGL10(mGL);
+                            mTexture.releaseMips();
+                            
+                            Log.i(LogTag.TAG, imageFile + " loaded");
+                        } else {
+                            Log.e(LogTag.TAG, imageFile + " wasn't loaded");
                         }
                     } catch (IOException e) {
+                        
+                        Log.e(LogTag.TAG, "IOException while reading " 
+                              + imageFile);
+                        
                         return;
                     }
                 }
@@ -136,7 +147,8 @@ public final class NpSkinImageSet {
         mImages = new HashMap<String, NpSkinImageSet.NpSkinImage>();
     }
     
-    public NpSkinImageSet(GL10 gl, AssetManager assets, String imageSetFileName) {
+    public NpSkinImageSet(GL10 gl, AssetManager assets, 
+            String imageSetFileName) {
         
         mAssets = assets;
         

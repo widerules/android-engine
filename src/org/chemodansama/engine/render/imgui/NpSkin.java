@@ -117,10 +117,10 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     }
     
     static private void drawButtonText(GL10 gl, int id, 
-            String fontName, String caption, float fontHeight, 
-            NpVec4 fontColor, NpRect rect) {
+            String caption, String font, float height, 
+            NpVec4 color, NpRect rect) {
         
-        if (!mTextureCache.activateFont(gl, fontName)) {
+        if (!mTextureCache.activateFont(gl, font)) {
             return;
         }
 
@@ -130,12 +130,12 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             return;
         }
 
-        NpVec2 textRect = f.computeTextRect(fontHeight, caption);
+        NpVec2 textRect = f.computeTextRect(height, caption);
 
         drawString(gl, caption, 
                    rect.getX() + (rect.getW() - textRect.getX()) * 0.5f, 
                    rect.getY() + (rect.getH() - textRect.getY()) * 0.5f, 
-                   fontHeight, fontColor, 
+                   height, color, 
                    rect.getW(), ALIGN_LEFT);
     }
     
@@ -146,27 +146,27 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     }
     
     static public int doButton(GL10 gl, int id, String widgetLookName, 
-            String fontName, String caption, float fontHeight, 
+            String caption, String font, float fontHeight, 
             NpVec4 fontColor, NpRect rect) {
         
         drawButtonImage(gl, id, widgetLookName, rect);
      
-        drawButtonText(gl, id, fontName, caption, fontHeight, fontColor, rect);
+        drawButtonText(gl, id, caption, font, fontHeight, fontColor, rect);
 
         return getButtonRetCode(id, rect);
     }
     
     static public int doLabel(GL10 gl, int id, float x, float y, 
-            String asciiText, String font, 
-            NpVec4 fontColor, float fontHeight, byte align) {
+            String caption, String font, 
+            float fontHeight, NpVec4 fontColor, byte align) {
         
         if (!mTextureCache.activateFont(gl, font)) {
             return 0;
         }
         
-        NpVec2 r = computeTextRect(font, fontHeight, asciiText);
+        NpVec2 r = computeTextRect(font, fontHeight, caption);
         
-        drawString(gl, asciiText, x, y, fontHeight, fontColor, r.getX(), align);
+        drawString(gl, caption, x, y, fontHeight, fontColor, r.getX(), align);
 
         float offs;
         
@@ -182,10 +182,23 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
                                                    r.getX(), r.getY()));
     }
     
-    static void drawRect(GL10 gl, float x, float y, float w, float h, 
-            float tx, float ty, float tw, float th) {
-        mPolyBuffer.pushQuad(gl, x, y, w, h, tx, ty, tw, th);
+    static public int doRectWidget(GL10 gl, int id, NpWidgetState state, 
+            String widgetLookName, NpRect rect) {
+        
+        drawWidget(gl, state, widgetLookName, rect);
+        
+        return getRectWidgetRetCode(id, rect);
     }
+    
+    static void drawRectWH(GL10 gl, float x, float y, float w, float h, 
+            float tx, float ty, float tw, float th) {
+        mPolyBuffer.pushQuad(gl, x, y, x + w, y + h, tx, ty, tx + tw, ty + th);
+    }
+    
+    static void drawRect(GL10 gl, float x1, float y1, float x2, float y2, 
+            float tx1, float ty1, float tx2, float ty2) {
+        mPolyBuffer.pushQuad(gl, x1, y1, x2, y2, tx1, ty1, tx2, ty2);
+    }    
     
     static public void drawString(GL10 gl, String s, float x, float y, 
             float fontSize, NpVec4 fontColor, float textWidth, byte align) {
@@ -235,19 +248,19 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
                 continue;
             }
             
-            float xTexCoord = cs.getPos().getX() * rectSizeX;
-            float yTexCoord = cs.getPos().getY() * rectSizeY;
+            float tcX = cs.getPosX() * rectSizeX;
+            float tcY = cs.getPosY() * rectSizeY;
             
-            float charW = cs.getSize().getX() * Ky;
-            float charH = cs.getSize().getY() * Ky;
+            float charW = cs.getSizeX() * Ky;
+            float charH = cs.getSizeY() * Ky;
 
-            drawRect(gl, tx - Ky * (rectSizeX - cs.getSize().getX()) * 0.5f,
-                     0.0f, rectSizeX * Ky, charH,
-                     xTexCoord * InvTexWidth, 
-                     1.0f - (yTexCoord + rectSizeY) * InvTexHeight, 
-                     charTW, charTH);
-        
-            mPolyBuffer.flushRender(gl);
+            float x1 = tx - Ky * (rectSizeX - cs.getSizeX()) * 0.5f;
+            
+            float tx1 = tcX * InvTexWidth;
+            float ty1 = 1.0f - tcY * InvTexHeight;
+            
+            drawRect(gl, x1, 0, x1 + rectSizeX * Ky, charH, 
+                     tx1, ty1, tx1 + charTW, ty1 - charTH);
             
             tx += charW;
         }
@@ -258,7 +271,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         gl.glPopMatrix();
     }
     
-    static public void drawWidget(GL10 gl, NpWidgetState state, 
+    static private void drawWidget(GL10 gl, NpWidgetState state, 
             String widgetName, NpRect rect) {
         
         if (mScheme == null) {
@@ -314,13 +327,20 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             int tw = texture.getHeader().getWidth();
             int th = texture.getHeader().getHeight();
             
-            mTextureCache.activateTexture(gl, texture);
+            if (!mTextureCache.activateTexture(gl, texture)) {
+                continue;
+            }
             
-            drawRect(gl, rect.getX() + x, rect.getY() + y, w, h, 
-                     (float) im.getXPos() / tw, 
-                     1.0f - (float) im.getYPos() / th, 
-                     (float) im.getWidth() / tw, 
-                     -(float) im.getHeight() / th);
+            float x1 = rect.getX() + x;
+            float y1 = rect.getY() + y;
+            
+            float tx1 = (float) im.getXPos() / tw;
+            float ty1 = 1.0f - (float) im.getYPos() / th;
+            
+            drawRect(gl, x1, y1, x1 + w, y1 + h, 
+                     tx1, ty1, 
+                     tx1 + (float) im.getWidth() / tw, 
+                     ty1 - (float) im.getHeight() / th);
         }
     }
     
@@ -391,13 +411,20 @@ final class NpTextureCache {
         return false;
     }
     
+    /**
+     * @param gl
+     * @param texture
+     * @return returns true if specified texture is bound to gapi,
+     *         otherwise returns false
+     */
     public boolean activateTexture(GL10 gl, NpTexture texture) {
 
         if (doActivateTexture(gl, texture)) {
             mActiveFont = null;
         }
-        
-        return mActiveTexture.equalsToTexture(texture);
+
+        return (mActiveTexture != null) ? 
+                mActiveTexture.equalsToTexture(texture) : false;
     }
     
     public void activateTextureNoRet(GL10 gl, NpTexture texture) {
@@ -411,7 +438,7 @@ final class NpTextureCache {
      * doActivateTexture binds texture with gl state
      * @param gl
      * @param texture
-     * @return returns true if texture activating has been occurred, 
+     * @return returns true if texture activating has occurred, 
      *         otherwise returns false
      */
     private boolean doActivateTexture(GL10 gl, NpTexture texture) {
