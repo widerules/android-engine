@@ -1,6 +1,6 @@
 package org.chemodansama.engine.math;
 
-public class NpVec2i {
+final public class NpVec2i {
     private int mX;
     private int mY;
     
@@ -18,12 +18,20 @@ public class NpVec2i {
         return mX;
     }
     
-    public void setX(final int x) {
-        mX = x;
-    }
-    
     public int getY() {
         return mY;
+    }
+    
+    public NpVec2 mulF(float sx, float sy) {
+        return new NpVec2(mX * sx, mY * sy);
+    }
+    
+    public NpVec2 mulF(float s) {
+        return new NpVec2(mX * s, mY * s);
+    }
+    
+    public void setX(final int x) {
+        mX = x;
     }
     
     public void setY(final int y) {

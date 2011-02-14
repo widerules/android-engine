@@ -74,6 +74,8 @@ public final class NpGuiState {
     static public void prepare(GL10 gl, int orthoX, int orthoY) {
         prepareRender(gl, orthoX, orthoY);
         
+        NpWidgetIdGen.reset();
+        
         NpSkin.prepare(gl);
     }
     
@@ -81,7 +83,7 @@ public final class NpGuiState {
         gl.glMatrixMode(GL10.GL_PROJECTION);
         gl.glPushMatrix();
         gl.glLoadIdentity();
-        gl.glOrthof(0.0f, orthoX, 0.0f, orthoY, -1.0f, 1.0f);
+        gl.glOrthof(0.0f, orthoX, orthoY, 0.0f, -1.0f, 1.0f);
         gl.glMatrixMode(GL10.GL_MODELVIEW);
         gl.glPushMatrix();
         gl.glLoadIdentity();
@@ -95,6 +97,8 @@ public final class NpGuiState {
         
         gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
         gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
+        
+        gl.glCullFace(GL10.GL_FRONT);
     }
     
     static public boolean regionHit(float x, float y, float w, float h) {

@@ -10,9 +10,12 @@ import java.io.InputStream;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.chemodansama.engine.LogTag;
 import org.chemodansama.engine.utils.NpEndianness;
 
-public class NpTexture {
+import android.util.Log;
+
+final public class NpTexture implements LogTag {
     
     private int mTextureID = 0;
     private boolean mDataValid = false; // valid Header, Mips and MipsSize
@@ -27,7 +30,7 @@ public class NpTexture {
     }
     
     public boolean bindGL10(GL10 gl) {
-        if (mTextureID > 0) {
+        if (mTextureID != 0) {
             gl.glBindTexture(GL10.GL_TEXTURE_2D, mTextureID);
             
             return true;
@@ -66,91 +69,93 @@ public class NpTexture {
     }
     
     public boolean initFromStream(InputStream in) {
-        
-        boolean r = false;
 
-        DataInputStream din = new DataInputStream(in);
+        mDataValid = false;
         
-        if (din != null) {
-        
-            if (mHeader.loadFromStream(din)) {
-
-                try {
-                    for (int i = 0; i < mHeader.getMipsCount(); i++) {
-                        mMipSize.add(NpEndianness.convertInt(din.readInt()));
-                        
-                        ByteBuffer b = ByteBuffer.allocateDirect(mMipSize.get(i));
-
-                        byte[] bb = new byte[mMipSize.get(i)];
-                        
-                        din.read(bb, 0, mMipSize.get(i));
-                        
-                        b.put(bb);
-                        b.position(0);
-                        
-                        mMips.add(b);
-                    }
-            
-                    r = true;
-                } catch (IOException e) {
-                    r = false;
-                }
-                
-            }
+        if (in == null) {
+            return false;
         }
         
-        mDataValid = r;
+        DataInputStream din = new DataInputStream(in);
         
-        return r;
+        if (mHeader.loadFromStream(din)) {
+
+            try {
+                for (int i = 0; i < mHeader.getMipsCount(); i++) {
+                    mMipSize.add(NpEndianness.convertInt(din.readInt()));
+
+                    ByteBuffer b = ByteBuffer.allocateDirect(mMipSize.get(i));
+
+                    byte[] bb = new byte[mMipSize.get(i)];
+
+                    din.read(bb, 0, mMipSize.get(i));
+
+                    b.put(bb);
+                    b.position(0);
+
+                    mMips.add(b);
+                }
+
+                mDataValid = true;
+                return true;
+                
+            } catch (IOException e) {
+                return false;
+            }
+        } else {
+            return false;
+        }
     }
     
     public boolean initGL10(GL10 gl) {
         
-        boolean r = false;
-        
-        if (mDataValid && (mTextureID == 0) && (mHeader.getMipsCount() > 0)) {
-            if (gl != null) {
-                IntBuffer textureBuf = ByteBuffer.allocateDirect(4).asIntBuffer();
-                gl.glGenTextures(1, textureBuf);
-                
-                if (mTextureID > 0) {
-                    IntBuffer b = ByteBuffer.allocateDirect(1).asIntBuffer();
-                    b.put(mTextureID);
-                    b.position(0);
-                    
-                    gl.glDeleteTextures(1, b);
-                }
-                
-                mTextureID = textureBuf.get(0);
-                
-                if (mTextureID > 0) {
-                    
-                    gl.glBindTexture(GL10.GL_TEXTURE_2D, mTextureID);
-                    
-                    gl.glTexImage2D(GL10.GL_TEXTURE_2D, 
-                                    0, // level 
-                                    mHeader.getInternalFormat(), 
-                                    mHeader.getWidth(),
-                                    mHeader.getHeight(), 
-                                    0, // border 
-                                    mHeader.getFormat(), 
-                                    mHeader.getType(), 
-                                    mMips.get(0));
-                    
-                    gl.glTexParameterf(GL10.GL_TEXTURE_2D, 
-                                       GL10.GL_TEXTURE_MAG_FILTER, 
-                                       mHeader.getMagFilter());
-                    
-                    gl.glTexParameterf(GL10.GL_TEXTURE_2D, 
-                                       GL10.GL_TEXTURE_MIN_FILTER, 
-                                       mHeader.getMinFilter());
-                    
-                    r = true;
-                } 
-            }
+        if (!mDataValid || (mTextureID != 0) || (mHeader.getMipsCount() <= 0) 
+                || (gl == null)) {
+            return false;
         }
         
-        return r;
+        IntBuffer textureBuf = ByteBuffer.allocateDirect(4).asIntBuffer();
+
+        gl.glGenTextures(1, textureBuf);
+
+        mTextureID = textureBuf.get(0);
+
+        if (mTextureID == 0) {
+            Log.e(TAG, "TexID == 0");
+            return false;
+        }
+
+        Log.i(TAG, "mTextureID == " + mTextureID);
+        
+        gl.glBindTexture(GL10.GL_TEXTURE_2D, mTextureID);
+
+        gl.glTexParameterf(GL10.GL_TEXTURE_2D, 
+                           GL10.GL_TEXTURE_MAG_FILTER, 
+                           mHeader.getMagFilter());
+
+        gl.glTexParameterf(GL10.GL_TEXTURE_2D, 
+                           GL10.GL_TEXTURE_MIN_FILTER, 
+                           mHeader.getMinFilter());
+        
+        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S, 
+                           GL10.GL_CLAMP_TO_EDGE);
+        
+        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_T, 
+                           GL10.GL_CLAMP_TO_EDGE);
+        
+        gl.glTexImage2D(GL10.GL_TEXTURE_2D, 
+                        0, // level 
+                        mHeader.getInternalFormat(), 
+                        mHeader.getWidth(),
+                        mHeader.getHeight(), 
+                        0, // border 
+                        mHeader.getFormat(), 
+                        mHeader.getType(), 
+                        mMips.get(0));
+
+        gl.glBindTexture(GL10.GL_TEXTURE_2D, 0);
+
+        return true;
     }
     
     public void releaseMips() {

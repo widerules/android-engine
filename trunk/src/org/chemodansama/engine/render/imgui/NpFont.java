@@ -35,12 +35,20 @@ final public class NpFont {
             return mCode;
         }
         
-        public NpVec2i getSize() {
-            return mSize;
+        public float getSizeX() {
+            return mSize.getX();
         }
         
-        public NpVec2i getPos() {
-            return mPos;
+        public float getSizeY() {
+            return mSize.getY();
+        }
+        
+        public float getPosX() {
+            return mPos.getX();
+        }
+        
+        public float getPosY() {
+            return mPos.getY();
         }
     }
     
@@ -128,10 +136,17 @@ final public class NpFont {
 
         for (int i = 0; i < s.length(); i++) {
             
-            NpVec2i cs = getSize(s.charAt(i));
+            NpFontCharStruct c = getChar(s.charAt(i));
             
-            r.setX(r.getX() + cs.getX() * ky);
-            r.setY(Math.max(r.getY(), ky * cs.getY()));
+            if (c == null) {
+                continue;
+            }
+            
+            float sx = c.getSizeX();
+            float sy = c.getSizeY();
+            
+            r.setX(r.getX() + sx * ky);
+            r.setY(Math.max(r.getY(), ky * sy));
         }
         
         return r;
@@ -143,23 +158,5 @@ final public class NpFont {
     
     public NpFontCharStruct getChar(char c) {
         return mChars.get(c);
-    }
-    
-    public NpVec2i getSize(char c) {
-        NpFontCharStruct s = mChars.get(c);
-        if (s != null) {
-            return s.getSize();
-        } else {
-            return new NpVec2i(0, 0);
-        }
-    }
-    
-    public NpVec2i getPos(char c) {
-        NpFontCharStruct s = mChars.get(c);
-        if (s != null) {
-            return s.getPos();
-        } else {
-            return new NpVec2i(0, 0);
-        }
     }
 }

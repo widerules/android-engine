@@ -5,14 +5,17 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.TreeMap;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.chemodansama.engine.LogTag;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import android.content.res.AssetManager;
+import android.util.Log;
 import android.util.Xml;
 import android.util.Xml.Encoding;
 
@@ -25,12 +28,12 @@ import android.util.Xml.Encoding;
  */
 final public class NpSkinScheme {
 
-    private class SchemeXmlReader extends DefaultHandler {
+    private class SchemeXmlReader extends DefaultHandler implements LogTag {
 
         final private GL10 mGL;
         
         // widget look data for sax-parsing
-        private String mWidgetName = "";
+        private String mWidgetName = null;
         
         final private EnumMap<NpWidgetState, NpWidgetStatelook> mWidgetState = 
             new EnumMap<NpWidgetState, NpWidgetStatelook>(NpWidgetState.class);
@@ -64,6 +67,8 @@ final public class NpSkinScheme {
             try {
                 fontTexStream = mAssets.open(fontFileName);
             } catch (IOException e) {
+                
+                Log.e(TAG, "IOException while open: " + fontFileName);
                 return false;
             }
             
@@ -72,16 +77,17 @@ final public class NpSkinScheme {
             try {
                 fontCharsStream = mAssets.open(charsFileName);
             } catch (IOException e) {
+                Log.e(TAG, "IOException while open: " + charsFileName);
                 return false;
             }
-            
-            //NpSkin.addFont(alias, mGL, fontTexStream, fontCharsStream);
             
             if (!mFontsMap.containsKey(alias)) {
                 NpFont f = new NpFont(mGL, alias, fontTexStream, 
                                       fontCharsStream);
                 
                 mFontsMap.put(alias, f);
+            } else {
+                Log.w(TAG, "duplicated fonat alias: " + alias);
             }
             
             return true;
@@ -135,11 +141,16 @@ final public class NpSkinScheme {
             super.endElement(uri, localName, qName);
             
             // quite readable, isn't it? >_<
-            
-            if (localName.equalsIgnoreCase("widget")) {
+            if (localName.equalsIgnoreCase("WidgetLook") 
+                    && (mWidgetName != null)) {
+                
+                Log.w(LogTag.TAG, 
+                      "WidgetName is not null. <Widget> wasnt closed");
+                
+            } else if (localName.equalsIgnoreCase("widget")) {
                 mWidgetlook.put(mWidgetName, 
                                 new NpWidgetlook(mWidgetName, mWidgetState));
-                mWidgetName = "";
+                mWidgetName = null;
                 mWidgetState.clear();
             } else if (localName.equalsIgnoreCase("state")) {
                 mWidgetState.put(mCurrentState, 
@@ -241,8 +252,8 @@ final public class NpSkinScheme {
     final private HashMap<String, NpSkinImageSet> mImageSets = 
         new HashMap<String, NpSkinImageSet>();
 
-    final private HashMap<String, NpWidgetlook> mWidgetlook = 
-        new HashMap<String, NpWidgetlook>();
+    final private TreeMap<String, NpWidgetlook> mWidgetlook = 
+        new TreeMap<String, NpWidgetlook>();
     
     final private AssetManager mAssets;
     

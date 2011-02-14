@@ -1,6 +1,6 @@
 package org.chemodansama.engine.math;
 
-public class NpVec2 {
+final public class NpVec2 {
     private float[] mValues = new float[2];
     
     public NpVec2() {
