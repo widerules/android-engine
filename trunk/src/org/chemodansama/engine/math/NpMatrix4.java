@@ -265,6 +265,7 @@ final public class NpMatrix4 {
         
         float[] t = constructMatrixArray();
         
+        loadIdentity();
         Matrix.multiplyMM(t, 0, mValues, mOffset, m, 0);
         Matrix.translateM(t, 0, -eye.getX(), -eye.getY(), -eye.getZ());
         

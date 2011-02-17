@@ -22,7 +22,7 @@ import android.util.Xml.Encoding;
 /**
  * @author Chemodansama
  * 
- * NpSkinScheme - presents XML description for the skin: pure data only.
+ * NpSkinScheme - represents XML description for the skin: pure data only.
  * No render methods at all. GL is used only for loading textures. 
  *
  */
@@ -87,7 +87,7 @@ final public class NpSkinScheme {
                 
                 mFontsMap.put(alias, f);
             } else {
-                Log.w(TAG, "duplicated fonat alias: " + alias);
+                Log.w(TAG, "duplicated font alias: " + alias);
             }
             
             return true;
