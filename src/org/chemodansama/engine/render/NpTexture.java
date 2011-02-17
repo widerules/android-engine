@@ -15,18 +15,21 @@ import org.chemodansama.engine.utils.NpEndianness;
 
 import android.util.Log;
 
-final public class NpTexture implements LogTag {
+final public class NpTexture {
     
     private int mTextureID = 0;
-    private boolean mDataValid = false; // valid Header, Mips and MipsSize
     
-    private NpTextureHeader mHeader = new NpTextureHeader();
+    private NpTextureHeader mHeader;
     
-    private ArrayList<ByteBuffer> mMips = new ArrayList<ByteBuffer>();
-    private ArrayList<Integer> mMipSize = new ArrayList<Integer>(); 
-    
-    public NpTexture() {
+    public NpTexture(GL10 gl, InputStream in) {
         super();
+        
+        NpTextureData d = new NpTextureData(in);
+        
+        if (d.isDataValid()) {
+            mHeader = d.getHeader();
+            initGL10(gl, d);
+        }
     }
     
     public boolean bindGL10(GL10 gl) {
@@ -38,21 +41,25 @@ final public class NpTexture implements LogTag {
         return false;
     }
     
+    @Override
+    public boolean equals(Object o) {
+        if ((o != null) && (o instanceof NpTexture)) {
+            return mTextureID == ((NpTexture) o).mTextureID; 
+        } else {
+            return super.equals(o);
+        }
+    }
+    
+    public boolean equalsToTexture(NpTexture t) {
+        return (t != null) ? mTextureID == t.mTextureID : false;
+    }
+    
     public NpTextureHeader getHeader() {
         return mHeader;
     }
     
-    @Override
-    public boolean equals(Object o) {
-        if (o != null) {
-            if (o instanceof NpTexture) {
-                return mTextureID == ((NpTexture) o).mTextureID; 
-            } else {
-                return super.equals(o);
-            }
-        } else {
-            return super.equals(o);
-        }
+    public int getTextureID() {
+        return mTextureID;
     }
     
     @Override
@@ -60,57 +67,10 @@ final public class NpTexture implements LogTag {
         return mTextureID;
     }
     
-    public int getTextureID() {
-        return mTextureID;
-    }
-    
-    public boolean equalsToTexture(NpTexture t) {
-        return (t != null) ? mTextureID == t.mTextureID : false;
-    }
-    
-    public boolean initFromStream(InputStream in) {
-
-        mDataValid = false;
+    public boolean initGL10(GL10 gl, NpTextureData texData) {
         
-        if (in == null) {
-            return false;
-        }
-        
-        DataInputStream din = new DataInputStream(in);
-        
-        if (mHeader.loadFromStream(din)) {
-
-            try {
-                for (int i = 0; i < mHeader.getMipsCount(); i++) {
-                    mMipSize.add(NpEndianness.convertInt(din.readInt()));
-
-                    ByteBuffer b = ByteBuffer.allocateDirect(mMipSize.get(i));
-
-                    byte[] bb = new byte[mMipSize.get(i)];
-
-                    din.read(bb, 0, mMipSize.get(i));
-
-                    b.put(bb);
-                    b.position(0);
-
-                    mMips.add(b);
-                }
-
-                mDataValid = true;
-                return true;
-                
-            } catch (IOException e) {
-                return false;
-            }
-        } else {
-            return false;
-        }
-    }
-    
-    public boolean initGL10(GL10 gl) {
-        
-        if (!mDataValid || (mTextureID != 0) || (mHeader.getMipsCount() <= 0) 
-                || (gl == null)) {
+        if ((texData == null) || !texData.isDataValid() || (mTextureID != 0) 
+                || (mHeader.getMipsCount() <= 0) || (gl == null)) {
             return false;
         }
         
@@ -121,11 +81,11 @@ final public class NpTexture implements LogTag {
         mTextureID = textureBuf.get(0);
 
         if (mTextureID == 0) {
-            Log.e(TAG, "TexID == 0");
+            Log.e(LogTag.TAG, "Generated TextureID == 0");
             return false;
         }
 
-        Log.i(TAG, "mTextureID == " + mTextureID);
+        Log.i(LogTag.TAG, "mTextureID == " + mTextureID);
         
         gl.glBindTexture(GL10.GL_TEXTURE_2D, mTextureID);
 
@@ -151,18 +111,73 @@ final public class NpTexture implements LogTag {
                         0, // border 
                         mHeader.getFormat(), 
                         mHeader.getType(), 
-                        mMips.get(0));
+                        texData.getMips().get(0));
 
         gl.glBindTexture(GL10.GL_TEXTURE_2D, 0);
 
         return true;
     }
+}
+
+final class NpTextureData {
     
-    public void releaseMips() {
-        mMips.clear();
-        mMipSize.clear();
-        
+    private boolean mDataValid = false; // valid Header, Mips and MipsSize
+    
+    private NpTextureHeader mHeader = new NpTextureHeader();
+    private ArrayList<ByteBuffer> mMips = new ArrayList<ByteBuffer>();
+    private ArrayList<Integer> mMipSize = new ArrayList<Integer>(); 
+    
+    public NpTextureData(InputStream in) {
         mDataValid = false;
+        
+        if (in == null) {
+            return;
+        }
+        
+        DataInputStream din = new DataInputStream(in);
+        
+        if (mHeader.loadFromStream(din)) {
+
+            try {
+                for (int i = 0; i < mHeader.getMipsCount(); i++) {
+                    mMipSize.add(NpEndianness.convertInt(din.readInt()));
+
+                    ByteBuffer b = ByteBuffer.allocateDirect(mMipSize.get(i));
+
+                    byte[] bb = new byte[mMipSize.get(i)];
+
+                    din.read(bb, 0, mMipSize.get(i));
+
+                    b.put(bb);
+                    b.position(0);
+
+                    mMips.add(b);
+                }
+
+                mDataValid = true;
+                return;
+                
+            } catch (IOException e) {
+                return;
+            }
+        } else {
+            return;
+        }
     }
-    
+
+    public NpTextureHeader getHeader() {
+        return mHeader;
+    }
+
+    public ArrayList<ByteBuffer> getMips() {
+        return mMips;
+    }
+
+    public ArrayList<Integer> getMipSize() {
+        return mMipSize;
+    }
+
+    public boolean isDataValid() {
+        return mDataValid;
+    }
 }

@@ -47,8 +47,7 @@ public final class NpCamera {
         mDirty = false;
     }
 
-    // package-visible function
-    void onScreenAspectChanged(float screenAspect) {
+    public void onScreenAspectChanged(float screenAspect) {
         mAspect = screenAspect;
     }
 
@@ -83,7 +82,7 @@ public final class NpCamera {
     }
 
     public float[] getProj() {
-        float[] result = new float[16];
+        float[] result = NpMatrix4.constructMatrixArray();
 
         getProj(result);
 
@@ -99,7 +98,7 @@ public final class NpCamera {
     }
 
     public float[] getViewProj() {
-        float[] result = new float[16];
+        float[] result = NpMatrix4.constructMatrixArray();
 
         getViewProj(result);
 

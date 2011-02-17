@@ -1,6 +1,7 @@
 package org.chemodansama.engine.render.imgui;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 
 import javax.microedition.khronos.opengles.GL10;
@@ -101,24 +102,20 @@ public final class NpSkinImageSet {
                 String imageFile = attributes.getValue("Imagefile");
                 
                 if ((imageFile != null) && (mGL != null) && (mAssets != null)) {
-                    mTexture = new NpTexture();
                     
+                    InputStream texIn;
                     try {
-                        if (mTexture.initFromStream(mAssets.open(imageFile))) {
-                            mTexture.initGL10(mGL);
-                            mTexture.releaseMips();
-                            
-                            Log.i(LogTag.TAG, imageFile + " loaded");
-                        } else {
-                            Log.e(LogTag.TAG, imageFile + " wasn't loaded");
-                        }
-                    } catch (IOException e) {
+                        texIn = mAssets.open(imageFile);
+                    } catch (IOException e1) {
                         
                         Log.e(LogTag.TAG, "IOException while reading " 
                               + imageFile);
                         
                         return;
                     }
+                    
+                    mTexture = new NpTexture(mGL, texIn);
+                    Log.i(LogTag.TAG, imageFile + " loaded");
                 }
                 
             } else if (localName.equalsIgnoreCase("image")) {
