@@ -54,8 +54,9 @@ class NpSurfaceRenderer implements GLSurfaceView.Renderer {
 
         mCamera.onScreenAspectChanged(aspect);
         mCamera.setProjParams(45.0f, 0.125f, 32.0f);
-        mCamera.setViewParams(new NpVec3(0, 0, 5), new NpVec3(0, 0, 0),
-                              new NpVec3(0, 1, 0));
+        mCamera.setViewParams(NpVec3.newInstance(0, 0, 5), 
+                              NpVec3.newInstance(0, 0, 0),
+                              NpVec3.newInstance(0, 1, 0));
 
         gl.glMatrixMode(GL10.GL_PROJECTION);
         gl.glLoadMatrixf(mCamera.getProj(), 0);

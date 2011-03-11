@@ -13,9 +13,9 @@ public final class NpCamera {
     private boolean mDirty = false;
 
     // View matrix parameters
-    private NpVec3 mPos = new NpVec3();
-    private NpVec3 mCenter = new NpVec3();
-    private NpVec3 mUp = new NpVec3();
+    private float[] mPos = NpVec3.newInstance();
+    private float[] mCenter = NpVec3.newInstance();
+    private float[] mUp = NpVec3.newInstance();
 
     // Projection matrix parameters
     private float mFovy = 0;
@@ -105,25 +105,35 @@ public final class NpCamera {
         return result;
     }
 
-    public void setPos(NpVec3 p) {
-        mPos.setValues(p);
+    public void setPos(float[] p) {
+        NpVec3.copy(p, mPos);
 
         mDirty = true;
     }
 
-    public void setUp(NpVec3 r) {
-        mUp.setValues(r);
+    public void setUp(float[] r) {
+        NpVec3.copy(r, mUp);
 
         mDirty = true;
     }
 
-    public void setCenter(NpVec3 c) {
-        mCenter.setValues(c);
+    public void setCenter(float[] c) {
+        NpVec3.copy(c, mCenter);
 
         mDirty = true;
     }
+    
+    public void setView(float[] v) {
+        mView.fromArray(v, 0);
+        computeProj();
+        computeViewProj();
 
-    public void setViewParams(NpVec3 pos, NpVec3 center, NpVec3 up) {
+        
+        
+        mDirty = false;
+    }
+    
+    public void setViewParams(float[] pos, float[] center, float[] up) {
         setPos(pos);
         setCenter(center);
         setUp(up);
@@ -159,6 +169,10 @@ public final class NpCamera {
         }
 
         return mView.multiplyExternal(worldMat);
+    }
+
+    public void getPos(float[] p) {
+        System.arraycopy(mPos, 0, p, 0, 3);
     }
 
 }

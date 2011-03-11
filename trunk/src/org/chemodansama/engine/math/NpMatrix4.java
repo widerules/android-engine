@@ -67,6 +67,8 @@ final public class NpMatrix4 {
             return false;
         }
         
+        return Matrix.invertM(result, 0, mValues, mOffset);
+        /*
         float[] m = mValues;
         float[] a = constructMatrixArray();
         
@@ -143,7 +145,7 @@ final public class NpMatrix4 {
             return true;
         } else {
             return false;
-        }
+        }*/
     }
     
     public boolean computeInverse(NpMatrix4 result) {
@@ -162,6 +164,21 @@ final public class NpMatrix4 {
     public float[] getArray() {
         return mValues;
     }
+    
+    public float[] getX() {
+        float[] p = {mValues[0], mValues[1], mValues[2]}; 
+        return p;
+    }
+    
+    public float[] getY() {
+        float[] p = {mValues[4], mValues[5], mValues[6]}; 
+        return p;
+    }
+    
+    public float[] getZ() {
+        float[] p = {mValues[8], mValues[9], mValues[10]}; 
+        return p;
+    }
 
     public int getOffset() {
         return mOffset;
@@ -172,10 +189,13 @@ final public class NpMatrix4 {
     }
 
     public void multiply(NpMatrix4 m) {
+        multiply(m.mValues);
+    }
+    
+    public void multiply(float[] m) {
         float[] t = constructMatrixArray();
-        System.arraycopy(mValues, mOffset, t, 0, MATRIX_ARRAY_SIZE);
-
-        Matrix.multiplyMM(mValues, mOffset, t, 0, m.mValues, m.mOffset);
+        System.arraycopy (mValues, mOffset, t, 0, MATRIX_ARRAY_SIZE);
+        Matrix.multiplyMM(mValues, mOffset, t, 0, m, 0);
     }
 
     public float[] multiplyExternal(NpMatrix4 m) {
@@ -186,12 +206,16 @@ final public class NpMatrix4 {
         return t;
     }
     
-    public float[] multiplyVec(NpVec4 v) {
+    public float[] multiplyVec(float[] v) {
         float[] r = new float[4];
 
-        Matrix.multiplyMV(r, 0, mValues, mOffset, v.getArray(), 0);
+        Matrix.multiplyMV(r, 0, mValues, mOffset, v, 0);
         
         return r;
+    }
+    
+    public void multiplyVec(float[] v, float[] r) {
+        Matrix.multiplyMV(r, 0, mValues, mOffset, v, 0);
     }
 
     public void ortho(float left, float right, float bottom, float top,
@@ -211,51 +235,82 @@ final public class NpMatrix4 {
     }
 
     public void rotate(float a, float x, float y, float z) {
-        Matrix.rotateM(mValues, mOffset, a, x, y, z);
+        
+        float ar = (float) (a * Math.PI / 180);
+        float c = (float) Math.cos(ar);
+        float s = (float) Math.sin(ar);
+        float c1 = 1 - c;
+
+        float[] t = constructMatrixArray();
+        
+        t[0]  = c + c1 * x * x;
+        t[1]  = c1 * y * x + s * z;
+        t[2]  = c1 * x * z - s * y;
+        t[3]  = 0;
+
+        t[4]  = c1 * y * x - s * z;
+        t[5]  = c + c1 * y * y;
+        t[6]  = c1 * y * z + s * x;
+        t[7]  = 0;
+
+        t[8]  = c1 * z * x + s * y;
+        t[9]  = c1 * z * y - s * x;
+        t[10] = c + c1 * z * z;
+        t[11] = 0;
+
+        t[12] = 0;
+        t[13] = 0;
+        t[14] = 0;
+        t[15] = 1;
+
+        multiply(t);
+        
+//        Matrix.rotateM(mValues, mOffset, a, x, y, z);
     }
 
-    public void rotate(float a, NpVec3 v) {
-        rotate(a, v.getX(), v.getY(), v.getZ());
+    public void rotate(float a, float[] v) {
+        rotate(a, v[0], v[1], v[2]);
     }
 
     public void scale(float kx, float ky, float kz) {
         Matrix.scaleM(mValues, mOffset, kx, ky, kz);
     }
 
-    public void scale(NpVec3 k) {
-        scale(k.getX(), k.getY(), k.getZ());
+    public void scale(float[] k) {
+        scale(k[0], k[1], k[2]);
     }
 
     // set, not multiply!
-    public void setLookAt(final NpVec3 eye, final NpVec3 center, 
-            final NpVec3 up) {
+    public void setLookAt(final float[] eye, final float[] center, 
+            final float[] up) {
+        float[] f = NpVec3.newInstance(); 
+        NpVec3.sub(center, eye, f);
+        NpVec3.normalize(f);
         
-        NpVec3 f = center.sub(eye);
-        f.normalize();
+        float[] uUp = NpVec3.newInstance(up);
+        NpVec3.normalize(uUp);
         
-        NpVec3 uUp = new NpVec3(up); 
-        uUp.normalize();
+        float[] s = NpVec3.newInstance(); 
+        NpVec3.cross(f, uUp, s);
         
-        NpVec3 s = f.cross(uUp);
-        
-        NpVec3 u = s.cross(f);
+        float[] u = NpVec3.newInstance();
+        NpVec3.cross(s, f, u);
 
         float[] m = new float[16];
-
         
-        m[0] = s.getX();
-        m[1] = u.getX();
-        m[2] = -f.getX();
+        m[0] = s[0];
+        m[1] = u[0];
+        m[2] = -f[0];
         m[3] = 0;
         
-        m[4] = s.getY();
-        m[5] = u.getY();
-        m[6] = -f.getY();
+        m[4] = s[1];
+        m[5] = u[1];
+        m[6] = -f[1];
         m[7] = 0;
         
-        m[8] = s.getZ();
-        m[9] = u.getZ();
-        m[10] = -f.getZ();
+        m[8] = s[2];
+        m[9] = u[2];
+        m[10] = -f[2];
         m[11] = 0;
         
         m[12] = 0;
@@ -267,7 +322,7 @@ final public class NpMatrix4 {
         
         loadIdentity();
         Matrix.multiplyMM(t, 0, mValues, mOffset, m, 0);
-        Matrix.translateM(t, 0, -eye.getX(), -eye.getY(), -eye.getZ());
+        Matrix.translateM(t, 0, -eye[0], -eye[1], -eye[2]);
         
         System.arraycopy(t, 0, mValues, mOffset, MATRIX_ARRAY_SIZE);
         
@@ -311,8 +366,8 @@ final public class NpMatrix4 {
         Matrix.translateM(mValues, mOffset, x, y, z);
     }
 
-    public void translate(NpVec3 v) {
-        translate(v.getX(), v.getY(), v.getZ());
+    public void translate(float[] v) {
+        translate(v[0], v[1], v[2]);
     }
     
     @Override

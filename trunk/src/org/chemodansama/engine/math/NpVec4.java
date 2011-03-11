@@ -25,6 +25,8 @@ final public class NpVec4 {
 
         if (a.length == 4) {
             setValues(a[0], a[1], a[2], a[3]);
+        } else if (a.length == 3) {
+            setValues(a[0], a[1], a[2], 1);
         } else {
             setValues(0, 0, 0, 1);
         }
@@ -36,16 +38,16 @@ final public class NpVec4 {
         setValues(v);
     }
 
-    public boolean clip() {
+    public static boolean clip(float[] v) {
         
-        if (Math.abs(mValues[3]) > NpMath.ZERO) {
+        if (Math.abs(v[3]) > NpMath.ZERO) {
         
-            final float invW = 1 / mValues[3];
+            final float invW = 1 / v[3];
 
-            mValues[0] *= invW;
-            mValues[1] *= invW;
-            mValues[2] *= invW;
-            mValues[3] = 1;
+            v[0] *= invW;
+            v[1] *= invW;
+            v[2] *= invW;
+            v[3] = 1;
             
             return true;
         } else {

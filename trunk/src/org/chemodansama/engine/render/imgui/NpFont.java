@@ -23,12 +23,13 @@ final public class NpFont {
         final private NpVec2i mPos;
         
         public NpFontCharStruct(DataInputStream in) throws IOException {
-            mCode = NpEndianness.convertChar(in.readChar());
-            mSize = new NpVec2i(NpEndianness.convertInt(in.readInt()),
-                                NpEndianness.convertInt(in.readInt()));
+            
+            mCode =  NpEndianness.convertChar(in.readChar());
+            mSize = new NpVec2i(Integer.reverseBytes(in.readInt()),
+                                Integer.reverseBytes(in.readInt()));
 
-            mPos = new NpVec2i(NpEndianness.convertInt(in.readInt()),
-                               NpEndianness.convertInt(in.readInt()));
+            mPos = new NpVec2i(Integer.reverseBytes(in.readInt()),
+                               Integer.reverseBytes(in.readInt()));
         }
         
         public char getCode() {
@@ -77,10 +78,10 @@ final public class NpFont {
                 }
 
                 mFontSize = in.readByte();
-                mColumnsCount = NpEndianness.convertInt(in.readInt());
-                mRowsCount = NpEndianness.convertInt(in.readInt());
+                mColumnsCount = Integer.reverseBytes(in.readInt());
+                mRowsCount = Integer.reverseBytes(in.readInt());
                 
-                int len = NpEndianness.convertInt(in.readInt());
+                int len = Integer.reverseBytes(in.readInt());
                 
                 for (int i = 0; i < len; i++) {
                     NpFontCharStruct s = new NpFontCharStruct(in);
