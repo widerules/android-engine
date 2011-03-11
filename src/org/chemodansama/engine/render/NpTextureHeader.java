@@ -3,7 +3,9 @@ package org.chemodansama.engine.render;
 import java.io.DataInputStream;
 import java.io.IOException;
 
-import org.chemodansama.engine.utils.NpEndianness;
+import org.chemodansama.engine.LogTag;
+
+import android.util.Log;
 
 final public class NpTextureHeader {
     private int bytesPerPel = 0;
@@ -73,20 +75,21 @@ final public class NpTextureHeader {
 
         if (in != null) {
             try {
-                bytesPerPel    = NpEndianness.convertInt(in.readInt());
-                target         = NpEndianness.convertInt(in.readInt());
-                internalFormat = NpEndianness.convertInt(in.readInt());
-                width          = NpEndianness.convertInt(in.readInt());
-                height         = NpEndianness.convertInt(in.readInt());
-                format         = NpEndianness.convertInt(in.readInt());
-                type           = NpEndianness.convertInt(in.readInt());
-                minFilter      = NpEndianness.convertInt(in.readInt());
-                magFilter      = NpEndianness.convertInt(in.readInt());
-                mipsCount      = NpEndianness.convertInt(in.readInt());
+                bytesPerPel    = Integer.reverseBytes(in.readInt());
+                target         = Integer.reverseBytes(in.readInt());
+                internalFormat = Integer.reverseBytes(in.readInt());
+                width          = Integer.reverseBytes(in.readInt());
+                height         = Integer.reverseBytes(in.readInt());
+                format         = Integer.reverseBytes(in.readInt());
+                type           = Integer.reverseBytes(in.readInt());
+                minFilter      = Integer.reverseBytes(in.readInt());
+                magFilter      = Integer.reverseBytes(in.readInt());
+                mipsCount      = Integer.reverseBytes(in.readInt());
 
                 r = true;
                 
             } catch (IOException e) {
+                Log.e(LogTag.TAG, "IOException while reading texHeader", e);
                 r = false;
             }
         } 

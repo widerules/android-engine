@@ -11,7 +11,6 @@ import java.io.InputStream;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.chemodansama.engine.LogTag;
-import org.chemodansama.engine.utils.NpEndianness;
 
 import android.util.Log;
 
@@ -29,7 +28,7 @@ final public class NpTexture {
         if (d.isDataValid()) {
             mHeader = d.getHeader();
             initGL10(gl, d);
-        }
+        } 
     }
     
     public boolean bindGL10(GL10 gl) {
@@ -131,6 +130,7 @@ final class NpTextureData {
         mDataValid = false;
         
         if (in == null) {
+            Log.w(LogTag.TAG, "cant load texture data: input stream is null");
             return;
         }
         
@@ -140,7 +140,7 @@ final class NpTextureData {
 
             try {
                 for (int i = 0; i < mHeader.getMipsCount(); i++) {
-                    mMipSize.add(NpEndianness.convertInt(din.readInt()));
+                    mMipSize.add(Integer.reverseBytes(din.readInt()));
 
                     ByteBuffer b = ByteBuffer.allocateDirect(mMipSize.get(i));
 
@@ -158,6 +158,7 @@ final class NpTextureData {
                 return;
                 
             } catch (IOException e) {
+                Log.e(LogTag.TAG, "IOException while reading texture", e);
                 return;
             }
         } else {
