@@ -100,20 +100,19 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         return ret;
     }
     
+    static public NpWidgetState getWidgetState(int id) {
+        if (NpGuiState.mActiveItem == id) {
+            return NpWidgetState.WS_PUSHED; 
+        } else if (NpGuiState.getHotItem() == id) {
+            return NpWidgetState.WS_HOVER;
+        } else {
+            return NpWidgetState.WS_NORMAL;
+        }
+    }
+    
     static private void drawButtonImage(GL10 gl, int id, String widgetLookName, 
             NpRect rect) {
-        
-        NpWidgetState state;
-        
-        if (NpGuiState.mActiveItem == id) {
-            state = NpWidgetState.WS_PUSHED; 
-        } else if (NpGuiState.getHotItem() == id) {
-            state = NpWidgetState.WS_HOVER;
-        } else {
-            state = NpWidgetState.WS_NORMAL;
-        }
-        
-        drawWidget(gl, state, widgetLookName, rect);
+        drawWidget(gl, getWidgetState(id), widgetLookName, rect);
     }
     
     static private void drawButtonText(GL10 gl, int id, 
