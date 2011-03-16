@@ -146,7 +146,7 @@ public class NpMesh {
     private float[] mTangent = null;
     private float[] mBitangent = null;
     
-    public NpMesh(InputStream in, boolean shouldPrepareNormalMapping) {
+    public NpMesh(InputStream in, boolean needNormalMapping) {
         
         super();
         
@@ -174,7 +174,7 @@ public class NpMesh {
         mTexCoordsBuffer = makeFloatBuffer(parser.getTexCoords());
         mFacesBuffer     = makeShortBuffer(parser.getFaces());
         
-        if (shouldPrepareNormalMapping) {
+        if (needNormalMapping) {
             mCoords  = parser.getCoords();
             mNormals = parser.getNormals();
             computeTangetSpace(parser.getTexCoords(), parser.getFaces());
