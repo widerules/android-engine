@@ -189,6 +189,14 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         return getRectWidgetRetCode(id, rect);
     }
     
+    static public int doRectWidget(GL10 gl, int id, String widgetLookName, 
+            NpRect rect) {
+        
+        drawWidget(gl, getWidgetState(id), widgetLookName, rect);
+        
+        return getRectWidgetRetCode(id, rect);
+    }
+    
     static void drawRectWH(GL10 gl, float x, float y, float w, float h, 
             float tx, float ty, float tw, float th) {
         mPolyBuffer.pushQuad(gl, x, y, x + w, y + h, tx, ty, tx + tw, ty + th);
