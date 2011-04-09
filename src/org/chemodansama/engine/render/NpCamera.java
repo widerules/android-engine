@@ -24,21 +24,12 @@ public final class NpCamera {
 
     private float mAspect = 1;
 
-    private void computeView() {
-        mView.setLookAt(mPos, mCenter, mUp);
+    public NpCamera(float screenAspect) {
+        super();
+
+        mAspect = screenAspect;
     }
 
-    private void computeProj() {
-        mProj.setPerspective(mFovy, mAspect, mNear, mFar);
-    }
-
-    private void computeViewProj() {
-        mProj.toMatrix(mViewProj);
-        mViewProj.multiply(mView);
-        
-        mViewProj.computeInverse(mInvViewProj);
-    }
-    
     private void computeMatrices() {
         computeView();
         computeProj();
@@ -47,28 +38,37 @@ public final class NpCamera {
         mDirty = false;
     }
 
-    public void onScreenAspectChanged(float screenAspect) {
-        mAspect = screenAspect;
+    private void computeProj() {
+        mProj.setPerspective(mFovy, mAspect, mNear, mFar);
+    }
+    
+    private void computeView() {
+        mView.setLookAt(mPos, mCenter, mUp);
     }
 
-    public NpCamera(float screenAspect) {
-        super();
-
-        mAspect = screenAspect;
+    private void computeViewProj() {
+        mProj.toMatrix(mViewProj);
+        mViewProj.multiply(mView);
+        
+        mViewProj.computeInverse(mInvViewProj);
     }
 
-    public void getView(float[] view) {
+    public void getInvViewProj(float[] invviewproj) {
         if (mDirty) {
             computeMatrices();
         }
 
-        mView.toArray(view);
+        mInvViewProj.toArray(invviewproj);
     }
 
-    public float[] getView() {
+    public void getPos(float[] p) {
+        System.arraycopy(mPos, 0, p, 0, 3);
+    }
+
+    public float[] getProj() {
         float[] result = NpMatrix4.constructMatrixArray();
 
-        getView(result);
+        getProj(result);
 
         return result;
     }
@@ -81,20 +81,20 @@ public final class NpCamera {
         mProj.toArray(proj);
     }
 
-    public float[] getProj() {
+    public float[] getView() {
         float[] result = NpMatrix4.constructMatrixArray();
 
-        getProj(result);
+        getView(result);
 
         return result;
     }
 
-    public void getViewProj(float[] viewproj) {
+    public void getView(float[] view) {
         if (mDirty) {
             computeMatrices();
         }
 
-        mViewProj.toArray(viewproj);
+        mView.toArray(view);
     }
 
     public float[] getViewProj() {
@@ -104,17 +104,25 @@ public final class NpCamera {
 
         return result;
     }
+    
+    public void getViewProj(float[] viewproj) {
+        if (mDirty) {
+            computeMatrices();
+        }
 
-    public void setPos(float[] p) {
-        NpVec3.copy(p, mPos);
-
-        mDirty = true;
+        mViewProj.toArray(viewproj);
     }
 
-    public void setUp(float[] r) {
-        NpVec3.copy(r, mUp);
+    public float[] getWorldViewMatrix(NpMatrix4 worldMat) {
+        if (mDirty) {
+            computeMatrices();
+        }
 
-        mDirty = true;
+        return mView.multiplyExternal(worldMat);
+    }
+
+    public void onScreenAspectChanged(float screenAspect) {
+        mAspect = screenAspect;
     }
 
     public void setCenter(float[] c) {
@@ -123,22 +131,12 @@ public final class NpCamera {
         mDirty = true;
     }
     
-    public void setView(float[] v) {
-        mView.fromArray(v, 0);
-        computeProj();
-        computeViewProj();
+    public void setFar(float far) {
+        mFar = far;
 
-        
-        
-        mDirty = false;
+        mDirty = true;
     }
     
-    public void setViewParams(float[] pos, float[] center, float[] up) {
-        setPos(pos);
-        setCenter(center);
-        setUp(up);
-    }
-
     public void setFovy(float fovy) {
         mFovy = fovy;
 
@@ -151,8 +149,8 @@ public final class NpCamera {
         mDirty = true;
     }
 
-    public void setFar(float far) {
-        mFar = far;
+    public void setPos(float[] p) {
+        NpVec3.copy(p, mPos);
 
         mDirty = true;
     }
@@ -163,16 +161,26 @@ public final class NpCamera {
         setFar(far);
     }
 
-    public float[] getWorldViewMatrix(NpMatrix4 worldMat) {
-        if (mDirty) {
-            computeMatrices();
-        }
+    public void setUp(float[] r) {
+        NpVec3.copy(r, mUp);
 
-        return mView.multiplyExternal(worldMat);
+        mDirty = true;
     }
 
-    public void getPos(float[] p) {
-        System.arraycopy(mPos, 0, p, 0, 3);
+    public void setView(float[] v) {
+        mView.fromArray(v, 0);
+        computeProj();
+        computeViewProj();
+
+        
+        
+        mDirty = false;
+    }
+
+    public void setViewParams(float[] pos, float[] center, float[] up) {
+        setPos(pos);
+        setCenter(center);
+        setUp(up);
     }
 
 }
