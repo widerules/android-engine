@@ -38,6 +38,10 @@ final public class NpVec4 {
         setValues(v);
     }
 
+    public static float squareLen3(float[] v) {
+        return v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+    }
+    
     public static boolean clip(float[] v) {
         
         if (Math.abs(v[3]) > NpMath.ZERO) {
@@ -84,5 +88,16 @@ final public class NpVec4 {
 
     public void setValues(NpVec4 v) {
         setValues(v.getX(), v.getY(), v.getZ(), v.getW());
+    }
+    
+    public static void sub(float[] a, float[] b, float[] r) {
+        r[0] = a[0] - b[0];
+        r[1] = a[1] - b[1];
+        r[2] = a[2] - b[2];
+        r[3] = a[3] - b[3];
+    }
+    
+    public static void sub(float[] a, float[] b) {
+        sub(a, b, a);
     }
 }

@@ -19,7 +19,8 @@ final class NpRenderer implements GLSurfaceView.Renderer {
 
     private NpGameUpdateThread mUpdater = null;
     
-    public NpRenderer(AssetManager assets, NpActivityTerminator ft, NpGame game) {
+    public NpRenderer(AssetManager assets, NpActivityTerminator ft, 
+            NpGame game) {
         super();
         
         mGame = game;
