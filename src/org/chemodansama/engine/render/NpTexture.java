@@ -20,14 +20,14 @@ final public class NpTexture {
     
     private NpTextureHeader mHeader;
     
-    public NpTexture(GL10 gl, InputStream in) {
+    public NpTexture(GL10 gl, InputStream in, boolean clampToEdge) {
         super();
         
         NpTextureData d = new NpTextureData(in);
         
         if (d.isDataValid()) {
             mHeader = d.getHeader();
-            initGL10(gl, d);
+            initGL10(gl, d, clampToEdge);
         } 
     }
     
@@ -66,7 +66,8 @@ final public class NpTexture {
         return mTextureID;
     }
     
-    public boolean initGL10(GL10 gl, NpTextureData texData) {
+    public boolean initGL10(GL10 gl, NpTextureData texData, 
+            boolean clampToEdge) {
         
         if ((texData == null) || !texData.isDataValid() || (mTextureID != 0) 
                 || (mHeader.getMipsCount() <= 0) || (gl == null)) {
@@ -88,19 +89,19 @@ final public class NpTexture {
         
         gl.glBindTexture(GL10.GL_TEXTURE_2D, mTextureID);
 
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, 
+        gl.glTexParameterx(GL10.GL_TEXTURE_2D, 
                            GL10.GL_TEXTURE_MAG_FILTER, 
                            mHeader.getMagFilter());
 
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, 
+        gl.glTexParameterx(GL10.GL_TEXTURE_2D, 
                            GL10.GL_TEXTURE_MIN_FILTER, 
                            mHeader.getMinFilter());
         
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S, 
-                           GL10.GL_CLAMP_TO_EDGE);
+        int clamp = (clampToEdge) ? GL10.GL_CLAMP_TO_EDGE : GL10.GL_REPEAT;
         
-        gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_T, 
-                           GL10.GL_CLAMP_TO_EDGE);
+        gl.glTexParameterx(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S, clamp);
+        
+        gl.glTexParameterx(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_T, clamp);
         
         gl.glTexImage2D(GL10.GL_TEXTURE_2D, 
                         0, // level 

@@ -419,7 +419,7 @@ public class NpMesh {
         }
         
         if (shouldBindNormals) {
-            gl.glNormalPointer(GL10.GL_FLOAT, 0, mNormalsBuffer);
+            setupNormalPointer(gl);
         }
         
         gl.glVertexPointer(3, GL10.GL_FLOAT, 0, mCoordsBuffer);

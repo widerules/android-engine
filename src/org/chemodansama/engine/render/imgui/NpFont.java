@@ -103,7 +103,7 @@ final public class NpFont {
         
         loadChars(charsStream);
         
-        mTex = new NpTexture(gl, texStream);
+        mTex = new NpTexture(gl, texStream, true);
     }
     
     public String getName() {

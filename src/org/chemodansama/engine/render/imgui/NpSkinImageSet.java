@@ -114,7 +114,7 @@ public final class NpSkinImageSet {
                         return;
                     }
                     
-                    mTexture = new NpTexture(mGL, texIn);
+                    mTexture = new NpTexture(mGL, texIn, true);
                     Log.i(LogTag.TAG, imageFile + " loaded");
                 }
                 

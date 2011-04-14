@@ -1,12 +1,15 @@
 package org.chemodansama.engine;
 
+import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.chemodansama.engine.render.imgui.NpSkin;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.graphics.PixelFormat;
 import android.opengl.GLSurfaceView;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -80,10 +83,11 @@ public final class NpSurface extends GLSurfaceView {
     
     public NpSurface(Context context, NpActivityTerminator ft, NpGame game) {
         super(context);
-
-        mRenderer = new NpRenderer(context.getAssets(), ft, game);
+        this.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
         
+        mRenderer = new NpRenderer(context.getAssets(), ft, game);
         setRenderer(mRenderer);
+        getHolder().setFormat(PixelFormat.TRANSPARENT);        
     }
     
     @Override
