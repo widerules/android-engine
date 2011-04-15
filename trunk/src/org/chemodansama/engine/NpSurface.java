@@ -1,8 +1,6 @@
 package org.chemodansama.engine;
 
-import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.chemodansama.engine.render.imgui.NpSkin;
