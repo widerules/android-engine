@@ -73,6 +73,10 @@ final class NpRenderer implements GLSurfaceView.Renderer {
     boolean handleKeyEvent(int keyCode, KeyEvent event) {
         return mGame.onKeyEvent(keyCode, event);
     }
+    
+    public boolean onBackPressed() {
+        return mGame.onBackPressed();
+    }
 }
 
 public final class NpSurface extends GLSurfaceView {
@@ -111,5 +115,9 @@ public final class NpSurface extends GLSurfaceView {
     
     public boolean handleKeyEvent(int keyCode, KeyEvent event) {
         return mRenderer.handleKeyEvent(keyCode, event);
+    }
+    
+    public boolean onBackPressed() {
+        return mRenderer.onBackPressed();
     }
 }
