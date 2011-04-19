@@ -27,6 +27,10 @@ public class NpGameState {
         return false;
     }
     
+    protected boolean onBackPressed() {
+        return false;
+    }
+    
     protected void handleMotionEvent(MotionEvent event) {
         
     }

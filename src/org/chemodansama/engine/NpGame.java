@@ -9,6 +9,7 @@ import javax.microedition.khronos.opengles.GL10;
 import org.chemodansama.engine.math.NpVec2;
 import org.chemodansama.engine.render.imgui.NpGuiState;
 
+import android.content.Context;
 import android.content.res.AssetManager;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -28,8 +29,16 @@ public abstract class NpGame {
     private NpVec2 mPointerCoord = new NpVec2();
     private NpVec2 mPointerOffset = new NpVec2();
     
-    public NpGame() {
+    private final Context mContext;
+    
+    public NpGame(Context context) {
         super();
+        
+        mContext = context;
+    }
+    
+    public Context getContext() {
+        return mContext;
     }
     
     public final int getStatesCount() {
@@ -107,6 +116,14 @@ public abstract class NpGame {
         
         if (mStates.size() > 0) {
             return mStates.peek().handleKeyEvent(keyCode, event); 
+        } else {        
+            return false;
+        }
+    }
+    
+    synchronized public final boolean onBackPressed() {
+        if (mStates.size() > 0) {
+            return mStates.peek().onBackPressed(); 
         } else {        
             return false;
         }
