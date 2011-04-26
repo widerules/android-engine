@@ -4,6 +4,8 @@ import java.util.HashMap;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.chemodansama.engine.NpHolder;
+import org.chemodansama.engine.math.NpMath;
 import org.chemodansama.engine.math.NpVec2;
 import org.chemodansama.engine.math.NpVec4;
 import org.chemodansama.engine.render.NpTexture;
@@ -197,6 +199,45 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         return getRectWidgetRetCode(id, rect);
     }
     
+    static public int doVertSlider(GL10 gl, int id, String widgetLookName,
+            float x, float y, float h, NpHolder<Float> slidePos) {
+
+        int r = GUI_RETURN_FLAG_NORMAL;
+        
+        String bgName = widgetLookName + "Bg";
+        
+        NpWidgetState state = getWidgetState(id);
+
+        NpRect rect = new NpRect();
+        
+        if (!getWidgetRectDefW(gl, state, bgName, x, y, h, rect)) {
+            return r;
+        }
+        
+        drawWidget(gl, state, bgName, rect);
+        
+        r = getRectWidgetRetCode(id, rect);
+        
+        if ((r & GUI_RETURN_FLAG_ACTIVE) > 0) {
+            slidePos.value = (float)(NpGuiState.getMouseY() - y) / h;
+            slidePos.value = NpMath.clampf(slidePos.value, 0, 1);
+        }
+        
+        float slideY = slidePos.value * rect.getH();
+        
+        getWidgetRectDefWH(gl, state, widgetLookName, x, y + slideY, rect);
+        
+        rect.setH(32);
+        
+        if (rect.getY() + rect.getH() > y + h) {
+            rect.setY(y + h - rect.getH());
+        }
+        
+        drawWidget(gl, state, widgetLookName, rect);
+        
+        return r;
+    }
+
     static void drawRectWH(GL10 gl, float x, float y, float w, float h, 
             float tx, float ty, float tw, float th) {
         mPolyBuffer.pushQuad(gl, x, y, x + w, y + h, tx, ty, tx + tw, ty + th);
@@ -278,6 +319,46 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         gl.glPopMatrix();
     }
     
+    static private boolean getWidgetRectDefW(GL10 gl, NpWidgetState state, 
+            String widgetName, float x, float y, float h, NpRect out) {
+        NpWidgetlook look = mScheme.getWidget(widgetName);
+        
+        if (look == null) {
+            return false;
+        }        
+        
+        NpWidgetStatelook stateLook = look.getStateLook(NpWidgetState.WS_NORMAL);
+        
+        if (stateLook == null) {
+            return false;
+        }
+
+        out.set(x, y, stateLook.getDefaultWidth(mScheme, stateLook), h);
+        
+        return true;
+    }
+    
+    static private boolean getWidgetRectDefWH(GL10 gl, NpWidgetState state, 
+            String widgetName, float x, float y, NpRect out) {
+        NpWidgetlook look = mScheme.getWidget(widgetName);
+        
+        if (look == null) {
+            return false;
+        }        
+        
+        NpWidgetStatelook stateLook = look.getStateLook(NpWidgetState.WS_NORMAL);
+        
+        if (stateLook == null) {
+            return false;
+        }
+
+        out.set(x, y, 
+                stateLook.getDefaultWidth(mScheme, stateLook), 
+                stateLook.getDefaultHeight(mScheme, stateLook));
+        
+        return true;
+    }
+    
     static private void drawWidget(GL10 gl, NpWidgetState state, 
             String widgetName, NpRect rect) {
         
@@ -298,7 +379,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         }
         
         mPolyBuffer.flushRender(gl);
-        gl.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+        gl.glColor4f(1, 1, 1, 1);
         
         for (NpWidgetArea area : stateLook.getAreas()) {
             

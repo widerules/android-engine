@@ -112,6 +112,10 @@ final public class NpSkinScheme {
 
                 String area = attribs.getValue("Area");
 
+                if (area == null) { 
+                    area = mAreaName;
+                }
+                
                 NpWidgetDimSource source = 
                     NpWidgetDimSource.parseStr(attribs.getValue("Source"));
 
@@ -213,6 +217,20 @@ final public class NpSkinScheme {
                     NpWidgetState.parseStr(attributes.getValue("Type"));
             } else if (localName.equalsIgnoreCase("areas")) {
                 mWidgetAreas.clear();
+                
+                String linkedState = attributes.getValue("LinkedState");
+                
+                if (linkedState != null) {
+                    NpWidgetStatelook linkedLook = 
+                        mWidgetState.get(NpWidgetState.parseStr(linkedState));
+                    
+                    if (linkedLook != null) {
+                        for (NpWidgetArea a : linkedLook.getAreas()) {
+                            mWidgetAreas.add(a);
+                        }
+                    }
+                }
+                
             } else if (localName.equalsIgnoreCase("images")) {
                 mWidgetImages.clear();
             } else if (localName.equalsIgnoreCase("area")) {

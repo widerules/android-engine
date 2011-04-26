@@ -11,10 +11,57 @@ final class NpWidgetStatelook {
     final private ArrayList<NpWidgetImage> mImages = 
         new ArrayList<NpWidgetImage>();
     
+    private boolean mDefaultsComputed = false;
+    
+    private float mWidthDef = 0;
+    private float mHeightDef = 0;
+    
     NpWidgetStatelook(ArrayList<NpWidgetArea> areas,
             ArrayList<NpWidgetImage> images) {
         mAreas.addAll(areas);
         mImages.addAll(images);
+    }
+    
+    private void computeDefaults(NpSkinScheme scheme, 
+            NpWidgetStatelook stateLook) {
+        
+        mWidthDef = 0;
+        mHeightDef = 0;
+        
+        for (NpWidgetArea a : mAreas) {
+            if (a == null) {
+                continue;
+            }
+            
+            float w = a.getX().getValue(scheme, stateLook, a.getName())
+                    + a.getWidth().getValue(scheme, stateLook, a.getName());
+            
+            float h = a.getY().getValue(scheme, stateLook, a.getName())
+                    + a.getHeight().getValue(scheme, stateLook, a.getName());
+            
+            mWidthDef = Math.max(mWidthDef, w);
+            mHeightDef = Math.max(mHeightDef, h);
+        }
+        
+        mDefaultsComputed = true;
+    }
+    
+    float getDefaultWidth(NpSkinScheme scheme, 
+            NpWidgetStatelook stateLook) {
+        if (!mDefaultsComputed) {
+            computeDefaults(scheme, stateLook);
+        }
+        
+        return mWidthDef;
+    }
+    
+    float getDefaultHeight(NpSkinScheme scheme, 
+            NpWidgetStatelook stateLook) {
+        if (!mDefaultsComputed) {
+            computeDefaults(scheme, stateLook);
+        }
+        
+        return mHeightDef;
     }
     
     /**

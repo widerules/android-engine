@@ -49,6 +49,8 @@ final class NpRenderer implements GLSurfaceView.Renderer {
         if (mUpdater == null) {
             mUpdater = new NpGameUpdateThread(mGame, mTerminator);
         }
+
+        
     }
     
     @Override

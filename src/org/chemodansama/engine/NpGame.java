@@ -9,7 +9,7 @@ import javax.microedition.khronos.opengles.GL10;
 import org.chemodansama.engine.math.NpVec2;
 import org.chemodansama.engine.render.imgui.NpGuiState;
 
-import android.content.Context;
+import android.app.Activity;
 import android.content.res.AssetManager;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -29,87 +29,47 @@ public abstract class NpGame {
     private NpVec2 mPointerCoord = new NpVec2();
     private NpVec2 mPointerOffset = new NpVec2();
     
-    private final Context mContext;
+    private final Activity mActivity;
     
-    public NpGame(Context context) {
+    public NpGame(Activity activity) {
         super();
         
-        mContext = context;
+        mActivity = activity;
     }
     
-    public Context getContext() {
-        return mContext;
+    public abstract NpGameState constructInitialState(NpGame g, GL10 gl, 
+            AssetManager assets);
+    
+    public Activity getActivity() {
+        return mActivity;
+    }
+    
+    public final float getPointerOffsetX() {
+        return mPointerOffset.getX();
+    }
+    
+    public final float getPointerOffsetY() {
+        return mPointerOffset.getY();
     }
     
     public final int getStatesCount() {
         return mStates.size();
     }
     
-    public final void pushState(final NpGameState state) {
-        if (state == null) {
-            return;
-        }
-        
-        mStates.push(state);
-        
-        mNeedSetupState = true;
-    }
-    
-    public final void popState() {
-        mStatesToDelete.add(mStates.pop());
-    }
-    
-    public final void shutDown() {
-        mStatesToDelete.addAll(mStates);
-        mStates.clear();
-    }
-    
     public final boolean isEmpty() {
         return mStates.isEmpty();
     }
     
-    public abstract NpGameState constructInitialState(NpGame g, GL10 gl, 
-            AssetManager assets);
-    
-    public final void onSurfaceCreated(GL10 gl, EGLConfig config, 
-            AssetManager assets) {
-        if (mStates.isEmpty()) {
-            pushState(constructInitialState(this, gl, assets));
-        } else {
-            for (NpGameState s : mStates) {
-                s.refreshContextAssets(gl, config, assets);
-            }
-        }
+    public final boolean isPointerDown() {
+        return mPointerDown;
     }
     
-    synchronized public final void render(GL10 gl) {
-
-        if (mStates.size() <= 0) {
-            return;
-        }
-
-        NpGameState s = mStates.peek(); 
-
-        if (s == null) {
-            return;
-        }
-
-        if (mNeedSetupState) {
-            s.setupOnSurfaceChanged(gl, mWidth, mHeight);
-        }
-
-        s.render(gl); 
-    }
-    
-    synchronized public final void setupOnSurfaceChanged(GL10 gl, int width, 
-            int height) {
-        
-        mWidth = width; 
-        mHeight = height;
-        
+    synchronized public final boolean onBackPressed() {
         if (mStates.size() > 0) {
-            mStates.peek().setupOnSurfaceChanged(gl, width, height); 
-        }        
+            return mStates.peek().onBackPressed(); 
+        } else {        
+            return false;
+        }
     }
     
     synchronized public final boolean onKeyEvent(int keyCode, KeyEvent event) {
@@ -121,11 +81,14 @@ public abstract class NpGame {
         }
     }
     
-    synchronized public final boolean onBackPressed() {
-        if (mStates.size() > 0) {
-            return mStates.peek().onBackPressed(); 
-        } else {        
-            return false;
+    public final void onSurfaceCreated(GL10 gl, EGLConfig config, 
+            AssetManager assets) {
+        if (mStates.isEmpty()) {
+            pushState(constructInitialState(this, gl, assets));
+        } else {
+            for (NpGameState s : mStates) {
+                s.refreshContextAssets(gl, config, assets);
+            }
         }
     }
     
@@ -172,6 +135,55 @@ public abstract class NpGame {
         return true;
     }
     
+    public final void popState() {
+        mStatesToDelete.add(mStates.pop());
+    }
+    
+    public final void pushState(final NpGameState state) {
+        if (state == null) {
+            return;
+        }
+        
+        mStates.push(state);
+        
+        mNeedSetupState = true;
+    }
+    
+    synchronized public final void render(GL10 gl) {
+
+        if (mStates.size() <= 0) {
+            return;
+        }
+
+        NpGameState s = mStates.peek(); 
+
+        if (s == null) {
+            return;
+        }
+
+        if (mNeedSetupState) {
+            s.setupOnSurfaceChanged(gl, mWidth, mHeight);
+        }
+
+        s.render(gl); 
+    }
+
+    synchronized public final void setupOnSurfaceChanged(GL10 gl, int width, 
+            int height) {
+        
+        mWidth = width; 
+        mHeight = height;
+        
+        if (mStates.size() > 0) {
+            mStates.peek().setupOnSurfaceChanged(gl, width, height); 
+        }        
+    }
+    
+    public final void shutDown() {
+        mStatesToDelete.addAll(mStates);
+        mStates.clear();
+    }
+    
     synchronized public final boolean update() {
 
         boolean r = false;
@@ -185,17 +197,5 @@ public abstract class NpGame {
         }
         
         return r;
-    }
-
-    public final boolean isPointerDown() {
-        return mPointerDown;
-    }
-    
-    public final float getPointerOffsetX() {
-        return mPointerOffset.getX();
-    }
-    
-    public final float getPointerOffsetY() {
-        return mPointerOffset.getY();
     }
 }

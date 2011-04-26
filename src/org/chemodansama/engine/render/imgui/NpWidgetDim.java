@@ -54,25 +54,22 @@ final class NpWidgetDim {
     private float getBaseImageValue(NpSkinScheme skinScheme, 
             NpWidgetStatelook stateLook) {
 
-        NpWidgetImage im = null;
+        NpWidgetImage im = stateLook.findImageByArea(mArea);
         
-        for (NpWidgetImage i : stateLook.getImages()) {
-            if (i.getArea().equals(mArea)) {
-                im = i;
-                break;
-            }
+        if (im == null) {
+            return 0;
         }
 
         NpSkinImageSet is = skinScheme.getImageSet(im.getImageset());
 
         if (is == null) {
-            return 0.0f;
+            return 0;
         }
         
         NpSkinImageSet.NpSkinImage image = is.getImage(im.getImage());
         
         if (image == null) {
-            return 0.0f;
+            return 0;
         }
         
         switch (mSource) {
@@ -85,15 +82,49 @@ final class NpWidgetDim {
         }
     }
     
-    private float getBaseScaleValue(NpSkinScheme skinScheme, 
+    private float getBaseScaleValue(NpSkinScheme skinScheme,
+            NpWidgetStatelook stateLook, 
             NpRect instanceRect) {
 
         switch (mSource) {
         case HEIGHT:
             return instanceRect.getH();
-            
+
         case WIDTH:
             return instanceRect.getW();
+
+        default:
+            return 0;
+        }
+    }
+    
+    private float getBaseScaleValue(NpSkinScheme skinScheme,
+            NpWidgetStatelook stateLook, 
+            String areaName) {
+        NpWidgetImage im = stateLook.findImageByArea(areaName);
+        
+        if (im == null) {
+            return 0;
+        }
+        
+        NpSkinImageSet is = skinScheme.getImageSet(im.getImageset());
+
+        if (is == null) {
+            return 0;
+        }            
+        
+        NpSkinImageSet.NpSkinImage image = is.getImage(im.getImage());
+        
+        if (image == null) {
+            return 0;
+        }
+        
+        switch (mSource) {
+        case HEIGHT:
+            return image.getHeight();
+
+        case WIDTH:
+            return image.getWidth();
 
         default:
             return 0;
@@ -111,22 +142,55 @@ final class NpWidgetDim {
             return getBaseImageValue(skinScheme, stateLook);
             
         case SCALE:
-            return getBaseScaleValue(skinScheme, instanceRect);
+            return getBaseScaleValue(skinScheme, stateLook, instanceRect);
 
         default:
             return 0.0f;
         }
     }
     
-    private float applyOp(float baseValue, NpSkinScheme skinScheme,
+    private float getBaseValue(NpSkinScheme skinScheme, 
+            NpWidgetStatelook stateLook, String areaName) {
+
+        switch (mType) {
+        case ABSOLUTE:
+            return mValue;
+            
+        case IMAGE:
+            return getBaseImageValue(skinScheme, stateLook);
+            
+        case SCALE:
+            return getBaseScaleValue(skinScheme, stateLook, areaName);
+
+        default:
+            return 0.0f;
+        }
+    }
+    
+    private float computeSubValue(NpSkinScheme skinScheme,
             NpWidgetStatelook stateLook, NpRect instanceRect) {
+        if (mOp == null) {
+            return 0;
+        }
         
+        return mOp.getDim().getValue(skinScheme, stateLook, 
+                                     instanceRect);
+    }
+    
+    private float computeSubValue(NpSkinScheme skinScheme,
+            NpWidgetStatelook stateLook, String areaName) {
+        if (mOp == null) {
+            return 0;
+        }
+        
+        return mOp.getDim().getValue(skinScheme, stateLook, 
+                                     areaName);
+    }
+    
+    private float execOp(float baseValue, float subValue) {
         float r = baseValue;
         
         if (mOp != null) {
-            
-            float subValue = mOp.getDim().getValue(skinScheme, stateLook, 
-                                                   instanceRect);
             
             switch (mOp.getOpType()) {
             case ADD:
@@ -153,6 +217,19 @@ final class NpWidgetDim {
         return r;
     }
     
+    private float applyOp(float baseValue, NpSkinScheme skinScheme,
+            NpWidgetStatelook stateLook, NpRect instanceRect) {
+        return execOp(baseValue, 
+                      computeSubValue(skinScheme, stateLook, instanceRect));
+    }
+    
+    private float applyOp(float baseValue, NpSkinScheme skinScheme,
+            NpWidgetStatelook stateLook, String areaName) {
+        return execOp(baseValue, 
+                      computeSubValue(skinScheme, stateLook, areaName));
+    }
+    
+    
     public float getValue(NpSkinScheme skinScheme, NpWidgetStatelook stateLook,
             NpRect instanceRect) {
         
@@ -161,6 +238,21 @@ final class NpWidgetDim {
 
         // applying specified operation for this dim
         r = applyOp(r, skinScheme, stateLook, instanceRect);
+        
+        return r;
+    }
+    
+    /** getValue - get value, based on area name, 
+     *             which is supposed to be equal to its image name 
+     */
+    public float getValue(NpSkinScheme skinScheme, NpWidgetStatelook stateLook,
+            String areaName) {
+        
+        // base value for this dimension, with no applied operation yet
+        float r = getBaseValue(skinScheme, stateLook, areaName);
+
+        // applying specified operation for this dim
+        r = applyOp(r, skinScheme, stateLook, areaName);
         
         return r;
     }
