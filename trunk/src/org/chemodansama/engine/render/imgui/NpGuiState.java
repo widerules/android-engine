@@ -93,14 +93,14 @@ public final class NpGuiState {
         gl.glMatrixMode(GL10.GL_PROJECTION);
         gl.glPushMatrix();
         gl.glLoadIdentity();
-        gl.glOrthof(0.0f, orthoX, orthoY, 0.0f, -1.0f, 1.0f);
+        gl.glOrthof(0, orthoX, orthoY, 0, -1, 1);
         gl.glMatrixMode(GL10.GL_MODELVIEW);
         gl.glPushMatrix();
         gl.glLoadIdentity();
 
         gl.glEnable(GL10.GL_TEXTURE_2D);
         gl.glEnable(GL10.GL_ALPHA_TEST);
-        gl.glAlphaFunc(GL10.GL_GREATER, 0.0f);
+        gl.glAlphaFunc(GL10.GL_GREATER, 0);
 
         gl.glEnable(GL10.GL_BLEND);
         gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
