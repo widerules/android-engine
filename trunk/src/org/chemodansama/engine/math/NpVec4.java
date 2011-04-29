@@ -4,10 +4,10 @@ final public class NpVec4 {
     
     private float[] mValues = new float[4];
     
-    static public NpVec4 iOrt4 = new NpVec4(1, 0, 0, 1);
-    static public NpVec4 jOrt4 = new NpVec4(0, 1, 0, 1);
-    static public NpVec4 kOrt4 = new NpVec4(0, 0, 1, 1);
-    static public NpVec4 ONE = new NpVec4(1, 1, 1, 1);
+    public static final NpVec4 iOrt4 = new NpVec4(1, 0, 0, 1);
+    public static final NpVec4 jOrt4 = new NpVec4(0, 1, 0, 1);
+    public static final NpVec4 kOrt4 = new NpVec4(0, 0, 1, 1);
+    public static final NpVec4 ONE = new NpVec4(1, 1, 1, 1);
 
     public NpVec4() {
         super();
