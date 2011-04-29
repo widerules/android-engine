@@ -24,9 +24,10 @@ import android.content.res.AssetManager;
  */
 public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
 
-    static private NpPolyBuffer mPolyBuffer;
-    static private NpSkinScheme mScheme = null;
-    static private NpTextureCache mTextureCache = null;
+    private static NpPolyBuffer mPolyBuffer;
+    private static NpSkinScheme mScheme = null;
+    private static NpTextureCache mTextureCache = null;
+    private static GL10 mGL = null;
     
     static {
         mPolyBuffer = new NpPolyBuffer(16);
@@ -112,14 +113,16 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         }
     }
     
-    static private void drawButtonImage(GL10 gl, int id, String widgetLookName, 
+    static private void drawButtonImage(int id, String widgetLookName, 
             NpRect rect) {
-        drawWidget(gl, getWidgetState(id), widgetLookName, rect);
+        drawWidget(getWidgetState(id), widgetLookName, rect);
     }
     
-    static private void drawButtonText(GL10 gl, int id, 
+    static private void drawButtonText(int id, 
             String caption, String font, float height, 
             NpVec4 color, NpRect rect) {
+        
+        GL10 gl = mGL;
         
         if (!mTextureCache.activateFont(gl, font)) {
             return;
@@ -133,11 +136,10 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
 
         NpVec2 textRect = f.computeTextRect(height, caption);
 
-        drawString(gl, caption, 
+        drawString(caption, 
                    rect.getX() + (rect.getW() - textRect.getX()) * 0.5f, 
                    rect.getY() + (rect.getH() - textRect.getY()) * 0.5f, 
-                   height, color, 
-                   rect.getW(), ALIGN_LEFT);
+                   height, color);
     }
     
     static private int getButtonRetCode(int id, NpRect rect) {
@@ -146,20 +148,32 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
     }
     
-    static public int doButton(GL10 gl, int id, String widgetLookName, 
+    static public int doButton(int id, String widgetLookName, 
             String caption, String font, float fontHeight, 
             NpVec4 fontColor, NpRect rect) {
         
-        drawButtonImage(gl, id, widgetLookName, rect);
+        drawButtonImage(id, widgetLookName, rect);
      
-        drawButtonText(gl, id, caption, font, fontHeight, fontColor, rect);
+        drawButtonText(id, caption, font, fontHeight, fontColor, rect);
 
         return getButtonRetCode(id, rect);
     }
+        
+    // bunch of parameters :E
+    static public int doLabel(int id, float x, float y, 
+            String caption, NpFontParams font, float maxWidth, 
+            NpHolder<Float> outHeight) {
+
+        
+        return 0;
+    }
     
-    static public int doLabel(GL10 gl, int id, float x, float y, 
+    
+    static public int doLabel(int id, float x, float y, 
             String caption, String font, 
             float fontHeight, NpVec4 fontColor, byte align) {
+        
+        GL10 gl = mGL;
         
         if (!mTextureCache.activateFont(gl, font)) {
             return 0;
@@ -167,39 +181,35 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         NpVec2 r = computeTextRect(font, fontHeight, caption);
         
-        drawString(gl, caption, x, y, fontHeight, fontColor, r.getX(), align);
-
-        float offs;
-        
         if (align == ALIGN_CENTER) {
-            offs = r.getX() * 0.5f;
+            x -= r.getX() * 0.5f;
         } else if (align == ALIGN_RIGHT) {
-            offs = r.getX();
-        } else {
-            offs = 0;
-        }
+            x -= r.getX();
+        };
         
-        return getRectWidgetRetCode(id, new NpRect(x - offs, y, 
+        drawString(caption, x, y, fontHeight, fontColor);
+        
+        return getRectWidgetRetCode(id, new NpRect(x, y, 
                                                    r.getX(), r.getY()));
     }
     
-    static public int doRectWidget(GL10 gl, int id, NpWidgetState state, 
+    static public int doRectWidget(int id, NpWidgetState state, 
             String widgetLookName, NpRect rect) {
         
-        drawWidget(gl, state, widgetLookName, rect);
+        drawWidget(state, widgetLookName, rect);
         
         return getRectWidgetRetCode(id, rect);
     }
     
-    static public int doRectWidget(GL10 gl, int id, String widgetLookName, 
+    static public int doRectWidget(int id, String widgetLookName, 
             NpRect rect) {
         
-        drawWidget(gl, getWidgetState(id), widgetLookName, rect);
+        drawWidget(getWidgetState(id), widgetLookName, rect);
         
         return getRectWidgetRetCode(id, rect);
     }
     
-    static public int doVertSlider(GL10 gl, int id, String widgetLookName,
+    static public int doVertSlider(int id, String widgetLookName,
             float x, float y, float h, NpHolder<Float> slidePos) {
 
         int r = GUI_RETURN_FLAG_NORMAL;
@@ -210,11 +220,11 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
 
         NpRect rect = new NpRect();
         
-        if (!getWidgetRectDefW(gl, state, bgName, x, y, h, rect)) {
+        if (!getWidgetRectDefW(state, bgName, x, y, h, rect)) {
             return r;
         }
         
-        drawWidget(gl, state, bgName, rect);
+        drawWidget(state, bgName, rect);
         
         r = getRectWidgetRetCode(id, rect);
         
@@ -225,7 +235,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         float slideY = slidePos.value * rect.getH();
         
-        getWidgetRectDefWH(gl, state, widgetLookName, x, y + slideY, rect);
+        getWidgetRectDefWH(state, widgetLookName, x, y + slideY, rect);
         
         rect.setH(32);
         
@@ -233,23 +243,25 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             rect.setY(y + h - rect.getH());
         }
         
-        drawWidget(gl, state, widgetLookName, rect);
+        drawWidget(state, widgetLookName, rect);
         
         return r;
     }
 
-    static void drawRectWH(GL10 gl, float x, float y, float w, float h, 
+    static void drawRectWH(float x, float y, float w, float h, 
             float tx, float ty, float tw, float th) {
-        mPolyBuffer.pushQuad(gl, x, y, x + w, y + h, tx, ty, tx + tw, ty + th);
+        mPolyBuffer.pushQuad(mGL, x, y, x + w, y + h, tx, ty, tx + tw, ty + th);
     }
     
-    static void drawRect(GL10 gl, float x1, float y1, float x2, float y2, 
+    static void drawRect(float x1, float y1, float x2, float y2, 
             float tx1, float ty1, float tx2, float ty2) {
-        mPolyBuffer.pushQuad(gl, x1, y1, x2, y2, tx1, ty1, tx2, ty2);
+        mPolyBuffer.pushQuad(mGL, x1, y1, x2, y2, tx1, ty1, tx2, ty2);
     }    
     
-    static public void drawString(GL10 gl, String s, float x, float y, 
-            float fontSize, NpVec4 fontColor, float textWidth, byte align) {
+    static public void drawString(String s, float x, float y, 
+            float fontSize, NpVec4 fontColor) {
+        
+        GL10 gl = mGL; 
         
         NpFont f = mTextureCache.getActiveFont();
         
@@ -267,12 +279,6 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         gl.glColor4f(fontColor.getX(), fontColor.getY(), fontColor.getZ(), 
                      fontColor.getW());
         
-        if (align == ALIGN_CENTER) {
-            gl.glTranslatef(-textWidth * 0.5f, 0.0f, 0.0f);
-        } else if (align == ALIGN_RIGHT) {
-            gl.glTranslatef(-textWidth, 0.0f, 0.0f);
-        }
-
         NpTextureHeader fontTexHeader = f.getTexture().getHeader(); 
 
         int rectSizeX = fontTexHeader.getWidth() / f.getColumnsCount();
@@ -307,7 +313,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             float tx1 = tcX * InvTexWidth;
             float ty1 = 1.0f - tcY * InvTexHeight;
             
-            drawRect(gl, x1, 0, x1 + rectSizeX * Ky, charH, 
+            drawRect(x1, 0, x1 + rectSizeX * Ky, charH, 
                      tx1, ty1, tx1 + charTW, ty1 - charTH);
             
             tx += charW;
@@ -319,7 +325,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         gl.glPopMatrix();
     }
     
-    static private boolean getWidgetRectDefW(GL10 gl, NpWidgetState state, 
+    static private boolean getWidgetRectDefW(NpWidgetState state, 
             String widgetName, float x, float y, float h, NpRect out) {
         NpWidgetlook look = mScheme.getWidget(widgetName);
         
@@ -338,7 +344,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         return true;
     }
     
-    static private boolean getWidgetRectDefWH(GL10 gl, NpWidgetState state, 
+    static private boolean getWidgetRectDefWH(NpWidgetState state, 
             String widgetName, float x, float y, NpRect out) {
         NpWidgetlook look = mScheme.getWidget(widgetName);
         
@@ -359,8 +365,10 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         return true;
     }
     
-    static private void drawWidget(GL10 gl, NpWidgetState state, 
+    static private void drawWidget(NpWidgetState state, 
             String widgetName, NpRect rect) {
+        
+        GL10 gl = mGL;
         
         if (mScheme == null) {
             return;
@@ -425,15 +433,16 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             float tx1 = (float) im.getXPos() / tw;
             float ty1 = 1.0f - (float) im.getYPos() / th;
             
-            drawRect(gl, x1, y1, x1 + w, y1 + h, 
+            drawRect(x1, y1, x1 + w, y1 + h, 
                      tx1, ty1, 
                      tx1 + (float) im.getWidth() / tw, 
                      ty1 - (float) im.getHeight() / th);
         }
     }
     
-    static void finish(GL10 gl) {
-        mPolyBuffer.flushRender(gl);
+    static void finish() {
+        mPolyBuffer.flushRender(mGL);
+        mGL = null;
     }
     
     static public boolean loadScheme(GL10 gl, AssetManager assets, 
@@ -447,6 +456,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     }
     
     static void prepare(GL10 gl) {
+        mGL = gl;
         mTextureCache.reset(gl);
     }
     

@@ -3,6 +3,8 @@ package org.chemodansama.engine.render.imgui;
 import javax.microedition.khronos.opengles.GL10;
 
 public final class NpGuiState {
+
+    private static GL10 mGL = null;
     
     static private int mMouseX = 0;
     static private int mMouseY = 0;
@@ -11,7 +13,7 @@ public final class NpGuiState {
     static int mActiveItem = 0;
     static private boolean mMouseDown = false;
     
-    static public void finish(GL10 gl) {
+    static public void finish() {
 
         // Introduce one-render-frame lag here to get a correct hot id.
         // Assume widgets rendering goes in z-order, 
@@ -20,12 +22,17 @@ public final class NpGuiState {
         mHotItem = mHotItemTemp;
         mHotItemTemp = 0;
 
-        NpSkin.finish(gl);
+        NpSkin.finish();
         
-        finishRender(gl);
+        finishRender();
+        
+        mGL = null;
     }
     
-    static private void finishRender(GL10 gl) {
+    static private void finishRender() {
+        
+        GL10 gl = mGL;
+        
         gl.glMatrixMode(GL10.GL_PROJECTION);
         gl.glPopMatrix();
         gl.glMatrixMode(GL10.GL_MODELVIEW);
@@ -72,6 +79,9 @@ public final class NpGuiState {
     }
     
     static public void prepare(GL10 gl, int orthoX, int orthoY) {
+        
+        mGL = gl;
+        
         prepareRender(gl, orthoX, orthoY);
         
         NpWidgetIdGen.reset();
