@@ -2,7 +2,7 @@ package org.chemodansama.engine.render.imgui;
 
 import org.chemodansama.engine.math.NpVec4;
 
-public class NpFontParams {
+public final class NpFontParams {
     public String name = "";
     public float height = 0;
     public NpVec4 color = new NpVec4(1, 1, 1, 1);

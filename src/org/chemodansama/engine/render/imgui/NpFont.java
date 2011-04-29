@@ -106,10 +106,6 @@ final public class NpFont {
         mTex = new NpTexture(gl, texStream, true);
     }
     
-    public String getName() {
-        return mName;
-    }
-    
     public int getColumnsCount() {
         return mColumnsCount;
     }
@@ -124,6 +120,27 @@ final public class NpFont {
     
     public boolean hasName(String name) {
         return ((mName != null) && (mName.equals(name))) ? true : false;
+    }
+    
+    public float computeTextHeight(float height, String s) {
+        float r = 0;
+        
+        float ky = height / mFontSize;
+        
+        for (int i = 0; i < s.length(); i++) {
+            
+            NpFontCharStruct c = getChar(s.charAt(i));
+            
+            if (c == null) {
+                continue;
+            }
+            
+            float sy = c.getSizeY();
+            
+            r = Math.max(r, ky * sy);
+        }
+        
+        return r;
     }
     
     public NpVec2 computeTextRect(float height, String s) {

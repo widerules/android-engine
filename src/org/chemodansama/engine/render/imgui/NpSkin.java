@@ -34,21 +34,25 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         mTextureCache = new NpTextureCache(mPolyBuffer);
     }
     
-    static public NpVec2 computeTextRect(String fontName, float height, 
-            String text) {
-        
+    private static NpFont getFont(String name) {
         NpFont f = null;
         
-        if ((f = mTextureCache.getActiveFont(fontName)) == null) {
-            f = mScheme.getFonts().get(fontName);
+        if ((f = mTextureCache.getActiveFont(name)) == null) {
+            f = mScheme.getFonts().get(name);
         }
         
-        if (f != null) {
-            return f.computeTextRect(height, text);
-        } else {
-            // return zeroes 
-            return new NpVec2();
-        }
+        return f;
+    }
+    
+    public static float computeFontHeight(NpFontParams font) {
+        NpFont f = getFont(font.name);
+        return (f != null) ? f.computeTextHeight(font.height, "A") : 0;
+    }
+    
+    public static NpVec2 computeTextRect(String fontName, float height, 
+            String text) {
+        NpFont f = getFont(fontName);
+        return (f != null) ? f.computeTextRect(height, text) : new NpVec2(); 
     }
     
     static private int getRectWidgetRetCode(int id, NpRect rect) {
@@ -113,18 +117,12 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         }
     }
     
-    static private void drawButtonImage(int id, String widgetLookName, 
-            NpRect rect) {
-        drawWidget(getWidgetState(id), widgetLookName, rect);
-    }
-    
     static private void drawButtonText(int id, 
-            String caption, String font, float height, 
-            NpVec4 color, NpRect rect) {
+            String caption, NpFontParams font, NpRect rect) {
         
         GL10 gl = mGL;
         
-        if (!mTextureCache.activateFont(gl, font)) {
+        if (!mTextureCache.activateFont(gl, font.name)) {
             return;
         }
 
@@ -134,29 +132,26 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             return;
         }
 
-        NpVec2 textRect = f.computeTextRect(height, caption);
+        NpVec2 textRect = f.computeTextRect(font.height, caption);
 
         drawString(caption, 
                    rect.getX() + (rect.getW() - textRect.getX()) * 0.5f, 
                    rect.getY() + (rect.getH() - textRect.getY()) * 0.5f, 
-                   height, color);
-    }
-    
-    static private int getButtonRetCode(int id, NpRect rect) {
-
-        return getRectWidgetRetCode(id, rect);
-        
+                   font.height, font.color);
     }
     
     static public int doButton(int id, String widgetLookName, 
-            String caption, String font, float fontHeight, 
-            NpVec4 fontColor, NpRect rect) {
-        
-        drawButtonImage(id, widgetLookName, rect);
-     
-        drawButtonText(id, caption, font, fontHeight, fontColor, rect);
-
-        return getButtonRetCode(id, rect);
+            String caption, NpFontParams font, NpRect rect, NpVec4 color) {
+        drawWidget(getWidgetState(id), widgetLookName, rect, color);
+        drawButtonText(id, caption, font, rect);
+        return getRectWidgetRetCode(id, rect);
+    }
+    
+    static public int doButton(int id, String widgetLookName, 
+            String caption, NpFontParams font, NpRect rect) {
+        drawWidget(getWidgetState(id), widgetLookName, rect);
+        drawButtonText(id, caption, font, rect);
+        return getRectWidgetRetCode(id, rect);
     }
         
     // bunch of parameters :E
@@ -170,16 +165,15 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     
     
     static public int doLabel(int id, float x, float y, 
-            String caption, String font, 
-            float fontHeight, NpVec4 fontColor, byte align) {
+            String caption, NpFontParams font, byte align) {
         
         GL10 gl = mGL;
         
-        if (!mTextureCache.activateFont(gl, font)) {
+        if (!mTextureCache.activateFont(gl, font.name)) {
             return 0;
         }
         
-        NpVec2 r = computeTextRect(font, fontHeight, caption);
+        NpVec2 r = computeTextRect(font.name, font.height, caption);
         
         if (align == ALIGN_CENTER) {
             x -= r.getX() * 0.5f;
@@ -187,7 +181,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             x -= r.getX();
         };
         
-        drawString(caption, x, y, fontHeight, fontColor);
+        drawString(caption, x, y, font.height, font.color);
         
         return getRectWidgetRetCode(id, new NpRect(x, y, 
                                                    r.getX(), r.getY()));
@@ -364,9 +358,14 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         return true;
     }
-    
+
     static private void drawWidget(NpWidgetState state, 
             String widgetName, NpRect rect) {
+        drawWidget(state, widgetName, rect, NpVec4.ONE);
+    }
+    
+    static private void drawWidget(NpWidgetState state, 
+            String widgetName, NpRect rect, NpVec4 color) {
         
         GL10 gl = mGL;
         
@@ -387,7 +386,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         }
         
         mPolyBuffer.flushRender(gl);
-        gl.glColor4f(1, 1, 1, 1);
+        gl.glColor4f(color.getX(), color.getY(), color.getZ(), color.getW());
         
         for (NpWidgetArea area : stateLook.getAreas()) {
             
