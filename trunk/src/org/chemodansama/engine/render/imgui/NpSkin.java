@@ -6,10 +6,8 @@ import javax.microedition.khronos.opengles.GL10;
 
 import org.chemodansama.engine.NpHolder;
 import org.chemodansama.engine.math.NpMath;
-import org.chemodansama.engine.math.NpVec2;
 import org.chemodansama.engine.math.NpVec4;
 import org.chemodansama.engine.render.NpTexture;
-import org.chemodansama.engine.render.NpTextureHeader;
 import org.chemodansama.engine.render.imgui.NpFont.NpFontCharStruct;
 
 import android.content.res.AssetManager;
@@ -49,10 +47,10 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         return (f != null) ? f.computeTextHeight(font.height, "A") : 0;
     }
     
-    public static NpVec2 computeTextRect(String fontName, float height, 
+    public static NpRect computeTextRect(String fontName, float height, 
             String text) {
         NpFont f = getFont(fontName);
-        return (f != null) ? f.computeTextRect(height, text) : new NpVec2(); 
+        return (f != null) ? f.computeTextRect(height, text) : new NpRect(); 
     }
     
     static private int getRectWidgetRetCode(int id, NpRect rect) {
@@ -132,11 +130,11 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             return;
         }
 
-        NpVec2 textRect = f.computeTextRect(font.height, caption);
+        NpRect textRect = f.computeTextRect(font.height, caption);
 
         drawString(caption, 
-                   rect.getX() + (rect.getW() - textRect.getX()) * 0.5f, 
-                   rect.getY() + (rect.getH() - textRect.getY()) * 0.5f, 
+                   rect.getX() + (rect.getW() - textRect.getW()) * 0.5f - textRect.getX(), 
+                   rect.getY() + (rect.getH() + f.getXHeight(font.height)) * 0.5f, 
                    font.height, font.color);
     }
     
@@ -173,13 +171,15 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             return 0;
         }
         
-        NpVec2 r = computeTextRect(font.name, font.height, caption);
+        NpRect r = computeTextRect(font.name, font.height, caption);
         
         if (align == ALIGN_CENTER) {
-            x -= r.getX() * 0.5f;
+            x -= r.getW() * 0.5f;
         } else if (align == ALIGN_RIGHT) {
-            x -= r.getX();
+            x -= r.getW();
         };
+        
+        x -= r.getX();
         
         drawString(caption, x, y, font.height, font.color);
         
@@ -268,25 +268,14 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         // flush render on GL states change 
         mPolyBuffer.flushRender(gl);
         
-        gl.glTranslatef(x, y, 0.0f);
+        gl.glTranslatef(x, y, 0);
 
         gl.glColor4f(fontColor.getX(), fontColor.getY(), fontColor.getZ(), 
                      fontColor.getW());
         
-        NpTextureHeader fontTexHeader = f.getTexture().getHeader(); 
-
-        int rectSizeX = fontTexHeader.getWidth() / f.getColumnsCount();
-        int rectSizeY = fontTexHeader.getHeight() / f.getRowsCount();
-
         float Ky = fontSize / f.getSize();
 
-        float InvTexWidth = 1.0f / fontTexHeader.getWidth();
-        float InvTexHeight = 1.0f / fontTexHeader.getHeight();
-
-        float tx = 0.0f;
-
-        float charTW = rectSizeX * InvTexWidth;
-        float charTH = rectSizeY * InvTexHeight;
+        float tx = 0;
 
         for (int i = 0; i < s.length(); i++) {
             
@@ -296,21 +285,20 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
                 continue;
             }
             
-            float tcX = cs.getPosX() * rectSizeX;
-            float tcY = cs.getPosY() * rectSizeY;
+            NpImmutableRect verts = cs.getRenderRect();
+            NpImmutableRect texCoords = cs.getTextureRect();
             
-            float charW = cs.getSizeX() * Ky;
-            float charH = cs.getSizeY() * Ky;
-
-            float x1 = tx - Ky * (rectSizeX - cs.getSizeX()) * 0.5f;
+            drawRectWH(tx + Ky * verts.getX(),
+                       Ky * verts.getY(), 
+                       Ky * verts.getW(), 
+                       Ky * verts.getH(), 
+                       
+                       texCoords.getX(),
+                       texCoords.getY(), 
+                       texCoords.getW(), 
+                       texCoords.getH());
             
-            float tx1 = tcX * InvTexWidth;
-            float ty1 = 1.0f - tcY * InvTexHeight;
-            
-            drawRect(x1, 0, x1 + rectSizeX * Ky, charH, 
-                     tx1, ty1, tx1 + charTW, ty1 - charTH);
-            
-            tx += charW;
+            tx += cs.getAdvance() * Ky;
         }
         
         // flush render on matrix change 
