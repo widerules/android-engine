@@ -1,7 +1,6 @@
 package org.chemodansama.engine.render.imgui;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -60,30 +59,10 @@ final public class NpSkinScheme {
             mGL = gl;
         }
         
-        private boolean addFont(String alias, String fontFileName, 
-                String charsFileName) {
-            InputStream fontTexStream = null;
+        private boolean addFont(String alias, String fontFileName) {
 
-            try {
-                fontTexStream = mAssets.open(fontFileName);
-            } catch (IOException e) {
-                
-                Log.e(TAG, "IOException while open: " + fontFileName);
-                return false;
-            }
-            
-            InputStream fontCharsStream = null;
-
-            try {
-                fontCharsStream = mAssets.open(charsFileName);
-            } catch (IOException e) {
-                Log.e(TAG, "IOException while open: " + charsFileName);
-                return false;
-            }
-            
             if (!mFontsMap.containsKey(alias)) {
-                NpFont f = new NpFont(mGL, alias, fontTexStream, 
-                                      fontCharsStream);
+                NpFont f = new NpFont(mGL, alias, mAssets, fontFileName);
                 
                 mFontsMap.put(alias, f);
             } else {
@@ -208,8 +187,7 @@ final public class NpSkinScheme {
                             attributes.getValue("Filename"));
             } else if (localName.equalsIgnoreCase("font")) {
                 addFont(attributes.getValue("Name"), 
-                        attributes.getValue("File"),
-                        attributes.getValue("Chars"));
+                        attributes.getValue("File"));
             } else if (localName.equalsIgnoreCase("widget")) {
                 mWidgetName = attributes.getValue("Name");
             } else if (localName.equalsIgnoreCase("state")) {
