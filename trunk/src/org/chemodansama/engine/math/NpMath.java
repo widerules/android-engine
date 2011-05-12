@@ -13,6 +13,16 @@ final public class NpMath {
         }
     }
     
+    public static double clampd(double x, double min, double max) {
+        if (x < min) {
+            return min;
+        } else if (x > max) {
+            return max;
+        } else {
+            return x;
+        }
+    }
+    
     public static boolean calcLinePlaneIntersection(float[] plane0, 
             float[] planeDir, float[] line0, float[] lineDir, float[] out) {
         

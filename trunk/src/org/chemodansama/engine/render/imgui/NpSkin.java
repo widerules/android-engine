@@ -359,6 +359,80 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         drawWidget(state, widgetName, rect, NpVec4.ONE);
     }
     
+    static private void tileImageHorizontal(float absX, float absY, 
+            float w, float h, float imageWidthInPels, 
+            float imageX, float imageY, float imageW, float imageH) {
+        int wn = (int) Math.floor(w / imageWidthInPels);
+        
+        for (int i = 0; i < wn; i++) {
+            drawRectWH(absX + imageWidthInPels * i, absY, imageWidthInPels, h, 
+                       imageX, imageY, imageW, imageH);
+        }
+        
+        float ceilPart = w - imageWidthInPels * wn;
+        
+        float texCeil = ceilPart / imageWidthInPels * imageW;
+        
+        drawRectWH(absX + imageWidthInPels * wn, absY, ceilPart, h, 
+                   imageX, imageY, texCeil, imageH);
+    }
+    
+    static private void tileImageVertical(float absX, float absY, 
+            float w, float h, float imageHeightInPels, 
+            float imageX, float imageY, float imageW, float imageH) {
+        
+        int hn = (int) Math.floor(h / imageHeightInPels);
+        
+        for (int i = 0; i < hn; i++) {
+            drawRectWH(absX, absY + imageHeightInPels * i, w, imageHeightInPels, 
+                       imageX, imageY, imageW, imageH);
+        }
+        
+        float ceilPart = h - imageHeightInPels * hn;
+        float texCeil = ceilPart / imageHeightInPels * imageH;
+        
+        drawRectWH(absX, absY + imageHeightInPels * hn, w, ceilPart, 
+                   imageX, imageY, imageW, texCeil);
+    }
+    
+    static private void tileImagePlane(float absX, float absY, 
+            float w, float h, float imageWidthInPels, float imageHeightInPels,  
+            float imageX, float imageY, float imageW, float imageH) {
+        
+        int hn = (int) Math.floor(h / imageHeightInPels);
+        int wn = (int) Math.floor(w / imageWidthInPels);
+        
+        float ceilW = w - imageWidthInPels * wn;
+        float texCeilW = ceilW / imageWidthInPels * imageW;
+        
+        for (int i = 0; i < hn; i++) {
+            float y = absY + imageHeightInPels * i;
+
+            for (int j = 0; j < wn; j++) {
+                drawRectWH(absX + j * imageWidthInPels, y, 
+                           imageWidthInPels, imageHeightInPels, 
+                           imageX, imageY, imageW, imageH);    
+            }
+            
+            drawRectWH(absX + wn * imageWidthInPels, y, 
+                       ceilW, imageHeightInPels, 
+                       imageX, imageY, texCeilW, imageH);
+        }
+        
+        float y = absY + imageHeightInPels * hn; 
+        
+        float ceilH = h - imageHeightInPels * hn;
+        float texCeilH = ceilH / imageHeightInPels * imageH;
+        
+        for (int j = 0; j < wn; j++) {
+            drawRectWH(absX + j * imageWidthInPels, y, w, ceilH, 
+                       imageX, imageY, imageW, texCeilH);
+        }
+        
+        drawRectWH(absX + wn * imageWidthInPels, y, ceilW, ceilH, 
+                   imageX, imageY, texCeilW, texCeilH);
+    }
+    
     static private void drawWidget(NpWidgetState state, 
             String widgetName, NpRect rect, NpVec4 color) {
         
@@ -409,8 +483,8 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
                 continue;
             }
 
-            float x = area.getX().getValue(mScheme, stateLook, rect);
-            float y = area.getY().getValue(mScheme, stateLook, rect);
+            float relX = area.getX().getValue(mScheme, stateLook, rect);
+            float relY = area.getY().getValue(mScheme, stateLook, rect);
             float w = area.getWidth().getValue(mScheme, stateLook, rect);
             float h = area.getHeight().getValue(mScheme, stateLook, rect);
             
@@ -421,110 +495,48 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
                 continue;
             }
             
-            float x1 = rect.getX() + x;
-            float y1 = rect.getY() + y;
+            float absX = rect.getX() + relX;
+            float absY = rect.getY() + relY;
             
-            float tx1 = (float) im.getXPos() / tw;
-            float ty1 = 1.0f - (float) im.getYPos() / th;
+            float imageX = (float) im.getXPos() / tw;
+            float imageY = 1.0f - (float) im.getYPos() / th;
             
-            float tw1 = (float) im.getWidth() / tw;
-            float th1 = -(float) im.getHeight() / th;
+            float imageW = (float) im.getWidth() / tw;
+            float imageH = -(float) im.getHeight() / th;
             
-            float th1m = im.getHeight();
-            float tw1m = im.getWidth();
+            float imageWidthInPels = im.getWidth();
+            float imageHeightInPels = im.getHeight();
             
             switch (area.getWidthScale()) {
             case STRETCH:
-                
                 switch (area.getHeightScale()) {
                 case STRETCH:
-                    drawRectWH(x1, y1, w, h, tx1, ty1, tw1, th1);
+                    drawRectWH(absX, absY, w, h, 
+                               imageX, imageY, imageW, imageH);
                     break;
                     
                 case REPEAT:
-                    
-                    int hn = (int) Math.floor(h / th1m);
-                    
-                    for (int i = 0; i < hn; i++) {
-                        drawRectWH(x1, y1 + th1m * i, w, th1m, 
-                                   tx1, ty1, tw1, th1);
-                    }
-                    
-                    float ceilPart = h - th1m * hn;
-                    
-                    drawRectWH(x1, y1 + th1m * hn, w, ceilPart, 
-                               tx1, ty1, tw1, ceilPart);
-                    
-                    break;
-
-                default:
+                    tileImageVertical(absX, absY, w, h, imageHeightInPels, 
+                                      imageX, imageY, imageW, imageH);
                     break;
                 }
-                
                 break;
                 
             case REPEAT:
-                
                 switch (area.getHeightScale()) {
                 case STRETCH:
-                    int wn = (int) Math.floor(w / tw1m);
-                    
-                    for (int i = 0; i < wn; i++) {
-                        drawRectWH(x1 + tw1m * i, y1, tw1m, h, 
-                                   tx1, ty1, tw1, th1);
-                    }
-                    
-                    float ceilPart = w - tw1m * wn;
-                    
-                    drawRectWH(x1 + tw1m * wn, y1, ceilPart, h, 
-                               tx1, ty1, ceilPart, th1);
+                    tileImageHorizontal(absX, absY, w, h, imageWidthInPels, 
+                                        imageX, imageY, imageW, imageH);
                     break;
                     
                 case REPEAT:
-                    
-                    int hn = (int) Math.floor(h / th1m);
-                    
-                    wn = (int) Math.floor(w / tw1m);
-                    
-                    float ceilW = w - tw1m * wn;
-                    
-                    for (int i = 0; i < hn; i++) {
-                        
-                        float y2 = y1 + th1m * i;
-
-                        for (int j = 0; j < wn; j++) {
-                            drawRectWH(x1 + j * tw1m, y2, tw1m, th1m, 
-                                       tx1, ty1, tw1, th1);    
-                        }
-                        
-                        drawRectWH(x1 + wn * tw1m, y2, ceilW, th1m, 
-                                   tx1, ty1, ceilW, th1);
-                    }
-                    
-                    float ceilH = h - th1m * hn;
-                    float y2 = y1 + th1m * hn; 
-                    
-                    for (int j = 0; j < wn; j++) {
-                        drawRectWH(x1 + j * tw1m, y2, w, ceilH, 
-                                   tx1, ty1, tw1, ceilH);
-                    }
-                    
-                    drawRectWH(x1 + wn * tw1m, y2, ceilW, ceilH, 
-                               tx1, ty1, ceilW, ceilH);
-                    
-                    break;
-
-                default:
+                    tileImagePlane(absX, absY, w, h, 
+                                   imageWidthInPels, imageHeightInPels, 
+                                   imageX, imageY, imageW, imageH);
                     break;
                 }
-                
-                break;
-
-            default:
                 break;
             }
-            
-            
         }
     }
     
