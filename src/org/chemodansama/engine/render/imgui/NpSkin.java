@@ -47,13 +47,13 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         return (f != null) ? f.computeTextHeight(font.height, "A") : 0;
     }
     
-    public static NpRecti computeTextRect(String fontName, float height, 
+    public static NpRect computeTextRect(String fontName, float height, 
             String text) {
         NpFont f = getFont(fontName);
-        return (f != null) ? f.computeTextRect(height, text) : new NpRecti(); 
+        return (f != null) ? f.computeTextRect(height, text) : new NpRect(); 
     }
     
-    static private int getRectWidgetRetCode(int id, NpRecti rect) {
+    static private int getRectWidgetRetCode(int id, NpRect rect) {
         
         boolean r = rect.overlapsPoint(NpGuiState.getMouseX(), 
                                        NpGuiState.getMouseY());
@@ -116,7 +116,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     }
     
     static private void drawButtonText(int id, 
-            String caption, NpFontParams font, NpRecti rect) {
+            String caption, NpFontParams font, NpRect rect) {
         
         if ((caption == null) || (caption.length() == 0)) {
             return;
@@ -134,7 +134,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             return;
         }
 
-        NpRecti textRect = f.computeTextRect(font.height, caption);
+        NpRect textRect = f.computeTextRect(font.height, caption);
 
         int x = rect.getX() + (rect.getW() - textRect.getW()) / 2 
                 - textRect.getX();
@@ -146,14 +146,14 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     }
     
     static public int doButton(int id, String widgetLookName, 
-            String caption, NpFontParams font, NpRecti rect, NpVec4 color) {
+            String caption, NpFontParams font, NpRect rect, NpVec4 color) {
         drawWidget(getWidgetState(id), widgetLookName, rect, color);
         drawButtonText(id, caption, font, rect);
         return getRectWidgetRetCode(id, rect);
     }
     
     static public int doButton(int id, String widgetLookName, 
-            String caption, NpFontParams font, NpRecti rect) {
+            String caption, NpFontParams font, NpRect rect) {
         drawWidget(getWidgetState(id), widgetLookName, rect);
         drawButtonText(id, caption, font, rect);
         return getRectWidgetRetCode(id, rect);
@@ -178,7 +178,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             return 0;
         }
         
-        NpRecti r = computeTextRect(font.name, font.height, caption);
+        NpRect r = computeTextRect(font.name, font.height, caption);
         
         if (align == ALIGN_CENTER) {
             x -= r.getW() * 0.5f;
@@ -190,12 +190,12 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         drawString(caption, x, y, font.height, font.color);
         
-        return getRectWidgetRetCode(id, new NpRecti(x, y, 
+        return getRectWidgetRetCode(id, new NpRect(x, y, 
                                                     r.getX(), r.getY()));
     }
     
     static public int doRectWidget(int id, NpWidgetState state, 
-            String widgetLookName, NpRecti rect) {
+            String widgetLookName, NpRect rect) {
         
         drawWidget(state, widgetLookName, rect);
         
@@ -203,7 +203,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     }
     
     static public int doRectWidget(int id, String widgetLookName, 
-            NpRecti rect) {
+            NpRect rect) {
         
         drawWidget(getWidgetState(id), widgetLookName, rect);
         
@@ -219,7 +219,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         NpWidgetState state = getWidgetState(id);
 
-        NpRecti rect = new NpRecti();
+        NpRect rect = new NpRect();
         
         if (!getWidgetRectDefW(state, bgName, x, y, h, rect)) {
             return r;
@@ -292,8 +292,8 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
                 continue;
             }
             
-            NpImmutableRect verts = cs.getRenderRect();
-            NpImmutableRect texCoords = cs.getTextureRect();
+            NpTextureRect verts = cs.getRenderRect();
+            NpTextureRect texCoords = cs.getTextureRect();
             
             drawRectWH(tx + Ky * verts.getX(),
                        Ky * verts.getY(), 
@@ -315,7 +315,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     }
     
     static private boolean getWidgetRectDefW(NpWidgetState state, 
-            String widgetName, float x, float y, float h, NpRecti out) {
+            String widgetName, float x, float y, float h, NpRect out) {
         NpWidgetlook look = mScheme.getWidget(widgetName);
         
         if (look == null) {
@@ -334,7 +334,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     }
     
     static private boolean getWidgetRectDefWH(NpWidgetState state, 
-            String widgetName, float x, float y, NpRecti out) {
+            String widgetName, float x, float y, NpRect out) {
         NpWidgetlook look = mScheme.getWidget(widgetName);
         
         if (look == null) {
@@ -355,12 +355,12 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     }
 
     static private void drawWidget(NpWidgetState state, 
-            String widgetName, NpRecti rect) {
+            String widgetName, NpRect rect) {
         drawWidget(state, widgetName, rect, NpVec4.ONE);
     }
     
     static private void drawWidget(NpWidgetState state, 
-            String widgetName, NpRecti rect, NpVec4 color) {
+            String widgetName, NpRect rect, NpVec4 color) {
         
         GL10 gl = mGL;
         

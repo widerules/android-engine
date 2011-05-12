@@ -1,20 +1,20 @@
 package org.chemodansama.engine.render.imgui;
 
-public class NpImmutableRect {
+public class NpTextureRect {
 
     protected float mX;
     protected float mY;
     protected float mW;
     protected float mH;
 
-    public NpImmutableRect() {
+    public NpTextureRect() {
         mX = 0;
         mY = 0;
         mW = 0;
         mH = 0;
     }
 
-    public NpImmutableRect(float x, float y, float w, float h) {
+    public NpTextureRect(float x, float y, float w, float h) {
         mX = x;
         mY = y;
         mW = w;
