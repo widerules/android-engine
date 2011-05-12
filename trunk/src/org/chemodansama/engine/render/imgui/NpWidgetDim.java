@@ -43,14 +43,14 @@ final class NpWidgetDim {
       mArea = area;
       mSource = source;
       
-      mValue = 0.0f;
+      mValue = 0;
     }
     
     void setOperator(NpWidgetDimOp op) {
         mOp = op;
     }
     
-    private float getBaseImageValue(NpSkinScheme skinScheme, 
+    private int getBaseImageValue(NpSkinScheme skinScheme, 
             NpWidgetStatelook stateLook) {
 
         NpWidgetImage im = stateLook.findImageByArea(mArea);
@@ -81,9 +81,9 @@ final class NpWidgetDim {
         }
     }
     
-    private float getBaseScaleValue(NpSkinScheme skinScheme,
+    private int getBaseScaleValue(NpSkinScheme skinScheme,
             NpWidgetStatelook stateLook, 
-            NpRect instanceRect) {
+            NpRecti instanceRect) {
 
         switch (mSource) {
         case HEIGHT:
@@ -97,7 +97,7 @@ final class NpWidgetDim {
         }
     }
     
-    private float getBaseScaleValue(NpSkinScheme skinScheme,
+    private int getBaseScaleValue(NpSkinScheme skinScheme,
             NpWidgetStatelook stateLook, 
             String areaName) {
         NpWidgetImage im = stateLook.findImageByArea(areaName);
@@ -131,7 +131,7 @@ final class NpWidgetDim {
     }
     
     private float getBaseValue(NpSkinScheme skinScheme, 
-            NpWidgetStatelook stateLook, NpRect instanceRect) {
+            NpWidgetStatelook stateLook, NpRecti instanceRect) {
 
         switch (mType) {
         case ABSOLUTE:
@@ -167,7 +167,7 @@ final class NpWidgetDim {
     }
     
     private float computeSubValue(NpSkinScheme skinScheme,
-            NpWidgetStatelook stateLook, NpRect instanceRect) {
+            NpWidgetStatelook stateLook, NpRecti instanceRect) {
         if (mOp == null) {
             return 0;
         }
@@ -217,7 +217,7 @@ final class NpWidgetDim {
     }
     
     private float applyOp(float baseValue, NpSkinScheme skinScheme,
-            NpWidgetStatelook stateLook, NpRect instanceRect) {
+            NpWidgetStatelook stateLook, NpRecti instanceRect) {
         return execOp(baseValue, 
                       computeSubValue(skinScheme, stateLook, instanceRect));
     }
@@ -230,7 +230,7 @@ final class NpWidgetDim {
     
     
     public float getValue(NpSkinScheme skinScheme, NpWidgetStatelook stateLook,
-            NpRect instanceRect) {
+            NpRecti instanceRect) {
         
         // base value for this dimension, with no applied operation yet
         float r = getBaseValue(skinScheme, stateLook, instanceRect);
