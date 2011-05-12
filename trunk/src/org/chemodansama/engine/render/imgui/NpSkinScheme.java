@@ -45,6 +45,8 @@ final public class NpSkinScheme {
         
         private NpWidgetState mCurrentState = NpWidgetState.WS_NORMAL;
         private String mAreaName = "";
+        private NpWidgetScale mAreaWidthScale = NpWidgetScale.STRETCH;
+        private NpWidgetScale mAreaHeightScale = NpWidgetScale.STRETCH;
         
         private NpWidgetDim mDim = null; // first dim in dim-ops-tree
         private NpWidgetDim mCurrentDim = null; // last dim in dim-ops-tree
@@ -84,7 +86,7 @@ final public class NpSkinScheme {
             
             if (dimType == null) {
                 // provide some default dim (absolute, with value == 0.0f)
-                return new NpWidgetDim(0.0f);
+                return new NpWidgetDim(0);
             }
 
             if (dimType.equalsIgnoreCase("Image")) {
@@ -104,10 +106,8 @@ final public class NpSkinScheme {
 
                 float value = Float.parseFloat(attribs.getValue("Value"));
 
-                String sourceStr = attribs.getValue("Source");
-
                 NpWidgetDimSource source = 
-                    NpWidgetDimSource.parseStr(sourceStr);
+                    NpWidgetDimSource.parseStr(attribs.getValue("Source"));
 
                 return new NpWidgetDim(value, source);
 
@@ -147,8 +147,13 @@ final public class NpSkinScheme {
                         && (mHDim != null)) {
                     mWidgetAreas.add(new NpWidgetArea(mAreaName, 
                                                       mXDim, mYDim, 
-                                                      mWDim, mHDim));
+                                                      mWDim, mHDim,
+                                                      mAreaWidthScale,
+                                                      mAreaHeightScale));
                 }
+                mAreaHeightScale = NpWidgetScale.STRETCH;
+                mAreaWidthScale = NpWidgetScale.STRETCH;
+                
                 mXDim = null;
                 mYDim = null;
                 mHDim = null;
@@ -213,6 +218,13 @@ final public class NpSkinScheme {
                 mWidgetImages.clear();
             } else if (localName.equalsIgnoreCase("area")) {
                 mAreaName = attributes.getValue("Name");
+                
+                String widthScaleStr = attributes.getValue("WidthScale"); 
+                mAreaWidthScale = NpWidgetScale.parseStr(widthScaleStr);
+                
+                String heightScaleStr = attributes.getValue("HeightScale"); 
+                mAreaHeightScale = NpWidgetScale.parseStr(heightScaleStr);
+                
             } else if (localName.equalsIgnoreCase("dim")) {
 
                 mCurrentDim = createWidgetDim(attributes);

@@ -38,8 +38,7 @@ final class NpWidgetDim {
     /**
      * Creates Dim with image scale DimType
      */
-    public NpWidgetDim(String area, 
-            NpWidgetDimSource source) {
+    public NpWidgetDim(String area, NpWidgetDimSource source) {
       mType = NpWidgetDimType.IMAGE;
       mArea = area;
       mSource = source;

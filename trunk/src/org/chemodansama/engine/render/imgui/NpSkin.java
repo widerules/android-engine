@@ -420,10 +420,104 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             float tx1 = (float) im.getXPos() / tw;
             float ty1 = 1.0f - (float) im.getYPos() / th;
             
-            drawRect(x1, y1, x1 + w, y1 + h, 
-                     tx1, ty1, 
-                     tx1 + (float) im.getWidth() / tw, 
-                     ty1 - (float) im.getHeight() / th);
+            float tw1 = (float) im.getWidth() / tw;
+            float th1 = -(float) im.getHeight() / th;
+            
+            float th1m = im.getHeight();
+            float tw1m = im.getWidth();
+            
+            switch (area.getWidthScale()) {
+            case STRETCH:
+                
+                switch (area.getHeightScale()) {
+                case STRETCH:
+                    drawRectWH(x1, y1, w, h, tx1, ty1, tw1, th1);
+                    break;
+                    
+                case REPEAT:
+                    
+                    int hn = (int) Math.floor(h / th1m);
+                    
+                    for (int i = 0; i < hn; i++) {
+                        drawRectWH(x1, y1 + th1m * i, w, th1m, 
+                                   tx1, ty1, tw1, th1);
+                    }
+                    
+                    float ceilPart = h - th1m * hn;
+                    
+                    drawRectWH(x1, y1 + th1m * hn, w, ceilPart, 
+                               tx1, ty1, tw1, ceilPart);
+                    
+                    break;
+
+                default:
+                    break;
+                }
+                
+                break;
+                
+            case REPEAT:
+                
+                switch (area.getHeightScale()) {
+                case STRETCH:
+                    int wn = (int) Math.floor(w / tw1m);
+                    
+                    for (int i = 0; i < wn; i++) {
+                        drawRectWH(x1 + tw1m * i, y1, tw1m, h, 
+                                   tx1, ty1, tw1, th1);
+                    }
+                    
+                    float ceilPart = w - tw1m * wn;
+                    
+                    drawRectWH(x1 + tw1m * wn, y1, ceilPart, h, 
+                               tx1, ty1, ceilPart, th1);
+                    break;
+                    
+                case REPEAT:
+                    
+                    int hn = (int) Math.floor(h / th1m);
+                    
+                    wn = (int) Math.floor(w / tw1m);
+                    
+                    float ceilW = w - tw1m * wn;
+                    
+                    for (int i = 0; i < hn; i++) {
+                        
+                        float y2 = y1 + th1m * i;
+
+                        for (int j = 0; j < wn; j++) {
+                            drawRectWH(x1 + j * tw1m, y2, tw1m, th1m, 
+                                       tx1, ty1, tw1, th1);    
+                        }
+                        
+                        drawRectWH(x1 + wn * tw1m, y2, ceilW, th1m, 
+                                   tx1, ty1, ceilW, th1);
+                    }
+                    
+                    float ceilH = h - th1m * hn;
+                    float y2 = y1 + th1m * hn; 
+                    
+                    for (int j = 0; j < wn; j++) {
+                        drawRectWH(x1 + j * tw1m, y2, w, ceilH, 
+                                   tx1, ty1, tw1, ceilH);
+                    }
+                    
+                    drawRectWH(x1 + wn * tw1m, y2, ceilW, ceilH, 
+                               tx1, ty1, ceilW, ceilH);
+                    
+                    break;
+
+                default:
+                    break;
+                }
+                
+                break;
+
+            default:
+                break;
+            }
+            
+            
         }
     }
     
