@@ -206,8 +206,8 @@ public final class NpFont {
         return r;
     }
     
-    public NpRect computeTextRect(float height, String s) {
-        NpRect r = new NpRect(0, 0, 0, 0);
+    public NpRecti computeTextRect(float height, String s) {
+        NpRecti r = new NpRecti(0, 0, 0, 0);
         
         float w = 0;
         float h = 0;
