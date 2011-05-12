@@ -25,11 +25,11 @@ public final class NpFont {
         
         private final char mCode;
         private final NpVec2i mOffset;
-        private final NpImmutableRect mRect;
+        private final NpTextureRect mRect;
         private final int mAdvance;
         
-        private final NpImmutableRect mRenderRect;
-        private final NpImmutableRect mTextureRect;
+        private final NpTextureRect mRenderRect;
+        private final NpTextureRect mTextureRect;
         
         public NpFontCharStruct(Attributes attributes, int textureHeightInPels, 
                 int textureWidthInPels) {
@@ -69,18 +69,18 @@ public final class NpFont {
             int w = Integer.parseInt(s[2]); 
             int h = Integer.parseInt(s[3]); 
             
-            mRect = new NpImmutableRect(x, textureHeightInPels - y, w, h);
+            mRect = new NpTextureRect(x, textureHeightInPels - y, w, h);
             
             mAdvance = Integer.parseInt(attributes.getValue("advance"));
             
             
-            mRenderRect = new NpImmutableRect(mOffset.getX(), mOffset.getY(), 
+            mRenderRect = new NpTextureRect(mOffset.getX(), mOffset.getY(), 
                                               mRect.getW(), mRect.getH());
             
             float InvTexWidth = 1.0f / textureWidthInPels;
             float InvTexHeight = 1.0f / textureHeightInPels;
             
-            mTextureRect = new NpImmutableRect(mRect.getX() * InvTexWidth, 
+            mTextureRect = new NpTextureRect(mRect.getX() * InvTexWidth, 
                                                mRect.getY() * InvTexHeight, 
                                                mRect.getW() * InvTexWidth, 
                                                -mRect.getH() * InvTexHeight);
@@ -98,11 +98,11 @@ public final class NpFont {
          * @return character rectangle, assuming cursor is placed 
          *         on the base line and X coordinate is zero. 
          */
-        protected NpImmutableRect getRenderRect() {
+        protected NpTextureRect getRenderRect() {
             return mRenderRect;
         }
 
-        protected NpImmutableRect getTextureRect() {
+        protected NpTextureRect getTextureRect() {
             return mTextureRect;
         }
     }
@@ -206,8 +206,8 @@ public final class NpFont {
         return r;
     }
     
-    public NpRecti computeTextRect(float height, String s) {
-        NpRecti r = new NpRecti(0, 0, 0, 0);
+    public NpRect computeTextRect(float height, String s) {
+        NpRect r = new NpRect(0, 0, 0, 0);
         
         float w = 0;
         float h = 0;
