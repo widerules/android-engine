@@ -433,6 +433,44 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
                    imageX, imageY, texCeilW, texCeilH);
     }
     
+    static public boolean getImageRect(String widgetName, 
+            NpWidgetState state, String area, NpRect out) {
+        
+        NpWidgetlook widget = mScheme.getWidget(widgetName);
+        
+        if (widget == null) {
+            return false;
+        }
+        
+        NpWidgetStatelook stateLook = widget.getStateLook(state);
+        
+        if (stateLook == null) {
+            return false;
+        }
+        
+        NpWidgetImage image = stateLook.findImageByArea(area);
+        
+        if (image == null) {
+            return false;
+        }
+        
+        NpSkinImageSet imageSet = mScheme.getImageSet(image.getImageset());
+        
+        if (imageSet == null) {
+            return false;
+        }
+        
+        NpSkinImageSet.NpSkinImage im = imageSet.getImage(image.getImage());
+        
+        if (im == null) {
+            return false;
+        }
+        
+        out.set(im.getXPos(), im.getYPos(), im.getWidth(), im.getHeight());
+
+        return true;
+    }
+    
     static private void drawWidget(NpWidgetState state, 
             String widgetName, NpRect rect, NpVec4 color) {
         

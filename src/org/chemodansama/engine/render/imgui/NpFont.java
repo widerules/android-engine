@@ -81,9 +81,9 @@ public final class NpFont {
             float InvTexHeight = 1.0f / textureHeightInPels;
             
             mTextureRect = new NpTextureRect(mRect.getX() * InvTexWidth, 
-                                               mRect.getY() * InvTexHeight, 
-                                               mRect.getW() * InvTexWidth, 
-                                               -mRect.getH() * InvTexHeight);
+                                             mRect.getY() * InvTexHeight, 
+                                             mRect.getW() * InvTexWidth, 
+                                             -mRect.getH() * InvTexHeight);
         }
         
         public int getAdvance() {
