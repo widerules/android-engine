@@ -27,6 +27,10 @@ public class NpGameState {
         return false;
     }
     
+    protected void onForeground() {
+        
+    }
+    
     protected boolean onBackPressed() {
         return false;
     }
