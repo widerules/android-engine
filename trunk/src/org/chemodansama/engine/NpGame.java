@@ -137,6 +137,10 @@ public abstract class NpGame {
     
     public final void popState() {
         mStatesToDelete.add(mStates.pop());
+        
+        if (mStates.size() > 0) {
+            mStates.peek().onForeground();
+        }
     }
     
     public final void pushState(final NpGameState state) {
