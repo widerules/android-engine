@@ -13,6 +13,13 @@ public class NpRect {
         mW = 0;
         mH = 0;
     }
+    
+    public NpRect(NpRect r) {
+        mX = r.mX;
+        mY = r.mY;
+        mW = r.mW;
+        mH = r.mH;
+    }
 
     public NpRect(int x, int y, int w, int h) {
         mX = x;
