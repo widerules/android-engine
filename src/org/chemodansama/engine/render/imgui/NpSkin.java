@@ -32,19 +32,19 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         mTextureCache = new NpTextureCache(mPolyBuffer);
     }
     
-    private static NpFont getFont(String name) {
-        NpFont f = null;
-        
-        if ((f = mTextureCache.getActiveFont(name)) == null) {
-            f = mScheme.getFonts().get(name);
-        }
-        
-        return f;
-    }
-    
     public static float computeFontHeight(NpFontParams font) {
         NpFont f = getFont(font.name);
         return (f != null) ? f.computeTextHeight(font.height, "A") : 0;
+    }
+    
+    public static float getFontAscender(NpFontParams font) {
+        NpFont f = getFont(font.name);
+        return (f != null) ? f.getAscender() * font.height / f.getSize() : 0;
+    }
+    
+    public static float getFontXHeight(NpFontParams font) {
+        NpFont f = getFont(font.name);
+        return (f != null) ? f.getXHeight(font.height) : 0;
     }
     
     public static NpRect computeTextRect(String fontName, float height, 
@@ -53,121 +53,55 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         return (f != null) ? f.computeTextRect(height, text) : new NpRect(); 
     }
     
-    static private int getRectWidgetRetCode(int id, NpRect rect) {
-        
-        boolean r = rect.overlapsPoint(NpGuiState.getMouseX(), 
-                                       NpGuiState.getMouseY());
-        
-        int ret = 0;
-        
-        if (NpGuiState.getMouseDown()) {
-            
-            if (r) {
-               
-                if ((NpGuiState.getHotItem() == id) 
-                        && (NpGuiState.mActiveItem == 0)) {
-                
-                    NpGuiState.mActiveItem = id;
-                
-                }
-                
-                NpGuiState.setHotItem(id);
-            } else {
-                if (NpGuiState.getHotItem() == id) {
-                    NpGuiState.setHotItem(0);
-                    
-                    ret |= GUI_RETURN_FLAG_MOUSE_MOVED_OUT;
-                }
-            }
-        } else {
-            
-            if (NpGuiState.mActiveItem == id) {
-
-                NpGuiState.mActiveItem = 0;
-                
-                if (NpGuiState.getHotItem() == id) {
-                    NpGuiState.setHotItem(0);
-                    ret |= GUI_RETURN_FLAG_CLICKED;
-                }
-            }
-        }
-        
-        ret |= GUI_RETURN_FLAG_NORMAL;
-
-        if (NpGuiState.getHotItem() == id) {
-            ret |= GUI_RETURN_FLAG_HOT;
-        } 
-
-        if (NpGuiState.mActiveItem == id) {
-            ret |= GUI_RETURN_FLAG_ACTIVE;
-        }
-        
-        return ret;
-    }
-    
-    static public NpWidgetState getWidgetState(int id) {
-        if (NpGuiState.mActiveItem == id) {
-            return NpWidgetState.WS_PUSHED; 
-        } else if (NpGuiState.getHotItem() == id) {
-            return NpWidgetState.WS_HOVER;
-        } else {
-            return NpWidgetState.WS_NORMAL;
-        }
-    }
-    
-    static private void drawButtonText(int id, 
+    static public int doButton(int id, String widgetLookName, 
             String caption, NpFontParams font, NpRect rect) {
         
-        if ((caption == null) || (caption.length() == 0)) {
-            return;
+        NpWidgetStatelook sl = drawWidget(getWidgetState(id), widgetLookName, rect);
+        
+        NpRect clientRect;
+        if (sl == null) {
+            clientRect = rect;
+        } else {
+            clientRect = sl.computeClientRect(mScheme, rect, false, false);
         }
         
-        GL10 gl = mGL;
+        drawButtonText(id, caption, font, clientRect);
         
-        if (!mTextureCache.activateFont(gl, font.name)) {
-            return;
+        return getRectWidgetRetCode(id, rect);
+    }
+    
+    static public int doButtonEx(int id, String widgetLookName, 
+            String caption, NpFontParams font, NpRect rect, 
+            boolean invertX, boolean invertY) {
+        NpWidgetStatelook sl = drawWidget(getWidgetState(id), widgetLookName, rect, 
+                                          NpVec4.ONE, invertX, invertY);
+        
+        NpRect clientRect;
+        if (sl == null) {
+            clientRect = rect;
+        } else {
+            clientRect = sl.computeClientRect(mScheme, rect, invertX, invertY);
         }
-
-        NpFont f = mTextureCache.getActiveFont();
-
-        if (f == null) {
-            return;
-        }
-
-        NpRect textRect = f.computeTextRect(font.height, caption);
-
-        int x = rect.getX() + (rect.getW() - textRect.getW()) / 2 
-                - textRect.getX();
         
-        int y = rect.getY() 
-                + (int) ((rect.getH() + f.getXHeight(font.height)) * 0.5);
-        
-        drawString(caption, x, y, font.height, font.color);
+        drawButtonText(id, caption, font, clientRect);
+        return getRectWidgetRetCode(id, rect);
     }
     
     static public int doButton(int id, String widgetLookName, 
             String caption, NpFontParams font, NpRect rect, NpVec4 color) {
-        drawWidget(getWidgetState(id), widgetLookName, rect, color);
-        drawButtonText(id, caption, font, rect);
+        NpWidgetStatelook sl = drawWidget(getWidgetState(id), widgetLookName, rect, 
+                                          color, false, false);
+        
+        NpRect clientRect;
+        if (sl == null) {
+            clientRect = rect;
+        } else {
+            clientRect = sl.computeClientRect(mScheme, rect, false, false);
+        }
+        
+        drawButtonText(id, caption, font, clientRect);
         return getRectWidgetRetCode(id, rect);
     }
-    
-    static public int doButton(int id, String widgetLookName, 
-            String caption, NpFontParams font, NpRect rect) {
-        drawWidget(getWidgetState(id), widgetLookName, rect);
-        drawButtonText(id, caption, font, rect);
-        return getRectWidgetRetCode(id, rect);
-    }
-        
-    // bunch of parameters :E
-    static public int doLabel(int id, int x, int y, 
-            String caption, NpFontParams font, int maxWidth, 
-            NpHolder<Integer> outHeight) {
-
-        
-        return 0;
-    }
-    
     
     static public int doLabel(int id, int x, int y, 
             String caption, NpFontParams font, byte align) {
@@ -194,22 +128,40 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
                                                     r.getX(), r.getY()));
     }
     
+    // bunch of parameters :E
+    static public int doLabel(int id, int x, int y, 
+            String caption, NpFontParams font, int maxWidth, 
+            NpHolder<Integer> outHeight) {
+
+        
+        return 0;
+    }
+    
+    static public int doRectWidgetEx(int id, NpWidgetState state, 
+            String widgetLookName, NpRect rect, 
+            boolean invertX, boolean invertY) {
+        drawWidget(state, widgetLookName, rect, NpVec4.ONE, invertX, invertY);
+        return getRectWidgetRetCode(id, rect);
+    }
+    
     static public int doRectWidget(int id, NpWidgetState state, 
             String widgetLookName, NpRect rect) {
-        
         drawWidget(state, widgetLookName, rect);
-        
         return getRectWidgetRetCode(id, rect);
     }
     
-    static public int doRectWidget(int id, String widgetLookName, 
-            NpRect rect) {
-        
+    static public int doRectWidget(int id, String widgetLookName, NpRect rect) {
         drawWidget(getWidgetState(id), widgetLookName, rect);
-        
         return getRectWidgetRetCode(id, rect);
     }
     
+    static public int doRectWidgetEx(int id, String widgetLookName, NpRect rect,
+            boolean invertX, boolean invertY) {
+        drawWidget(getWidgetState(id), widgetLookName, rect, NpVec4.ONE, 
+                   invertX, invertY);
+        return getRectWidgetRetCode(id, rect);
+    }
+        
     static public int doVertSlider(int id, String widgetLookName,
             float x, float y, float h, NpHolder<Float> slidePos) {
 
@@ -248,16 +200,55 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         return r;
     }
+    
+    
+    static private void drawButtonText(int id,
+            String caption, NpFontParams font, NpRect rect) {
+        
+        if ((caption == null) || (caption.length() == 0)) {
+            return;
+        }
+        
+        if (font == null) {
+            return;
+        }
+        
+        if (rect == null) {
+            return;
+        }
+        
+        GL10 gl = mGL;
+        
+        if (!mTextureCache.activateFont(gl, font.name)) {
+            return;
+        }
 
-    static void drawRectWH(float x, float y, float w, float h, 
-            float tx, float ty, float tw, float th) {
-        mPolyBuffer.pushQuad(mGL, x, y, x + w, y + h, tx, ty, tx + tw, ty + th);
+        NpFont f = mTextureCache.getActiveFont();
+
+        if (f == null) {
+            return;
+        }
+        
+        NpRect textRect = f.computeTextRect(font.height, caption);
+
+        int x = rect.getX() + (rect.getW() - textRect.getW()) / 2 
+                - textRect.getX();
+        
+        int y = rect.getY() 
+                + (int) ((rect.getH() + f.getXHeight(font.height)) * 0.5);
+        
+        drawString(caption, x, y, font.height, font.color);
     }
     
     static void drawRect(float x1, float y1, float x2, float y2, 
             float tx1, float ty1, float tx2, float ty2) {
         mPolyBuffer.pushQuad(mGL, x1, y1, x2, y2, tx1, ty1, tx2, ty2);
-    }    
+    }
+    
+    static void drawRectWH(float x, float y, float w, float h, 
+            float tx, float ty, float tw, float th) {
+        mPolyBuffer.pushQuad(mGL, x, y, x + w, y + h, tx, ty, tx + tw, ty + th);
+    }
     
     static public void drawString(String s, int x, int y, 
             float fontSize, NpVec4 fontColor) {
@@ -313,183 +304,32 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
 
         gl.glPopMatrix();
     }
-    
-    static private boolean getWidgetRectDefW(NpWidgetState state, 
-            String widgetName, float x, float y, float h, NpRect out) {
-        NpWidgetlook look = mScheme.getWidget(widgetName);
-        
-        if (look == null) {
-            return false;
-        }        
-        
-        NpWidgetStatelook stateLook = look.getStateLook(NpWidgetState.WS_NORMAL);
-        
-        if (stateLook == null) {
-            return false;
-        }
 
-        out.set(x, y, stateLook.getDefaultWidth(mScheme, stateLook), h);
-        
-        return true;
-    }
-    
-    static private boolean getWidgetRectDefWH(NpWidgetState state, 
-            String widgetName, float x, float y, NpRect out) {
-        NpWidgetlook look = mScheme.getWidget(widgetName);
-        
-        if (look == null) {
-            return false;
-        }        
-        
-        NpWidgetStatelook stateLook = look.getStateLook(NpWidgetState.WS_NORMAL);
-        
-        if (stateLook == null) {
-            return false;
-        }
-
-        out.set(x, y, 
-                stateLook.getDefaultWidth(mScheme, stateLook), 
-                stateLook.getDefaultHeight(mScheme, stateLook));
-        
-        return true;
-    }
-
-    static private void drawWidget(NpWidgetState state, 
+    static private NpWidgetStatelook drawWidget(NpWidgetState state, 
             String widgetName, NpRect rect) {
-        drawWidget(state, widgetName, rect, NpVec4.ONE);
+        return drawWidget(state, widgetName, rect, NpVec4.ONE, false, false);
     }
     
-    static private void tileImageHorizontal(float absX, float absY, 
-            float w, float h, float imageWidthInPels, 
-            float imageX, float imageY, float imageW, float imageH) {
-        int wn = (int) Math.floor(w / imageWidthInPels);
-        
-        for (int i = 0; i < wn; i++) {
-            drawRectWH(absX + imageWidthInPels * i, absY, imageWidthInPels, h, 
-                       imageX, imageY, imageW, imageH);
-        }
-        
-        float ceilPart = w - imageWidthInPels * wn;
-        
-        float texCeil = ceilPart / imageWidthInPels * imageW;
-        
-        drawRectWH(absX + imageWidthInPels * wn, absY, ceilPart, h, 
-                   imageX, imageY, texCeil, imageH);
-    }
-    
-    static private void tileImageVertical(float absX, float absY, 
-            float w, float h, float imageHeightInPels, 
-            float imageX, float imageY, float imageW, float imageH) {
-        
-        int hn = (int) Math.floor(h / imageHeightInPels);
-        
-        for (int i = 0; i < hn; i++) {
-            drawRectWH(absX, absY + imageHeightInPels * i, w, imageHeightInPels, 
-                       imageX, imageY, imageW, imageH);
-        }
-        
-        float ceilPart = h - imageHeightInPels * hn;
-        float texCeil = ceilPart / imageHeightInPels * imageH;
-        
-        drawRectWH(absX, absY + imageHeightInPels * hn, w, ceilPart, 
-                   imageX, imageY, imageW, texCeil);
-    }
-    
-    static private void tileImagePlane(float absX, float absY, 
-            float w, float h, float imageWidthInPels, float imageHeightInPels,  
-            float imageX, float imageY, float imageW, float imageH) {
-        
-        int hn = (int) Math.floor(h / imageHeightInPels);
-        int wn = (int) Math.floor(w / imageWidthInPels);
-        
-        float ceilW = w - imageWidthInPels * wn;
-        float texCeilW = ceilW / imageWidthInPels * imageW;
-        
-        for (int i = 0; i < hn; i++) {
-            float y = absY + imageHeightInPels * i;
-
-            for (int j = 0; j < wn; j++) {
-                drawRectWH(absX + j * imageWidthInPels, y, 
-                           imageWidthInPels, imageHeightInPels, 
-                           imageX, imageY, imageW, imageH);    
-            }
-            
-            drawRectWH(absX + wn * imageWidthInPels, y, 
-                       ceilW, imageHeightInPels, 
-                       imageX, imageY, texCeilW, imageH);
-        }
-        
-        float y = absY + imageHeightInPels * hn; 
-        
-        float ceilH = h - imageHeightInPels * hn;
-        float texCeilH = ceilH / imageHeightInPels * imageH;
-        
-        for (int j = 0; j < wn; j++) {
-            drawRectWH(absX + j * imageWidthInPels, y, w, ceilH, 
-                       imageX, imageY, imageW, texCeilH);
-        }
-        
-        drawRectWH(absX + wn * imageWidthInPels, y, ceilW, ceilH, 
-                   imageX, imageY, texCeilW, texCeilH);
-    }
-    
-    static public boolean getImageRect(String widgetName, 
-            NpWidgetState state, String area, NpRect out) {
-        
-        NpWidgetlook widget = mScheme.getWidget(widgetName);
-        
-        if (widget == null) {
-            return false;
-        }
-        
-        NpWidgetStatelook stateLook = widget.getStateLook(state);
-        
-        if (stateLook == null) {
-            return false;
-        }
-        
-        NpWidgetImage image = stateLook.findImageByArea(area);
-        
-        if (image == null) {
-            return false;
-        }
-        
-        NpSkinImageSet imageSet = mScheme.getImageSet(image.getImageset());
-        
-        if (imageSet == null) {
-            return false;
-        }
-        
-        NpSkinImageSet.NpSkinImage im = imageSet.getImage(image.getImage());
-        
-        if (im == null) {
-            return false;
-        }
-        
-        out.set(im.getXPos(), im.getYPos(), im.getWidth(), im.getHeight());
-
-        return true;
-    }
-    
-    static private void drawWidget(NpWidgetState state, 
-            String widgetName, NpRect rect, NpVec4 color) {
+    static private NpWidgetStatelook drawWidget(NpWidgetState state, 
+            String widgetName, NpRect rect, NpVec4 color, 
+            boolean invertX, boolean invertY) {
         
         GL10 gl = mGL;
         
         if (mScheme == null) {
-            return;
+            return null;
         }
         
         NpWidgetlook widget = mScheme.getWidget(widgetName);
         
         if (widget == null) {
-            return;
+            return null;
         }
         
         NpWidgetStatelook stateLook = widget.getStateLook(state);
         
         if (stateLook == null) {
-            return;
+            return null;
         }
         
         mPolyBuffer.flushRender(gl);
@@ -542,6 +382,16 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             float imageW = (float) im.getWidth() / tw;
             float imageH = -(float) im.getHeight() / th;
             
+            if (invertX) {
+                imageX = imageX + imageW;
+                imageW = -imageW;
+            }
+            
+            if (invertY) {
+                imageY = imageY + imageH;
+                imageH = -imageH;
+            }
+            
             float imageWidthInPels = im.getWidth();
             float imageHeightInPels = im.getHeight();
             
@@ -576,11 +426,163 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
                 break;
             }
         }
-    }
+        
+        return stateLook;
+    }    
     
     static void finish() {
         mPolyBuffer.flushRender(mGL);
         mGL = null;
+    }
+    
+    private static NpFont getFont(String name) {
+        NpFont f = null;
+        
+        if ((f = mTextureCache.getActiveFont(name)) == null) {
+            f = mScheme.getFonts().get(name);
+        }
+        
+        return f;
+    }
+    
+    static public boolean getImageRect(String widgetName, 
+            NpWidgetState state, String area, NpRect out) {
+        
+        NpWidgetlook widget = mScheme.getWidget(widgetName);
+        
+        if (widget == null) {
+            return false;
+        }
+        
+        NpWidgetStatelook stateLook = widget.getStateLook(state);
+        
+        if (stateLook == null) {
+            return false;
+        }
+        
+        NpWidgetImage image = stateLook.findImageByArea(area);
+        
+        if (image == null) {
+            return false;
+        }
+        
+        NpSkinImageSet imageSet = mScheme.getImageSet(image.getImageset());
+        
+        if (imageSet == null) {
+            return false;
+        }
+        
+        NpSkinImageSet.NpSkinImage im = imageSet.getImage(image.getImage());
+        
+        if (im == null) {
+            return false;
+        }
+        
+        out.set(im.getXPos(), im.getYPos(), im.getWidth(), im.getHeight());
+
+        return true;
+    }
+
+    static private int getRectWidgetRetCode(int id, NpRect rect) {
+        
+        boolean r = rect.overlapsPoint(NpGuiState.getMouseX(), 
+                                       NpGuiState.getMouseY());
+        
+        int ret = 0;
+        
+        if (NpGuiState.getMouseDown()) {
+            
+            if (r) {
+               
+                if ((NpGuiState.getHotItem() == id) 
+                        && (NpGuiState.mActiveItem == 0)) {
+                
+                    NpGuiState.mActiveItem = id;
+                
+                }
+                
+                NpGuiState.setHotItem(id);
+            } else {
+                if (NpGuiState.getHotItem() == id) {
+                    NpGuiState.setHotItem(0);
+                    
+                    ret |= GUI_RETURN_FLAG_MOUSE_MOVED_OUT;
+                }
+            }
+        } else {
+            
+            if (NpGuiState.mActiveItem == id) {
+
+                NpGuiState.mActiveItem = 0;
+                
+                if (NpGuiState.getHotItem() == id) {
+                    NpGuiState.setHotItem(0);
+                    ret |= GUI_RETURN_FLAG_CLICKED;
+                }
+            }
+        }
+        
+        ret |= GUI_RETURN_FLAG_NORMAL;
+
+        if (NpGuiState.getHotItem() == id) {
+            ret |= GUI_RETURN_FLAG_HOT;
+        } 
+
+        if (NpGuiState.mActiveItem == id) {
+            ret |= GUI_RETURN_FLAG_ACTIVE;
+        }
+        
+        return ret;
+    }
+    
+    static private boolean getWidgetRectDefW(NpWidgetState state, 
+            String widgetName, float x, float y, float h, NpRect out) {
+        NpWidgetlook look = mScheme.getWidget(widgetName);
+        
+        if (look == null) {
+            return false;
+        }        
+        
+        NpWidgetStatelook stateLook = look.getStateLook(NpWidgetState.WS_NORMAL);
+        
+        if (stateLook == null) {
+            return false;
+        }
+
+        out.set(x, y, stateLook.getDefaultWidth(mScheme, stateLook), h);
+        
+        return true;
+    }
+    
+    static private boolean getWidgetRectDefWH(NpWidgetState state, 
+            String widgetName, float x, float y, NpRect out) {
+        NpWidgetlook look = mScheme.getWidget(widgetName);
+        
+        if (look == null) {
+            return false;
+        }        
+        
+        NpWidgetStatelook stateLook = look.getStateLook(NpWidgetState.WS_NORMAL);
+        
+        if (stateLook == null) {
+            return false;
+        }
+
+        out.set(x, y, 
+                stateLook.getDefaultWidth(mScheme, stateLook), 
+                stateLook.getDefaultHeight(mScheme, stateLook));
+        
+        return true;
+    }
+    
+    static public NpWidgetState getWidgetState(int id) {
+        if (NpGuiState.mActiveItem == id) {
+            return NpWidgetState.WS_PUSHED; 
+        } else if (NpGuiState.getHotItem() == id) {
+            return NpWidgetState.WS_HOVER;
+        } else {
+            return NpWidgetState.WS_NORMAL;
+        }
     }
     
     static public boolean loadScheme(GL10 gl, AssetManager assets, 
@@ -596,6 +598,80 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     static void prepare(GL10 gl) {
         mGL = gl;
         mTextureCache.reset(gl);
+    }
+    
+    static private void tileImageHorizontal(float absX, float absY, 
+            float w, float h, float imageWidthInPels, 
+            float imageX, float imageY, float imageW, float imageH) {
+        int wn = (int) Math.floor(w / imageWidthInPels);
+        
+        for (int i = 0; i < wn; i++) {
+            drawRectWH(absX + imageWidthInPels * i, absY, imageWidthInPels, h, 
+                       imageX, imageY, imageW, imageH);
+        }
+        
+        float ceilPart = w - imageWidthInPels * wn;
+        
+        float texCeil = ceilPart / imageWidthInPels * imageW;
+        
+        drawRectWH(absX + imageWidthInPels * wn, absY, ceilPart, h, 
+                   imageX, imageY, texCeil, imageH);
+    }
+    
+    static private void tileImagePlane(float absX, float absY, 
+            float w, float h, float imageWidthInPels, float imageHeightInPels,  
+            float imageX, float imageY, float imageW, float imageH) {
+        
+        int hn = (int) Math.floor(h / imageHeightInPels);
+        int wn = (int) Math.floor(w / imageWidthInPels);
+        
+        float ceilW = w - imageWidthInPels * wn;
+        float texCeilW = ceilW / imageWidthInPels * imageW;
+        
+        for (int i = 0; i < hn; i++) {
+            float y = absY + imageHeightInPels * i;
+
+            for (int j = 0; j < wn; j++) {
+                drawRectWH(absX + j * imageWidthInPels, y, 
+                           imageWidthInPels, imageHeightInPels, 
+                           imageX, imageY, imageW, imageH);    
+            }
+            
+            drawRectWH(absX + wn * imageWidthInPels, y, 
+                       ceilW, imageHeightInPels, 
+                       imageX, imageY, texCeilW, imageH);
+        }
+        
+        float y = absY + imageHeightInPels * hn; 
+        
+        float ceilH = h - imageHeightInPels * hn;
+        float texCeilH = ceilH / imageHeightInPels * imageH;
+        
+        for (int j = 0; j < wn; j++) {
+            drawRectWH(absX + j * imageWidthInPels, y, imageWidthInPels, ceilH, 
+                       imageX, imageY, imageW, texCeilH);
+        }
+        
+        drawRectWH(absX + wn * imageWidthInPels, y, ceilW, ceilH, 
+                   imageX, imageY, texCeilW, texCeilH);
+    }
+    
+    static private void tileImageVertical(float absX, float absY, 
+            float w, float h, float imageHeightInPels, 
+            float imageX, float imageY, float imageW, float imageH) {
+        
+        int hn = (int) Math.floor(h / imageHeightInPels);
+        
+        for (int i = 0; i < hn; i++) {
+            drawRectWH(absX, absY + imageHeightInPels * i, w, imageHeightInPels, 
+                       imageX, imageY, imageW, imageH);
+        }
+        
+        float ceilPart = h - imageHeightInPels * hn;
+        float texCeil = ceilPart / imageHeightInPels * imageH;
+        
+        drawRectWH(absX, absY + imageHeightInPels * hn, w, ceilPart, 
+                   imageX, imageY, imageW, texCeil);
     }
     
     private NpSkin() {

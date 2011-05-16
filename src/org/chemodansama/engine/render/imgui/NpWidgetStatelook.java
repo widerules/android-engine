@@ -5,21 +5,49 @@ import java.util.Iterator;
 
 final class NpWidgetStatelook {
     
-    final private ArrayList<NpWidgetArea> mAreas = 
+    private final ArrayList<NpWidgetArea> mAreas = 
         new ArrayList<NpWidgetArea>();
     
-    final private ArrayList<NpWidgetImage> mImages = 
+    private final ArrayList<NpWidgetImage> mImages = 
         new ArrayList<NpWidgetImage>();
     
     private boolean mDefaultsComputed = false;
     
     private float mWidthDef = 0;
     private float mHeightDef = 0;
+
+    private final NpWidgetRect mClientRect;
     
     NpWidgetStatelook(ArrayList<NpWidgetArea> areas,
-            ArrayList<NpWidgetImage> images) {
+            ArrayList<NpWidgetImage> images, NpWidgetRect clientRect) {
         mAreas.addAll(areas);
         mImages.addAll(images);
+        mClientRect = clientRect;
+    }
+    
+    public NpRect computeClientRect(NpSkinScheme scheme, NpRect instanceRect,
+            boolean invertX, boolean invertY) {
+        
+        if (mClientRect == null) {
+            return new NpRect(instanceRect);
+        }
+
+        NpRect result = new NpRect();
+        
+        float x = mClientRect.getX().getValue(scheme, this, instanceRect);
+        float y = mClientRect.getY().getValue(scheme, this, instanceRect);
+        float w = mClientRect.getWidth().getValue(scheme, this, instanceRect);
+        float h = mClientRect.getHeight().getValue(scheme, this, instanceRect);
+        
+        if (invertX) {
+            x = instanceRect.getW() - x - w;
+        } 
+        if (invertY) {
+            y = instanceRect.getH() - y - h;
+        }
+
+        result.set(instanceRect.getX() + x, instanceRect.getY() + y, w, h);
+        return result;
     }
     
     private void computeDefaults(NpSkinScheme scheme, 
@@ -97,5 +125,9 @@ final class NpWidgetStatelook {
                 return mImages.iterator();
             }
         };
+    }
+
+    public NpWidgetRect getClientRect() {
+        return mClientRect;
     }
 }

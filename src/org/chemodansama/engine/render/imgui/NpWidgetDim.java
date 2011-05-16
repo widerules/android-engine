@@ -81,23 +81,23 @@ final class NpWidgetDim {
         }
     }
     
-    private int getBaseScaleValue(NpSkinScheme skinScheme,
+    private float getBaseScaleValue(NpSkinScheme skinScheme,
             NpWidgetStatelook stateLook, 
             NpRect instanceRect) {
 
         switch (mSource) {
         case HEIGHT:
-            return instanceRect.getH();
+            return instanceRect.getH() * mValue;
 
         case WIDTH:
-            return instanceRect.getW();
+            return instanceRect.getW() * mValue;
 
         default:
             return 0;
         }
     }
     
-    private int getBaseScaleValue(NpSkinScheme skinScheme,
+    private float getBaseScaleValue(NpSkinScheme skinScheme,
             NpWidgetStatelook stateLook, 
             String areaName) {
         NpWidgetImage im = stateLook.findImageByArea(areaName);
@@ -120,10 +120,10 @@ final class NpWidgetDim {
         
         switch (mSource) {
         case HEIGHT:
-            return image.getHeight();
+            return image.getHeight() * mValue;
 
         case WIDTH:
-            return image.getWidth();
+            return image.getWidth() * mValue;
 
         default:
             return 0;

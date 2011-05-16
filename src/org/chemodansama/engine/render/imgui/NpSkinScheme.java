@@ -40,6 +40,8 @@ final public class NpSkinScheme {
         final private ArrayList<NpWidgetArea> mWidgetAreas = 
             new ArrayList<NpWidgetArea>();
         
+        private NpWidgetRect mClientRect = null;
+        
         final private ArrayList<NpWidgetImage> mWidgetImages = 
             new ArrayList<NpWidgetImage>();
         
@@ -133,14 +135,22 @@ final public class NpSkinScheme {
             } else if (localName.equalsIgnoreCase("widget")) {
                 mWidgetlook.put(mWidgetName, 
                                 new NpWidgetlook(mWidgetName, mWidgetState));
+                
+                if (Log.isLoggable(LogTag.TAG, Log.INFO)) {
+                    Log.i(LogTag.TAG, "widget read: " + mWidgetName);
+                }
                 mWidgetName = null;
                 mWidgetState.clear();
             } else if (localName.equalsIgnoreCase("state")) {
                 mWidgetState.put(mCurrentState, 
                                  new NpWidgetStatelook(mWidgetAreas, 
-                                                       mWidgetImages));
+                                                       mWidgetImages, 
+                                                       mClientRect));
                 mWidgetAreas.clear();
                 mWidgetImages.clear();
+                mClientRect = null;
+            } else if (localName.equalsIgnoreCase("clientrect")) {
+                mClientRect = new NpWidgetRect(mXDim, mYDim, mWDim, mHDim);
             } else if (localName.equalsIgnoreCase("area")) {
                 if ((mAreaName != null) && (mXDim != null) 
                         && (mYDim != null) && (mWDim != null) 
@@ -213,7 +223,19 @@ final public class NpSkinScheme {
                         }
                     }
                 }
-                
+            } else if (localName.equalsIgnoreCase("clientrect")) {
+                String linkedState = attributes.getValue("LinkedState");
+                if (linkedState != null) {
+                    NpWidgetStatelook linkedLook = 
+                        mWidgetState.get(NpWidgetState.parseStr(linkedState));
+                    
+                    if (linkedLook != null) {
+                        mXDim = linkedLook.getClientRect().getX();
+                        mYDim = linkedLook.getClientRect().getY();
+                        mWDim = linkedLook.getClientRect().getWidth();
+                        mHDim = linkedLook.getClientRect().getHeight();
+                    }
+                }
             } else if (localName.equalsIgnoreCase("images")) {
                 mWidgetImages.clear();
             } else if (localName.equalsIgnoreCase("area")) {

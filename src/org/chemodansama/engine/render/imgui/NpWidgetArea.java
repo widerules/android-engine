@@ -1,25 +1,17 @@
 package org.chemodansama.engine.render.imgui;
 
-class NpWidgetArea {
+class NpWidgetArea extends NpWidgetRect {
     private final String mName;
 
-    private final NpWidgetDim mX;
-    private final NpWidgetDim mY;
-    private final NpWidgetDim mWidth;
-    private final NpWidgetDim mHeight;
-    
     private final NpWidgetScale mWidthScale;
     private final NpWidgetScale mHeightScale;
     
     NpWidgetArea(String name, NpWidgetDim x, NpWidgetDim y, NpWidgetDim w, 
                  NpWidgetDim h, NpWidgetScale widthScale, 
                  NpWidgetScale heightScale) {
-        mName = name;
+        super(x, y, w, h);
         
-        mX = x;
-        mY = y;
-        mWidth = w;
-        mHeight = h;
+        mName = name;
         
         mWidthScale = widthScale;
         mHeightScale = heightScale;
@@ -29,22 +21,6 @@ class NpWidgetArea {
         return mName;
     }
     
-    public NpWidgetDim getX() {
-        return mX;
-    }
-    
-    public NpWidgetDim getY() {
-        return mY;
-    }
-
-    public NpWidgetDim getWidth() {
-        return mWidth;
-    }
-
-    public NpWidgetDim getHeight() {
-        return mHeight;
-    }
-
     public NpWidgetScale getWidthScale() {
         return mWidthScale;
     }

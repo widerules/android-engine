@@ -127,6 +127,10 @@ public final class NpSkinImageSet {
                 int h = Integer.parseInt(attributes.getValue("Height"));
                 
                 mImages.put(name, new NpSkinImage(name, x, y, w, h));
+                
+                if (Log.isLoggable(LogTag.TAG, Log.INFO)) {
+                    Log.i(LogTag.TAG, "image read: " + name);
+                }
             }
         }
     }
