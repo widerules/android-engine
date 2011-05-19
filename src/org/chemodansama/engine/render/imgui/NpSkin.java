@@ -27,6 +27,10 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     private static NpTextureCache mTextureCache = null;
     private static GL10 mGL = null;
     
+    private static boolean mScaling = false;
+    private static float mHScale = 1;
+    private static float mVScale = 1;
+    
     static {
         mPolyBuffer = new NpPolyBuffer(16);
         mTextureCache = new NpTextureCache(mPolyBuffer);
@@ -35,6 +39,18 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     public static float computeFontHeight(NpFontParams font) {
         NpFont f = getFont(font.name);
         return (f != null) ? f.computeTextHeight(font.height, "A") : 0;
+    }
+    
+    public static void enableScaling(float hscale, float vscale) {
+        mScaling = true;
+        mHScale = hscale;
+        mVScale = vscale;
+    }
+    
+    public static void disableScaling() {
+        mScaling = false;
+        mHScale = 1;
+        mVScale = 1;
     }
     
     public static float getFontAscender(NpFontParams font) {
@@ -115,7 +131,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         NpRect r = computeTextRect(font.name, font.height, caption);
         
         if (align == ALIGN_CENTER) {
-            x -= r.getW() * 0.5f;
+            x -= r.getW() / 2;
         } else if (align == ALIGN_RIGHT) {
             x -= r.getW();
         };
@@ -242,12 +258,25 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     
     static void drawRect(float x1, float y1, float x2, float y2, 
             float tx1, float ty1, float tx2, float ty2) {
-        mPolyBuffer.pushQuad(mGL, x1, y1, x2, y2, tx1, ty1, tx2, ty2);
+        if (mScaling) {
+            mPolyBuffer.pushQuad(mGL, x1 * mHScale, y1 * mVScale, 
+                                 x2 * mHScale, y2 * mVScale, 
+                                 tx1, ty1, tx2, ty2);
+        } else {
+            mPolyBuffer.pushQuad(mGL, x1, y1, x2, y2, tx1, ty1, tx2, ty2);
+        }
     }
     
     static void drawRectWH(float x, float y, float w, float h, 
             float tx, float ty, float tw, float th) {
-        mPolyBuffer.pushQuad(mGL, x, y, x + w, y + h, tx, ty, tx + tw, ty + th);
+        if (mScaling) {
+            mPolyBuffer.pushQuad(mGL, x * mHScale, y * mVScale, 
+                                 (x + w) * mHScale, (y + h) * mVScale, 
+                                 tx, ty, tx + tw, ty + th);
+        } else {
+            mPolyBuffer.pushQuad(mGL, x, y, x + w, y + h, 
+                                 tx, ty, tx + tw, ty + th);
+        }
     }
     
     static public void drawString(String s, int x, int y, 
@@ -265,6 +294,11 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         // flush render on GL states change 
         mPolyBuffer.flushRender(gl);
+        
+        if (mScaling) {
+            x *= mHScale;
+            y *= mVScale;
+        }
         
         gl.glTranslatef(x, y, 0);
 
@@ -485,8 +519,15 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
 
     static private int getRectWidgetRetCode(int id, NpRect rect) {
         
-        boolean r = rect.overlapsPoint(NpGuiState.getMouseX(), 
-                                       NpGuiState.getMouseY());
+        boolean r;
+        
+        if (mScaling) {
+            r = rect.overlapsPoint((int) (NpGuiState.getMouseX() / mHScale), 
+                                   (int) (NpGuiState.getMouseY() / mVScale));
+        } else {
+            r = rect.overlapsPoint(NpGuiState.getMouseX(), 
+                                   NpGuiState.getMouseY());    
+        }
         
         int ret = 0;
         
