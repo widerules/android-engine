@@ -539,7 +539,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
                         && (NpGuiState.mActiveItem == 0)) {
                 
                     NpGuiState.mActiveItem = id;
-                
+                    ret |= GUI_RETURN_FLAG_MOUSE_MOVED_IN;
                 }
                 
                 NpGuiState.setHotItem(id);
