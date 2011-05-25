@@ -31,6 +31,16 @@ final public class NpTexture {
         } 
     }
     
+    public void release(GL10 gl) {
+        IntBuffer t = ByteBuffer.allocate(4).asIntBuffer();
+        t.put(mTextureID);
+        t.rewind();
+        
+        gl.glDeleteTextures(1, t);
+        
+        mTextureID = 0;
+    }
+    
     public boolean bindGL10(GL10 gl) {
         if (mTextureID != 0) {
             gl.glBindTexture(GL10.GL_TEXTURE_2D, mTextureID);

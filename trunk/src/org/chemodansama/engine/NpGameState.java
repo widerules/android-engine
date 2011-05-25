@@ -35,6 +35,10 @@ public class NpGameState {
         return false;
     }
     
+    protected void onRelease(GL10 gl) {
+        
+    }
+    
     protected void handleMotionEvent(MotionEvent event) {
         
     }

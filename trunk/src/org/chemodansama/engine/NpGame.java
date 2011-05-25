@@ -136,7 +136,9 @@ public abstract class NpGame {
     }
     
     public final void popState() {
-        mStatesToDelete.add(mStates.pop());
+        if (mStates.size() > 0) {
+            mStatesToDelete.add(mStates.pop());
+        }
         
         if (mStates.size() > 0) {
             mStates.peek().onForeground();
@@ -153,8 +155,7 @@ public abstract class NpGame {
         mNeedSetupState = true;
     }
     
-    synchronized public final void render(GL10 gl) {
-
+    private void renderActiveState(GL10 gl) {
         if (mStates.size() <= 0) {
             return;
         }
@@ -169,7 +170,17 @@ public abstract class NpGame {
             s.setupOnSurfaceChanged(gl, mWidth, mHeight);
         }
 
-        s.render(gl); 
+        s.render(gl);
+    }
+    
+    synchronized public final void render(GL10 gl) {
+
+        renderActiveState(gl);
+        
+        for (NpGameState s : mStatesToDelete) {
+            s.onRelease(gl);
+        }
+        mStatesToDelete.clear();
     }
 
     synchronized public final void setupOnSurfaceChanged(GL10 gl, int width, 
@@ -191,7 +202,7 @@ public abstract class NpGame {
     synchronized public final boolean update() {
 
         boolean r = false;
-        
+
         mStatesToDelete.clear();
         
         if (mStates.size() > 0) {
