@@ -155,8 +155,8 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     
     static public int doRectWidgetEx(int id, NpWidgetState state, 
             String widgetLookName, NpRect rect, 
-            boolean invertX, boolean invertY) {
-        drawWidget(state, widgetLookName, rect, NpVec4.ONE, invertX, invertY);
+            boolean invertX, boolean invertY, NpVec4 color) {
+        drawWidget(state, widgetLookName, rect, color, invertX, invertY);
         return getRectWidgetRetCode(id, rect);
     }
     
@@ -172,8 +172,8 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     }
     
     static public int doRectWidgetEx(int id, String widgetLookName, NpRect rect,
-            boolean invertX, boolean invertY) {
-        drawWidget(getWidgetState(id), widgetLookName, rect, NpVec4.ONE, 
+            boolean invertX, boolean invertY, NpVec4 color) {
+        drawWidget(getWidgetState(id), widgetLookName, rect, color, 
                    invertX, invertY);
         return getRectWidgetRetCode(id, rect);
     }

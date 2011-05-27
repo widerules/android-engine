@@ -79,6 +79,22 @@ final public class NpVec4 {
     public float getZ() {
         return mValues[2];
     }
+    
+    public void setX(float aX) {
+        mValues[0] = aX;
+    }
+    
+    public void setY(float aY) {
+        mValues[1] = aY;
+    }
+    
+    public void setZ(float aZ) {
+        mValues[2] = aZ;
+    }
+    
+    public void setW(float aW) {
+        mValues[3] = aW;
+    }
 
     public void setValues(float aX, float aY, float aZ, float aW) {
         mValues[0] = aX;
