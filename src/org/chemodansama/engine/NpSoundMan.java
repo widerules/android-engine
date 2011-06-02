@@ -42,7 +42,7 @@ public class NpSoundMan {
         }
     }
     
-    private void playSound(int index, final int looped) {
+    private void playSound(int index, final int looped, final double volume) {
         
         final Integer soundID = mSoundPoolMap.get(index);
         
@@ -58,6 +58,8 @@ public class NpSoundMan {
                 float streamVolume = am.getStreamVolume(AudioManager.STREAM_MUSIC);
                 streamVolume /= am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
                 
+                streamVolume *= volume;
+                
                 mSoundPool.play(soundID, streamVolume, streamVolume, 1, looped, 
                                 1f);        
             }
@@ -65,10 +67,18 @@ public class NpSoundMan {
     }
     
     public void playSound(int index) {
-        playSound(index, 0);
+        playSound(index, 0, 1);
+    }
+    
+    public void playSound(int index, double volume) {
+        playSound(index, 0, volume);
     }
     
     public void playLoopedSound(int index) {
-        playSound(index, 1);
+        playSound(index, 1, 1);
+    }
+    
+    public void playLoopedSound(int index, double volume) {
+        playSound(index, 1, volume);
     }
 }
