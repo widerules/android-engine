@@ -8,11 +8,14 @@ import android.media.AudioManager;
 import android.media.SoundPool;
 import android.util.Log;
 
+
 public class NpSoundMan {
     private SoundPool mSoundPool;
     private HashMap<Integer, Integer> mSoundPoolMap;
     private AudioManager mAudioManager;
     private Activity mActivity;
+    
+    private boolean soundEnabled = true;
     
     private static NpSoundMan mInstance = null;
     
@@ -31,6 +34,14 @@ public class NpSoundMan {
         mAudioManager = (AudioManager) mActivity.getSystemService(Context.AUDIO_SERVICE);
     }
     
+    public boolean getSoundEnabled() {
+        return soundEnabled;
+    }
+    
+    public void revertSound() {
+        soundEnabled ^= true;
+    }
+    
     public void addSound(int SoundID) {
         if (!mSoundPoolMap.containsKey(SoundID)) {
             try {
@@ -43,6 +54,10 @@ public class NpSoundMan {
     }
     
     private void playSound(int index, final int looped, final double volume) {
+        
+        if (!soundEnabled) {
+            return;
+        }
         
         final Integer soundID = mSoundPoolMap.get(index);
         
