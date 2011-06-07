@@ -32,7 +32,7 @@ final public class NpTexture {
     }
     
     public void release(GL10 gl) {
-        IntBuffer t = ByteBuffer.allocate(4).asIntBuffer();
+        IntBuffer t = ByteBuffer.allocateDirect(4).asIntBuffer();
         t.put(mTextureID);
         t.rewind();
         
