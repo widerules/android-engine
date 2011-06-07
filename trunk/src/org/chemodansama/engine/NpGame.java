@@ -40,15 +40,15 @@ public abstract class NpGame {
     public abstract NpGameState constructInitialState(NpGame g, GL10 gl, 
             AssetManager assets);
     
-    public Activity getActivity() {
+    synchronized public Activity getActivity() {
         return mActivity;
     }
     
-    public final float getPointerOffsetX() {
+    synchronized public final float getPointerOffsetX() {
         return mPointerOffset.getX();
     }
     
-    public final float getPointerOffsetY() {
+    synchronized public final float getPointerOffsetY() {
         return mPointerOffset.getY();
     }
     
@@ -56,11 +56,11 @@ public abstract class NpGame {
         return mStates.size();
     }
     
-    public final boolean isEmpty() {
+    synchronized public final boolean isEmpty() {
         return mStates.isEmpty();
     }
     
-    public final boolean isPointerDown() {
+    synchronized public final boolean isPointerDown() {
         return mPointerDown;
     }
     
@@ -81,7 +81,7 @@ public abstract class NpGame {
         }
     }
     
-    public final void onSurfaceCreated(GL10 gl, EGLConfig config, 
+    synchronized public final void onSurfaceCreated(GL10 gl, EGLConfig config, 
             AssetManager assets) {
         if (mStates.isEmpty()) {
             pushState(constructInitialState(this, gl, assets));
@@ -135,7 +135,7 @@ public abstract class NpGame {
         return true;
     }
     
-    public final void popState() {
+    synchronized public final void popState() {
         if (mStates.size() > 0) {
             mStatesToDelete.add(mStates.pop());
         }
@@ -145,7 +145,7 @@ public abstract class NpGame {
         }
     }
     
-    public final void pushState(final NpGameState state) {
+    synchronized public final void pushState(final NpGameState state) {
         if (state == null) {
             return;
         }
