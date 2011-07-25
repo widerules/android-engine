@@ -1,5 +1,9 @@
 package org.chemodansama.engine;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.HashMap;
 
 import android.app.Activity;
@@ -15,7 +19,8 @@ public class NpSoundMan {
     private AudioManager mAudioManager;
     private Activity mActivity;
     
-    private boolean soundEnabled = true;
+    private boolean mSoundEnabled;
+    public static final String SOUND_SETTINGS = "sound.dat"; 
     
     private static NpSoundMan mInstance = null;
     
@@ -32,14 +37,52 @@ public class NpSoundMan {
         mSoundPool = new SoundPool(4, AudioManager.STREAM_MUSIC, 0);
         mSoundPoolMap = new HashMap<Integer, Integer>();
         mAudioManager = (AudioManager) mActivity.getSystemService(Context.AUDIO_SERVICE);
+        mSoundEnabled = loadSetting(activity, SOUND_SETTINGS);
+    }
+    
+    private boolean loadSetting(Context context, String fileName) {
+        try {
+            FileInputStream in = context.openFileInput(fileName);
+
+            InputStreamReader sr = new InputStreamReader(in);
+            
+            int enabled = sr.read();
+            
+            sr.close();
+            
+            return (enabled == 1) ? true : false;
+            
+        } catch (Exception e) {
+            return true;
+        }
+    }
+    
+    private void writeSettings(Context context, String fileName) {
+        try {
+            FileOutputStream os = context.openFileOutput(fileName, 
+                                                         Context.MODE_PRIVATE);
+            
+            OutputStreamWriter sw = new OutputStreamWriter(os);
+            
+            sw.write(mSoundEnabled ? 1 : 0);
+            sw.flush();
+            sw.close();
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void saveSettings() {
+        writeSettings(mActivity, SOUND_SETTINGS);
     }
     
     public boolean getSoundEnabled() {
-        return soundEnabled;
+        return mSoundEnabled;
     }
     
     public void revertSound() {
-        soundEnabled ^= true;
+        mSoundEnabled ^= true;
     }
     
     public void addSound(int SoundID) {
@@ -55,7 +98,7 @@ public class NpSoundMan {
     
     private void playSound(int index, final int looped, final double volume) {
         
-        if (!soundEnabled) {
+        if (!mSoundEnabled) {
             return;
         }
         
