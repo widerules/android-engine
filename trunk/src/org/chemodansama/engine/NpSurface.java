@@ -14,15 +14,19 @@ import android.view.MotionEvent;
 
 final class NpRenderer implements GLSurfaceView.Renderer {
 
-    final private AssetManager mAssets;
-    final private NpActivityTerminator mTerminator;
-    final private NpGame mGame;
+    private final AssetManager mAssets;
+    private final NpActivityTerminator mTerminator;
+    private final NpGame mGame;
 
+    private final String mSchemeName;
+    
     private NpGameUpdateThread mUpdater = null;
     
     public NpRenderer(AssetManager assets, NpActivityTerminator ft, 
-            NpGame game) {
+            NpGame game, String schemeName) {
         super();
+        
+        mSchemeName = schemeName;
         
         mGame = game;
         
@@ -61,7 +65,7 @@ final class NpRenderer implements GLSurfaceView.Renderer {
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         
-        NpSkin.loadScheme(gl, mAssets, "gui/sleekspace.myscheme");
+        NpSkin.loadScheme(gl, mAssets, mSchemeName);
         
         mGame.onSurfaceCreated(gl, config, mAssets);
         
@@ -85,11 +89,12 @@ public final class NpSurface extends GLSurfaceView {
 
     private NpRenderer mRenderer = null;
     
-    public NpSurface(Context context, NpActivityTerminator ft, NpGame game) {
+    public NpSurface(Context context, NpActivityTerminator ft, NpGame game, 
+            String schemeName) {
         super(context);
         this.setEGLConfigChooser(8, 8, 8, 8, 16, 0);
         
-        mRenderer = new NpRenderer(context.getAssets(), ft, game);
+        mRenderer = new NpRenderer(context.getAssets(), ft, game, schemeName);
         setRenderer(mRenderer);
         getHolder().setFormat(PixelFormat.TRANSPARENT);        
     }
