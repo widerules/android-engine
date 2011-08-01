@@ -67,7 +67,7 @@ public abstract class NpGame {
     synchronized public final boolean onBackPressed() {
         if (mStates.size() > 0) {
             return mStates.peek().onBackPressed(); 
-        } else {        
+        } else {
             return false;
         }
     }
@@ -203,12 +203,10 @@ public abstract class NpGame {
 
         boolean r = false;
 
-        mStatesToDelete.clear();
-        
         if (mStates.size() > 0) {
             mStates.peek().update();
         } else {
-            r = true;
+            r = mStatesToDelete.size() == 0;
         }
         
         return r;
