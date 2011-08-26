@@ -20,15 +20,27 @@ final public class NpTexture {
     
     private NpTextureHeader mHeader;
     
+    /**
+     * @param gl
+     * @param in
+     * @param clampToEdge
+     * @exception IllegalArgumentException
+     */
     public NpTexture(GL10 gl, InputStream in, boolean clampToEdge) {
         super();
+        
+        if (in == null) {
+            throw new IllegalArgumentException("Input stream is null");
+        }
         
         NpTextureData d = new NpTextureData(in);
         
         if (d.isDataValid()) {
             mHeader = d.getHeader();
             initGL10(gl, d, clampToEdge);
-        } 
+        } else {
+            throw new IllegalArgumentException("Texture data is not valid");
+        }
     }
     
     public void release(GL10 gl) {
