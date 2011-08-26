@@ -27,4 +27,8 @@ public class NpUtils {
         }
         return in;
     }
+    
+    public static int byteToUnsignedInt(byte b) {
+        return b & 0xFF;
+    }
 }
