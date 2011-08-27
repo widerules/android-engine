@@ -10,6 +10,7 @@ import java.io.InputStream;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.chemodansama.engine.LogHelper;
 import org.chemodansama.engine.LogTag;
 
 import android.util.Log;
@@ -26,21 +27,26 @@ final public class NpTexture {
      * @param clampToEdge
      * @exception IllegalArgumentException
      */
-    public NpTexture(GL10 gl, InputStream in, boolean clampToEdge) {
+    public NpTexture(GL10 gl, InputStream in, boolean clampToEdge) 
+            throws IOException {
         super();
         
+        if (gl == null) {
+            throw new NullPointerException("gl is null");
+        }
+        
         if (in == null) {
-            throw new IllegalArgumentException("Input stream is null");
+            throw new IOException("Input stream is null");
         }
         
         NpTextureData d = new NpTextureData(in);
         
-        if (d.isDataValid()) {
-            mHeader = d.getHeader();
-            initGL10(gl, d, clampToEdge);
-        } else {
-            throw new IllegalArgumentException("Texture data is not valid");
+        if (!initGL10(gl, d, clampToEdge)) {
+            LogHelper.w("Texture was not initialized!" 
+                        + " Texture is in Zombie state!");
         }
+        
+        mHeader = d.getHeader();
     }
     
     public void release(GL10 gl) {
@@ -51,6 +57,7 @@ final public class NpTexture {
         gl.glDeleteTextures(1, t);
         
         mTextureID = 0;
+        mHeader = null;
     }
     
     public boolean bindGL10(GL10 gl) {
@@ -88,12 +95,28 @@ final public class NpTexture {
         return mTextureID;
     }
     
-    public boolean initGL10(GL10 gl, NpTextureData texData, 
+    private boolean initGL10(GL10 gl, NpTextureData texData, 
             boolean clampToEdge) {
         
-        if ((texData == null) || !texData.isDataValid() || (mTextureID != 0) 
-                || (mHeader.getMipsCount() <= 0) || (gl == null)) {
+        if (texData == null) {
+            LogHelper.w("texData is null. Interrupting.");
             return false;
+        }
+
+        if (gl == null) {
+            LogHelper.w("gl == null. Interrupting");
+            return false;
+        }
+        
+        if (mTextureID != 0) {
+            LogHelper.w("textureID != 0. Interrupting.");
+            return false;
+        }
+
+        NpTextureHeader header = texData.getHeader();
+        
+        if (header.getMipsCount() <= 0) {
+            LogHelper.w("no mips in texture data. Interrupting.");
         }
         
         IntBuffer textureBuf = ByteBuffer.allocateDirect(4).asIntBuffer();
@@ -113,11 +136,11 @@ final public class NpTexture {
 
         gl.glTexParameterx(GL10.GL_TEXTURE_2D, 
                            GL10.GL_TEXTURE_MAG_FILTER, 
-                           mHeader.getMagFilter());
+                           header.getMagFilter());
 
         gl.glTexParameterx(GL10.GL_TEXTURE_2D, 
                            GL10.GL_TEXTURE_MIN_FILTER, 
-                           mHeader.getMinFilter());
+                           header.getMinFilter());
         
         int clamp = (clampToEdge) ? GL10.GL_CLAMP_TO_EDGE : GL10.GL_REPEAT;
         
@@ -127,12 +150,12 @@ final public class NpTexture {
         
         gl.glTexImage2D(GL10.GL_TEXTURE_2D, 
                         0, // level 
-                        mHeader.getInternalFormat(), 
-                        mHeader.getWidth(),
-                        mHeader.getHeight(), 
+                        header.getInternalFormat(), 
+                        header.getWidth(),
+                        header.getHeight(), 
                         0, // border 
-                        mHeader.getFormat(), 
-                        mHeader.getType(), 
+                        header.getFormat(), 
+                        header.getType(), 
                         texData.getMips().get(0));
 
         gl.glBindTexture(GL10.GL_TEXTURE_2D, 0);
@@ -143,49 +166,32 @@ final public class NpTexture {
 
 final class NpTextureData {
     
-    private boolean mDataValid = false; // valid Header, Mips and MipsSize
-    
-    private NpTextureHeader mHeader = new NpTextureHeader();
+    private final NpTextureHeader mHeader;
     private ArrayList<ByteBuffer> mMips = new ArrayList<ByteBuffer>();
     private ArrayList<Integer> mMipSize = new ArrayList<Integer>(); 
     
-    public NpTextureData(InputStream in) {
-        mDataValid = false;
-        
+    public NpTextureData(InputStream in) throws IOException {
         if (in == null) {
-            Log.w(LogTag.TAG, "cant load texture data: input stream is null");
-            return;
+            mHeader = null;
+            throw new IOException("in == null");
         }
         
         DataInputStream din = new DataInputStream(in);
-        
-        if (mHeader.loadFromStream(din)) {
+        mHeader = new NpTextureHeader(din);
 
-            try {
-                for (int i = 0; i < mHeader.getMipsCount(); i++) {
-                    mMipSize.add(Integer.reverseBytes(din.readInt()));
+        for (int i = 0; i < mHeader.getMipsCount(); i++) {
+            mMipSize.add(Integer.reverseBytes(din.readInt()));
 
-                    ByteBuffer b = ByteBuffer.allocateDirect(mMipSize.get(i));
+            ByteBuffer b = ByteBuffer.allocateDirect(mMipSize.get(i));
 
-                    byte[] bb = new byte[mMipSize.get(i)];
+            byte[] bb = new byte[mMipSize.get(i)];
 
-                    din.read(bb, 0, mMipSize.get(i));
+            din.read(bb, 0, mMipSize.get(i));
 
-                    b.put(bb);
-                    b.position(0);
+            b.put(bb);
+            b.position(0);
 
-                    mMips.add(b);
-                }
-
-                mDataValid = true;
-                return;
-                
-            } catch (IOException e) {
-                Log.e(LogTag.TAG, "IOException while reading texture", e);
-                return;
-            }
-        } else {
-            return;
+            mMips.add(b);
         }
     }
 
@@ -199,9 +205,5 @@ final class NpTextureData {
 
     public ArrayList<Integer> getMipSize() {
         return mMipSize;
-    }
-
-    public boolean isDataValid() {
-        return mDataValid;
     }
 }

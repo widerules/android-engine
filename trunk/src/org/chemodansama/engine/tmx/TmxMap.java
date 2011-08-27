@@ -5,12 +5,14 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.ListIterator;
 
+import org.chemodansama.engine.LogHelper;
 import org.chemodansama.engine.utils.NpUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import android.content.res.AssetManager;
+import android.util.Log;
 import android.util.Xml;
 import android.util.Xml.Encoding;
 
@@ -157,31 +159,20 @@ public class TmxMap {
         }
     }
     
-    /**
-     * @param assets
-     * @param fileName
-     * @exception IllegalArgumentException when xml parse error occurred.
-     */
-    public TmxMap(AssetManager assets, String fileName) {
+    public TmxMap(AssetManager assets, String fileName) 
+            throws IOException, IllegalArgumentException {
         
         mTilesets = new ArrayList<TmxTileset>();
         mLayers = new ArrayList<TmxLayer>();
         
-        InputStream is = NpUtils.openStreamNoCatch(assets, fileName);
-        
-        if (is == null) {
-            String msg = "Cant open stream for '" + fileName + "'";
-            throw new IllegalArgumentException(msg);
-        }
+        InputStream is = assets.open(fileName);
         
         try {
-            TmxParser h = new TmxParser();
-            
-            Xml.parse(is, Encoding.US_ASCII, h);
-        } catch (IOException e) {
-            throw new IllegalArgumentException("IOException while parsing", e);
+            Xml.parse(is, Encoding.US_ASCII, new TmxParser());
         } catch (SAXException e) {
-            throw new IllegalArgumentException("SAXException while parsing", e);
+            String msg = "SAXException while parsing '" + fileName + "'";
+            LogHelper.e(msg);
+            throw new IOException(msg);
         }
     }
     
