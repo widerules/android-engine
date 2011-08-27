@@ -3,10 +3,6 @@ package org.chemodansama.engine.render;
 import java.io.DataInputStream;
 import java.io.IOException;
 
-import org.chemodansama.engine.LogTag;
-
-import android.util.Log;
-
 final public class NpTextureHeader {
     private int bytesPerPel = 0;
 
@@ -70,29 +66,22 @@ final public class NpTextureHeader {
         return width;
     }
     
-    public boolean loadFromStream(DataInputStream in) {
-        boolean r = false;
-
+    public NpTextureHeader(DataInputStream in) throws IOException {
+        if (in == null) {
+            throw new IOException("NpTextureHeader(null)");
+        }
+        
         if (in != null) {
-            try {
-                bytesPerPel    = Integer.reverseBytes(in.readInt());
-                target         = Integer.reverseBytes(in.readInt());
-                internalFormat = Integer.reverseBytes(in.readInt());
-                width          = Integer.reverseBytes(in.readInt());
-                height         = Integer.reverseBytes(in.readInt());
-                format         = Integer.reverseBytes(in.readInt());
-                type           = Integer.reverseBytes(in.readInt());
-                minFilter      = Integer.reverseBytes(in.readInt());
-                magFilter      = Integer.reverseBytes(in.readInt());
-                mipsCount      = Integer.reverseBytes(in.readInt());
-
-                r = true;
-                
-            } catch (IOException e) {
-                Log.e(LogTag.TAG, "IOException while reading texHeader", e);
-                r = false;
-            }
+            bytesPerPel    = Integer.reverseBytes(in.readInt());
+            target         = Integer.reverseBytes(in.readInt());
+            internalFormat = Integer.reverseBytes(in.readInt());
+            width          = Integer.reverseBytes(in.readInt());
+            height         = Integer.reverseBytes(in.readInt());
+            format         = Integer.reverseBytes(in.readInt());
+            type           = Integer.reverseBytes(in.readInt());
+            minFilter      = Integer.reverseBytes(in.readInt());
+            magFilter      = Integer.reverseBytes(in.readInt());
+            mipsCount      = Integer.reverseBytes(in.readInt());
         } 
-        return r;
     }
 }

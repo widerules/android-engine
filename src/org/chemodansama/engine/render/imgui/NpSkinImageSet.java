@@ -6,6 +6,7 @@ import java.util.HashMap;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.chemodansama.engine.LogHelper;
 import org.chemodansama.engine.LogTag;
 import org.chemodansama.engine.render.NpTexture;
 import org.xml.sax.Attributes;
@@ -114,8 +115,12 @@ public final class NpSkinImageSet {
                         return;
                     }
                     
-                    mTexture = new NpTexture(mGL, texIn, true);
-                    Log.i(LogTag.TAG, imageFile + " loaded");
+                    try {
+                        mTexture = new NpTexture(mGL, texIn, true);
+                        Log.i(LogTag.TAG, imageFile + " loaded");
+                    } catch (IOException e) {
+                        LogHelper.e(imageFile + " was NOT loaded.");
+                    }
                 }
                 
             } else if (localName.equalsIgnoreCase("image")) {

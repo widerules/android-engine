@@ -2,23 +2,99 @@ package org.chemodansama.engine.tmx;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.TreeMap;
 
 import javax.microedition.khronos.opengles.GL10;
 
 import org.chemodansama.engine.LogHelper;
 import org.chemodansama.engine.render.NpTexture;
-import org.chemodansama.engine.utils.NpUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import android.content.res.AssetManager;
+import android.util.Pair;
 import android.util.Xml;
 import android.util.Xml.Encoding;
 
+class TextureHolder {
+    // clamp to edge is set by default.
+    private final static boolean CLAMP_TO_EDGE = true;
+    
+    // These two must be kept in sync. It is one the task of the class.
+    private final ArrayList<Pair<String, String>> mTextureSource; // <Alias, FileName>
+    private final TreeMap<String, NpTexture> mTextures; // <Alias, Texture>
+
+    public TextureHolder() {
+        mTextures = new TreeMap<String, NpTexture>();
+        mTextureSource = new ArrayList<Pair<String, String>>();
+    } 
+    
+    boolean put(GL10 gl, String alias, String file, AssetManager assets) 
+            throws IOException {
+        
+        if ((alias == null) || (alias.equals(""))) {
+            return false;
+        }
+        
+        if ((file == null) || (file.equals(""))) {
+            return false;
+        }
+        
+        if (assets == null) {
+            return false;
+        }
+        
+        if (mTextures.containsKey(alias)) {
+            return true;
+        }
+        
+        InputStream in = assets.open(file);
+        
+        mTextures.put(alias, new NpTexture(gl, in, CLAMP_TO_EDGE));
+        mTextureSource.add(new Pair<String, String>(alias, file));
+        
+        return true;
+    }
+    
+    private void releaseTextures(GL10 gl) {
+        for (NpTexture t : mTextures.values()) {
+            t.release(gl);
+        }
+        mTextures.clear();
+    }
+    
+    public void release(GL10 gl) {
+        releaseTextures(gl);
+        mTextureSource.clear();
+    }
+    
+    public boolean isEmpty() {
+        return mTextures.isEmpty() && mTextureSource.isEmpty();
+    }
+    
+    public boolean refreshTextures(GL10 gl, AssetManager assets) 
+            throws IOException {
+        
+        if ((assets == null) || (gl == null)) {
+            return false;
+        }
+        
+        releaseTextures(gl);
+        
+        for (Pair<String, String> p : mTextureSource) {
+            InputStream in = assets.open(p.second);
+            mTextures.put(p.first, new NpTexture(gl, in, CLAMP_TO_EDGE));        
+        }
+        
+        return true;
+    }
+}
+
 public class TmxTexturePack {
-    private final TreeMap<String, NpTexture> mTextures;
+    
+    private final TextureHolder mTextureHolder = new TextureHolder();
     
     private class TexturePackHandler extends DefaultHandler {
         
@@ -52,15 +128,17 @@ public class TmxTexturePack {
                     return;
                 }
                 
-                InputStream in = NpUtils.openStreamNoCatch(mAssets, texture);
-                
-                if (in == null) {
-                    return;
-                }
+                boolean failed = false;
                 
                 try {
-                    mTextures.put(alias, new NpTexture(mGL, in, true));
+                    failed = !mTextureHolder.put(mGL, alias, texture, mAssets);
                 } catch (IllegalArgumentException e) {
+                    failed = true;
+                } catch (IOException e) {
+                    failed = true;
+                }
+                
+                if (failed) {
                     LogHelper.e("Can't instantiate texture '" + texture + "'");
                     return;
                 }
@@ -71,27 +149,43 @@ public class TmxTexturePack {
         }
     }
     
-    /**
-     * 
-     * @param gl
-     * @param assets
-     * @param fileName
-     * @throws IOException if the specified file cannot be opened.
-     */
-    public TmxTexturePack(GL10 gl, AssetManager assets, String fileName) 
-            throws IOException {
-        mTextures = new TreeMap<String, NpTexture>();
-
-        InputStream in = assets.open(fileName);
-        
-        DefaultHandler handler = new TexturePackHandler(gl, assets);
-        
+    public TmxTexturePack() {
+    }
+    
+    public TmxTexturePack(GL10 gl, AssetManager assets, String fileName) {
+        this();
+        addTextures(gl, assets, fileName);
+    }
+    
+    public boolean addTextures(GL10 gl, AssetManager assets, String fileName) {
         try {
+            InputStream in = assets.open(fileName);
+            DefaultHandler handler = new TexturePackHandler(gl, assets);
             Xml.parse(in, Encoding.US_ASCII, handler);
-        } catch (IOException e) {
-            throw new IllegalArgumentException("IOException while parsing", e);
         } catch (SAXException e) {
-            throw new IllegalArgumentException("SAXException while parsing", e);
+            LogHelper.e("SAXException while parsing '" + fileName + "'");
+            return false;
+        } catch (IOException e) {
+            LogHelper.e("IOException with file '" + fileName + "'");
+            return false;
         }
+        return true;
+    }
+
+    public void release(GL10 gl) {
+        mTextureHolder.release(gl);
+    }
+    
+    @Override
+    protected void finalize() throws Throwable {
+        if (!mTextureHolder.isEmpty()) {
+            LogHelper.e("texture pack was NOT released!");
+        }
+        super.finalize();
+    }
+    
+    public boolean refreshTextures(GL10 gl, AssetManager assets) 
+            throws IOException {
+        return mTextureHolder.refreshTextures(gl, assets);
     }
 }
