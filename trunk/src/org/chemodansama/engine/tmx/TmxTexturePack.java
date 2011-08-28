@@ -22,14 +22,26 @@ class TextureHolder {
     // clamp to edge is set by default.
     private final static boolean CLAMP_TO_EDGE = true;
     
+    private final TreeMap<String, NpTexture> mTextures; // <Alias, Texture>
     // These two must be kept in sync. It is one the task of the class.
     private final ArrayList<Pair<String, String>> mTextureSource; // <Alias, FileName>
-    private final TreeMap<String, NpTexture> mTextures; // <Alias, Texture>
 
     public TextureHolder() {
         mTextures = new TreeMap<String, NpTexture>();
         mTextureSource = new ArrayList<Pair<String, String>>();
     } 
+    
+    public boolean isEmpty() {
+        return mTextures.isEmpty() && mTextureSource.isEmpty();
+    }
+    
+    public NpTexture get(String name) {
+        if ((name == null) || (name.equals(""))) {
+            return null;
+        }
+        
+        return mTextures.get(name);
+    }
     
     boolean put(GL10 gl, String alias, String file, AssetManager assets) 
             throws IOException {
@@ -58,22 +70,6 @@ class TextureHolder {
         return true;
     }
     
-    private void releaseTextures(GL10 gl) {
-        for (NpTexture t : mTextures.values()) {
-            t.release(gl);
-        }
-        mTextures.clear();
-    }
-    
-    public void release(GL10 gl) {
-        releaseTextures(gl);
-        mTextureSource.clear();
-    }
-    
-    public boolean isEmpty() {
-        return mTextures.isEmpty() && mTextureSource.isEmpty();
-    }
-    
     public boolean refreshTextures(GL10 gl, AssetManager assets) 
             throws IOException {
         
@@ -90,11 +86,21 @@ class TextureHolder {
         
         return true;
     }
+    
+    public void release(GL10 gl) {
+        releaseTextures(gl);
+        mTextureSource.clear();
+    }
+    
+    private void releaseTextures(GL10 gl) {
+        for (NpTexture t : mTextures.values()) {
+            t.release(gl);
+        }
+        mTextures.clear();
+    }
 }
 
 public class TmxTexturePack {
-    
-    private final TextureHolder mTextureHolder = new TextureHolder();
     
     private class TexturePackHandler extends DefaultHandler {
         
@@ -149,6 +155,8 @@ public class TmxTexturePack {
         }
     }
     
+    private final TextureHolder mTextureHolder = new TextureHolder();
+    
     public TmxTexturePack() {
     }
     
@@ -171,11 +179,15 @@ public class TmxTexturePack {
         }
         return true;
     }
-
-    public void release(GL10 gl) {
-        mTextureHolder.release(gl);
-    }
     
+    public NpTexture getTexture(String name) {
+        if ((name == null) || (name.equals(""))) {
+            return null;
+        }
+        
+        return mTextureHolder.get(name);
+    }
+
     @Override
     protected void finalize() throws Throwable {
         if (!mTextureHolder.isEmpty()) {
@@ -187,5 +199,9 @@ public class TmxTexturePack {
     public boolean refreshTextures(GL10 gl, AssetManager assets) 
             throws IOException {
         return mTextureHolder.refreshTextures(gl, assets);
+    }
+    
+    public void release(GL10 gl) {
+        mTextureHolder.release(gl);
     }
 }

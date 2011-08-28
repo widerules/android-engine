@@ -7,6 +7,7 @@ import javax.microedition.khronos.opengles.GL10;
 import org.chemodansama.engine.NpHolder;
 import org.chemodansama.engine.math.NpMath;
 import org.chemodansama.engine.math.NpVec4;
+import org.chemodansama.engine.render.NpPolyBuffer;
 import org.chemodansama.engine.render.NpTexture;
 import org.chemodansama.engine.render.imgui.NpFont.NpFontCharStruct;
 
