@@ -18,34 +18,74 @@ import android.util.Xml.Encoding;
 
 public class TmxMap {
 
-    private String version = "";
-    private int width;
-    private int height;
-    private int tileWidth;
-    private int tileHeight;
-    
-    private final ArrayList<TmxTileset> mTilesets;
-    private final ArrayList<TmxLayer> mLayers;
-    
     private class TmxParser extends DefaultHandler {
        
-        private int tsFirstgid;
-        private String tsName;
-        private int tsTileWidth;
-        private int tsTileHeight;
-        private TmxImage tsImage;
-        private int tsSpacing;
-        private int tsMargin;
-        private ArrayList<TmxTile> tsTiles = new ArrayList<TmxTile>();
-        private TmxTile tile;
-        private TmxLayer layer;
-        
         private final StringBuilder compressedData = new StringBuilder();
-        private TmxDataEncoding dataEncoding;
         private TmxDataCompression dataCompression;
+        private TmxDataEncoding dataEncoding;
         private boolean isParsingData = false;
+        private TmxLayer layer;
+        private TmxTile tile;
+        private int tsFirstgid;
+        private TmxImage tsImage;
+        private int tsMargin;
+        private String tsName;
+        
+        private int tsSpacing;
+        private int tsTileHeight;
+        private ArrayList<TmxTile> tsTiles = new ArrayList<TmxTile>();
+        private int tsTileWidth;
         
         public TmxParser() {
+        }
+        
+        @Override
+        public void characters(char[] ch, int start, int length)
+                throws SAXException {
+            if (isParsingData && (layer != null) 
+                    && (dataCompression != TmxDataCompression.NONE)
+                    && (dataEncoding != TmxDataEncoding.NONE)) {
+                compressedData.append(ch, start, length);
+            }
+        }
+        
+        @Override
+        public void endElement(String uri, String localName, String qName)
+                throws SAXException {
+            super.endElement(uri, localName, qName);
+            
+            if ((qName == null) || (qName.equals(""))) {
+                return;
+            }
+            
+            if (qName.equalsIgnoreCase("tileset")) {
+                flushTileSet();
+            } else if (qName.equalsIgnoreCase("tile")) {
+                tsTiles.add(tile);
+                tile = null;
+            } else if (qName.equalsIgnoreCase("layer")) {
+                mLayers.add(layer);
+                layer = null;
+            } else if (qName.equalsIgnoreCase("data")) {
+                if (isParsingData && (layer != null) 
+                        && (dataCompression != TmxDataCompression.NONE)
+                        && (dataEncoding != TmxDataEncoding.NONE)) {
+                    layer.setCompressedData(compressedData.toString(), 
+                                            dataEncoding, dataCompression);
+                }
+                dataEncoding = TmxDataEncoding.NONE;
+                dataCompression = TmxDataCompression.NONE;
+                compressedData.setLength(0);
+                isParsingData = false;
+            }
+        }
+        
+        private void flushTileSet() {
+            mTilesets.add(new TmxTileset(tsFirstgid, tsName, 
+                                         tsTileWidth, tsTileHeight, 
+                                         tsSpacing, tsMargin, 
+                                         tsImage, tsTiles));
+            tsTiles.clear();
         }
         
         private int getAttributeAsInt(Attributes attributes, String qName) {
@@ -69,7 +109,7 @@ public class TmxMap {
                 tileWidth  = getAttributeAsInt(attributes, "tilewidth");
                 tileHeight = getAttributeAsInt(attributes, "tileheight");
             } else if (qName.equalsIgnoreCase("tileset")) {
-                tsFirstgid = getAttributeAsInt(attributes, "firstdig");
+                tsFirstgid = getAttributeAsInt(attributes, "firstgid");
                 tsName = attributes.getValue("name");
                 tsTileHeight = getAttributeAsInt(attributes, "tileheight");
                 tsTileWidth = getAttributeAsInt(attributes, "tilewidth");
@@ -108,56 +148,16 @@ public class TmxMap {
                 isParsingData = true;
             }
         }
-        
-        @Override
-        public void characters(char[] ch, int start, int length)
-                throws SAXException {
-            if (isParsingData && (layer != null) 
-                    && (dataCompression != TmxDataCompression.NONE)
-                    && (dataEncoding != TmxDataEncoding.NONE)) {
-                compressedData.append(ch, start, length);
-            }
-        }
-        
-        private void flushTileSet() {
-            mTilesets.add(new TmxTileset(tsFirstgid, tsName, 
-                                         tsTileWidth, tsTileHeight, 
-                                         tsSpacing, tsMargin, 
-                                         tsImage, tsTiles));
-            tsTiles.clear();
-        }
-        
-        @Override
-        public void endElement(String uri, String localName, String qName)
-                throws SAXException {
-            super.endElement(uri, localName, qName);
-            
-            if ((qName == null) || (qName.equals(""))) {
-                return;
-            }
-            
-            if (qName.equalsIgnoreCase("tileset")) {
-                flushTileSet();
-            } else if (qName.equalsIgnoreCase("tile")) {
-                tsTiles.add(tile);
-                tile = null;
-            } else if (qName.equalsIgnoreCase("layer")) {
-                mLayers.add(layer);
-                layer = null;
-            } else if (qName.equalsIgnoreCase("data")) {
-                if (isParsingData && (layer != null) 
-                        && (dataCompression != TmxDataCompression.NONE)
-                        && (dataEncoding != TmxDataEncoding.NONE)) {
-                    layer.setCompressedData(compressedData.toString(), 
-                                            dataEncoding, dataCompression);
-                }
-                dataEncoding = TmxDataEncoding.NONE;
-                dataCompression = TmxDataCompression.NONE;
-                compressedData.setLength(0);
-                isParsingData = false;
-            }
-        }
     }
+    private int height;
+    private final ArrayList<TmxLayer> mLayers;
+    private final ArrayList<TmxTileset> mTilesets;
+    private int tileHeight;
+    
+    private int tileWidth;
+    private String version = "";
+    
+    private int width;
     
     public TmxMap(AssetManager assets, String fileName) 
             throws IOException, IllegalArgumentException {
@@ -176,30 +176,55 @@ public class TmxMap {
         }
     }
     
-    public int getLayersCount() {
-        return mLayers.size();
+    public int getHeight() {
+        return height;
+    }
+    
+    public int getHeightInPels() {
+        return height * tileHeight;
     }
     
     public TmxLayer getLayer(int i) {
         return ((i >= 0) && (i < mLayers.size())) ? mLayers.get(i) : null;
     }
     
-    public ListIterator<TmxLayer> getLayers() {
-        return mLayers.listIterator();
+    public Iterable<TmxLayer> getLayers() {
+        return mLayers;
     }
     
-    public int getTilesetCount() {
-        return mTilesets.size();
+    public int getLayersCount() {
+        return mLayers.size();
+    }
+    
+    public int getTileHeight() {
+        return tileHeight;
     }
     
     public TmxTileset getTileset(int i) {
         return ((i >= 0) && (i < mTilesets.size())) ? mTilesets.get(i) : null;
     }
     
-    public ListIterator<TmxTileset> getTilesets() {
-        return mTilesets.listIterator();
+    public TmxTileset getTilesetByGid(int gid) {
+        for (TmxTileset ts : mTilesets) {
+            if (ts.containsGid(gid)) {
+                return ts;
+            }
+        }
+        return null;
+    }
+
+    public int getTilesetCount() {
+        return mTilesets.size();
     }
     
+    public Iterable<TmxTileset> getTilesets() {
+        return mTilesets;
+    }
+    
+    public int getTileWidth() {
+        return tileWidth;
+    }
+
     public String getVersion() {
         return version;
     }
@@ -207,24 +232,8 @@ public class TmxMap {
     public int getWidth() {
         return width;
     }
-    
+
     public int getWidthInPels() {
         return width * tileWidth;
-    }
-    
-    public int getHeightInPels() {
-        return height * tileHeight;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public int getTileWidth() {
-        return tileWidth;
-    }
-
-    public int getTileHeight() {
-        return tileHeight;
     }
 }

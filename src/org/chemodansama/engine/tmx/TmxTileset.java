@@ -3,34 +3,43 @@ package org.chemodansama.engine.tmx;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import javax.microedition.khronos.opengles.GL10;
+
 import org.chemodansama.engine.LogTag;
+import org.chemodansama.engine.math.NpVec2;
 
 import android.util.Log;
 
 public class TmxTileset {
-    private final int mFirstGid;
-    private final String mName;
-    private final int mTileWidth;
-    private final int mTileHeight;
-    private final int mSpacing;
-    private final int mMarging;
+    public final int firstGid;
+    public final int marging;
+    public final TmxImage mImage;
+    private final ArrayList<TmxTile> mTiles = new ArrayList<TmxTile>();
+    public final String name;
+    public final int spacing;
 
-    private final TmxImage mImage;
+    public final int tileHeightInPels;
     
-    private final ArrayList<TmxTile> mTiles;
+    public final int tilesCount;
+    public final int tileWidthInPels;
     
-    public TmxTileset(int firstGid, String name, int tileWidth, int tileHeight,
+    public final float tileWidth;
+    public final float tileHeight;
+    
+    public final int widthInTiles;
+    public final int heightInTiles;
+    
+    public TmxTileset(int firstGid, String name, int tileWidthInPels, 
+            int tileHeightInPels,
             int spacing, int marging, TmxImage image, 
             Collection<TmxTile> tiles) {
-        mFirstGid = firstGid;
-        mName = name;
-        mTileWidth = tileWidth;
-        mTileHeight = tileHeight;
-        mSpacing = spacing;
-        mMarging = marging;
-        mImage = image;
-        
-        mTiles = new ArrayList<TmxTile>();
+        this.firstGid = firstGid;
+        this.name = name;
+        this.tileWidthInPels = tileWidthInPels;
+        this.tileHeightInPels = tileHeightInPels;
+        this.spacing = spacing;
+        this.marging = marging;
+        this.mImage = image;
         
         if (Log.isLoggable(LogTag.TAG, Log.INFO)) {
             Log.i(LogTag.TAG, "tileset '" + name + "' added");
@@ -39,33 +48,54 @@ public class TmxTileset {
         if (tiles != null) {
             mTiles.addAll(tiles);
         }
+        
+        if (image == null) {
+            throw new NullPointerException("image is null");
+        }
+        
+        if (tileHeightInPels == 0) {
+            throw new IllegalArgumentException("tileHeight cant be zero");
+        }
+        
+        if (tileWidthInPels == 0) {
+            throw new IllegalArgumentException("tileWidth cant be zero");
+        }
+        
+        tileHeight = (float) tileHeightInPels / image.getHeight();
+        tileWidth = (float) tileWidthInPels / image.getWidth();
+        
+        widthInTiles = image.getWidth() / (tileWidthInPels + spacing);
+        heightInTiles = image.getHeight() / (tileHeightInPels + spacing);
+
+        tilesCount = widthInTiles * heightInTiles;
     }
     
-    public int getFirstGid() {
-        return mFirstGid;
+    public boolean containsGid(int gid) {
+        return (gid >= firstGid) && (gid < firstGid + tilesCount);
     }
+    
+    public boolean getTileTexcoords(int tileGid, NpVec2 tc) {
+        
+        if (tc == null) {
+            return false;
+        }
+        
+        if (!containsGid(tileGid)) {
+            return false;
+        }
+        
+        int localId = tileGid - firstGid;
+                
+        int tileX = localId % widthInTiles;
+        int tileY = localId / widthInTiles;
 
-    public String getName() {
-        return mName;
-    }
-
-    public int getTileWidth() {
-        return mTileWidth;
-    }
-
-    public int getTileHeight() {
-        return mTileHeight;
-    }
-
-    public int getSpacing() {
-        return mSpacing;
-    }
-
-    public int getMarging() {
-        return mMarging;
-    }
-
-    public TmxImage getImage() {
-        return mImage;
+        int imageH = mImage.getHeight();
+        
+        float y = (float) (imageH - tileY * (tileHeightInPels + spacing)) / imageH;
+        
+        tc.setValues((float) tileX * (tileWidthInPels + spacing) / mImage.getWidth(), 
+                     y); 
+        
+        return true;
     }
 }

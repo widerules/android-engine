@@ -1,4 +1,4 @@
-package org.chemodansama.engine.render.imgui;
+package org.chemodansama.engine.render;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -7,7 +7,7 @@ import java.nio.ShortBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
 
-final class NpPolyBuffer {
+final public class NpPolyBuffer {
     
     private short mQuadsCount = 0;
     final private int mQuadsLimit;
@@ -20,7 +20,7 @@ final class NpPolyBuffer {
     final private FloatBuffer mVertBuffer;
     final private ShortBuffer mIndices;
     
-    NpPolyBuffer(int quadsLimit) {
+    public NpPolyBuffer(int quadsLimit) {
         
         mQuadsLimit = quadsLimit;
         
@@ -41,7 +41,7 @@ final class NpPolyBuffer {
         mIndices = vbb.asShortBuffer();
     }
     
-    void flushRender(GL10 gl) {
+    public void flushRender(GL10 gl) {
         if (mQuadsCount > 0) {
             mTexCoordBuffer.put(mTexCoordArray);
             mTexCoordBuffer.position(0);
@@ -65,7 +65,7 @@ final class NpPolyBuffer {
         }
     }
     
-    void pushQuad(GL10 gl, float x1, float y1, float x2, float y2,  
+    public void pushQuad(GL10 gl, float x1, float y1, float x2, float y2,  
             float tx1, float ty1, float tx2, float ty2) {
        
         int offs = mQuadsCount * 4 * 3; 
@@ -126,7 +126,7 @@ final class NpPolyBuffer {
         }
     }
     
-    void pushQuadWH(GL10 gl, float x, float y, float w, float h, 
+    public void pushQuadWH(GL10 gl, float x, float y, float w, float h, 
             float tx, float ty, float tw, float th) {
         pushQuad(gl, x, y, x + w, y + h, tx, ty, tx + tw, ty + th);
     }

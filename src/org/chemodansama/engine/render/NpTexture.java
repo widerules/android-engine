@@ -17,16 +17,10 @@ import android.util.Log;
 
 final public class NpTexture {
     
-    private int mTextureID = 0;
-    
     private NpTextureHeader mHeader;
     
-    /**
-     * @param gl
-     * @param in
-     * @param clampToEdge
-     * @exception IllegalArgumentException
-     */
+    private int mTextureID = 0;
+    
     public NpTexture(GL10 gl, InputStream in, boolean clampToEdge) 
             throws IOException {
         super();
@@ -39,25 +33,10 @@ final public class NpTexture {
             throw new IOException("Input stream is null");
         }
         
-        NpTextureData d = new NpTextureData(in);
-        
-        if (!initGL10(gl, d, clampToEdge)) {
+        if (!initGL10(gl, new NpTextureData(in), clampToEdge)) {
             LogHelper.w("Texture was not initialized!" 
                         + " Texture is in Zombie state!");
         }
-        
-        mHeader = d.getHeader();
-    }
-    
-    public void release(GL10 gl) {
-        IntBuffer t = ByteBuffer.allocateDirect(4).asIntBuffer();
-        t.put(mTextureID);
-        t.rewind();
-        
-        gl.glDeleteTextures(1, t);
-        
-        mTextureID = 0;
-        mHeader = null;
     }
     
     public boolean bindGL10(GL10 gl) {
@@ -80,6 +59,15 @@ final public class NpTexture {
     
     public boolean equalsToTexture(NpTexture t) {
         return (t != null) ? mTextureID == t.mTextureID : false;
+    }
+    
+    @Override
+    protected void finalize() throws Throwable {
+        if ((mTextureID != 0) || (mHeader != null)) {
+            LogHelper.e("Texture was not released!");
+        }
+        
+        super.finalize();
     }
     
     public NpTextureHeader getHeader() {
@@ -160,7 +148,20 @@ final public class NpTexture {
 
         gl.glBindTexture(GL10.GL_TEXTURE_2D, 0);
 
+        mHeader = header;
+        
         return true;
+    }
+    
+    public void release(GL10 gl) {
+        IntBuffer t = ByteBuffer.allocateDirect(4).asIntBuffer();
+        t.put(mTextureID);
+        t.rewind();
+        
+        gl.glDeleteTextures(1, t);
+        
+        mTextureID = 0;
+        mHeader = null;
     }
 }
 
@@ -194,7 +195,7 @@ final class NpTextureData {
             mMips.add(b);
         }
     }
-
+    
     public NpTextureHeader getHeader() {
         return mHeader;
     }
