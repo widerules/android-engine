@@ -131,14 +131,9 @@ final public class NpSkinScheme {
                 
                 Log.w(LogTag.TAG, 
                       "WidgetName is not null. <Widget> wasnt closed");
-                
             } else if (localName.equalsIgnoreCase("widget")) {
                 mWidgetlook.put(mWidgetName, 
                                 new NpWidgetlook(mWidgetName, mWidgetState));
-                
-                if (Log.isLoggable(LogTag.TAG, Log.INFO)) {
-                    Log.i(LogTag.TAG, "widget read: " + mWidgetName);
-                }
                 mWidgetName = null;
                 mWidgetState.clear();
             } else if (localName.equalsIgnoreCase("state")) {

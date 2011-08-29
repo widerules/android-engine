@@ -3,8 +3,6 @@ package org.chemodansama.engine.tmx;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import javax.microedition.khronos.opengles.GL10;
-
 import org.chemodansama.engine.LogTag;
 import org.chemodansama.engine.math.NpVec2;
 

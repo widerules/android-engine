@@ -2,7 +2,6 @@ package org.chemodansama.engine.tmx;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.TreeMap;
 
 import javax.microedition.khronos.opengles.GL10;
@@ -18,21 +17,23 @@ import android.util.Pair;
 import android.util.Xml;
 import android.util.Xml.Encoding;
 
-class TextureHolder {
+/**
+ * TexturePack - generic texture pack for gl-android-application. 
+ *
+ */
+class TexturePack {
     // clamp to edge is set by default.
     private final static boolean CLAMP_TO_EDGE = true;
     
-    private final TreeMap<String, NpTexture> mTextures; // <Alias, Texture>
-    // These two must be kept in sync. It is one the task of the class.
-    private final ArrayList<Pair<String, String>> mTextureSource; // <Alias, FileName>
+    // <Alias, <Filename, Texture>>
+    private final TreeMap<String, Pair<String, NpTexture>> mTextures; 
 
-    public TextureHolder() {
-        mTextures = new TreeMap<String, NpTexture>();
-        mTextureSource = new ArrayList<Pair<String, String>>();
+    public TexturePack() {
+        mTextures = new TreeMap<String, Pair<String, NpTexture>>();
     } 
     
     public boolean isEmpty() {
-        return mTextures.isEmpty() && mTextureSource.isEmpty();
+        return mTextures.isEmpty();
     }
     
     public NpTexture get(String name) {
@@ -40,7 +41,9 @@ class TextureHolder {
             return null;
         }
         
-        return mTextures.get(name);
+        Pair<String, NpTexture> p = mTextures.get(name);
+
+        return (p != null) ? p.second : null;
     }
     
     boolean put(GL10 gl, String alias, String file, AssetManager assets) 
@@ -64,42 +67,44 @@ class TextureHolder {
         
         InputStream in = assets.open(file);
         
-        mTextures.put(alias, new NpTexture(gl, in, CLAMP_TO_EDGE));
-        mTextureSource.add(new Pair<String, String>(alias, file));
+        NpTexture texture = new NpTexture(gl, in, CLAMP_TO_EDGE);
+        
+        mTextures.put(alias, 
+                      new Pair<String, NpTexture>(file, texture));
         
         return true;
     }
     
-    public boolean refreshTextures(GL10 gl, AssetManager assets) 
-            throws IOException {
-        
+    public boolean refreshContextAssets(GL10 gl, AssetManager assets) {
         if ((assets == null) || (gl == null)) {
             return false;
         }
         
-        releaseTextures(gl);
-        
-        for (Pair<String, String> p : mTextureSource) {
-            InputStream in = assets.open(p.second);
-            mTextures.put(p.first, new NpTexture(gl, in, CLAMP_TO_EDGE));        
+        for (Pair<String, NpTexture> p : mTextures.values()) {
+            InputStream in;
+            try {
+                in = assets.open(p.first);
+                p.second.reloadOnSurfaceCreated(gl, in, CLAMP_TO_EDGE);
+                in.close();
+            } catch (IOException e) {
+                LogHelper.e("cant reload texture " + p.first);
+            }
         }
         
         return true;
     }
     
     public void release(GL10 gl) {
-        releaseTextures(gl);
-        mTextureSource.clear();
-    }
-    
-    private void releaseTextures(GL10 gl) {
-        for (NpTexture t : mTextures.values()) {
-            t.release(gl);
+        for (Pair<String, NpTexture> t : mTextures.values()) {
+            t.second.release(gl);
         }
         mTextures.clear();
     }
 }
 
+/**
+ * TmxTexturePack - wrapper for TexturePack. Provides input from xml file.
+ */
 public class TmxTexturePack {
     
     private class TexturePackHandler extends DefaultHandler {
@@ -155,7 +160,7 @@ public class TmxTexturePack {
         }
     }
     
-    private final TextureHolder mTextureHolder = new TextureHolder();
+    private final TexturePack mTextureHolder = new TexturePack();
     
     public TmxTexturePack() {
     }
@@ -196,9 +201,8 @@ public class TmxTexturePack {
         super.finalize();
     }
     
-    public boolean refreshTextures(GL10 gl, AssetManager assets) 
-            throws IOException {
-        return mTextureHolder.refreshTextures(gl, assets);
+    public boolean refreshContextAssets(GL10 gl, AssetManager assets) {
+        return mTextureHolder.refreshContextAssets(gl, assets);
     }
     
     public void release(GL10 gl) {

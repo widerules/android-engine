@@ -62,17 +62,21 @@ class GZIPDataReader extends LayerDataReader {
 }
 
 public class TmxLayer {
-    private final String mName;
-    private final int mWidth;
-    private final int mHeight;
+    public final String name;
+    public final int width;
+    public final int height;
+    
+    public final boolean isVisible;
     
     private final TreeMap<String, String> mProperties;
     private int[] mData;
     
-    public TmxLayer(String name, int width, int height) {
-        mHeight = height;
-        mWidth = width;
-        mName = name;
+    public TmxLayer(String name, int width, int height, boolean isVisible) {
+        this.height = height;
+        this.width = width;
+        this.name = name;
+        
+        this.isVisible = isVisible;
         
         mProperties = new TreeMap<String, String>();
     }
@@ -109,7 +113,7 @@ public class TmxLayer {
         
         switch (compression) {
         case GZIP:
-            dr = new GZIPDataReader(decoded, mWidth, mWidth); 
+            dr = new GZIPDataReader(decoded, width, width); 
             break;
 
         default:
@@ -121,28 +125,15 @@ public class TmxLayer {
         
         try {
             mData = dr.getData();
-            Log.i(LogTag.TAG, "Compressed data read OK.");
         } catch (IOException e) {
             Log.e(LogTag.TAG, "Can't decompress data. Layer data is not set.");   
         }
     }
     
     public int getTileId(int x, int y) {
-        boolean coordsAreValid = (y >= 0) && (y < mHeight) 
-                                    && (x >= 0) && (x < mWidth);
+        boolean coordsAreValid = (y >= 0) && (y < height) 
+                                    && (x >= 0) && (x < width);
            
-        return (coordsAreValid) ? mData[y * mWidth + x] : 0;
-    }
-    
-    public String getName() {
-        return mName;
-    }
-
-    public int getWidth() {
-        return mWidth;
-    }
-
-    public int getHeight() {
-        return mHeight;
+        return (coordsAreValid) ? mData[y * width + x] : 0;
     }
 }

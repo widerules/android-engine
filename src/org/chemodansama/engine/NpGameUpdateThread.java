@@ -29,7 +29,6 @@ final class NpGameUpdateThread implements Runnable {
     @Override
     public void run() {
         while (true) {
-            
             synchronized (this) {
                 if (mTerminated) {
                     break;
@@ -53,7 +52,9 @@ final class NpGameUpdateThread implements Runnable {
     
     
     public void start() {
-        mThread.start();
+        if (!mThread.isAlive()) {
+            mThread.start();
+        }
     }
     
     synchronized public void terminate() {

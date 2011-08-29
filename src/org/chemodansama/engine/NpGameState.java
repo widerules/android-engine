@@ -13,7 +13,7 @@ public class NpGameState {
     private int mSurfaceWidth = 0;
     private int mSurfaceHeight = 0;
     
-    final protected AssetManager mAssets;
+    protected AssetManager mAssets;
     final protected NpGame mGame;
     
     protected NpGameState(NpGame g, GL10 gl, AssetManager assets) {
@@ -50,6 +50,7 @@ public class NpGameState {
      */
     protected void refreshContextAssets(GL10 gl, EGLConfig config, 
             AssetManager assets) {
+        mAssets = assets;
     }
     
     protected void render(GL10 gl) {

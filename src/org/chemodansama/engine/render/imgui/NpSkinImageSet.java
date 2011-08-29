@@ -7,14 +7,12 @@ import java.util.HashMap;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.chemodansama.engine.LogHelper;
-import org.chemodansama.engine.LogTag;
 import org.chemodansama.engine.render.NpTexture;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import android.content.res.AssetManager;
-import android.util.Log;
 import android.util.Xml;
 import android.util.Xml.Encoding;
 
@@ -103,26 +101,14 @@ public final class NpSkinImageSet {
                 String imageFile = attributes.getValue("Imagefile");
                 
                 if ((imageFile != null) && (mGL != null) && (mAssets != null)) {
-                    
                     InputStream texIn;
                     try {
                         texIn = mAssets.open(imageFile);
-                    } catch (IOException e1) {
-                        
-                        Log.e(LogTag.TAG, "IOException while reading " 
-                              + imageFile);
-                        
-                        return;
-                    }
-                    
-                    try {
                         mTexture = new NpTexture(mGL, texIn, true);
-                        Log.i(LogTag.TAG, imageFile + " loaded");
                     } catch (IOException e) {
                         LogHelper.e(imageFile + " was NOT loaded.");
                     }
                 }
-                
             } else if (localName.equalsIgnoreCase("image")) {
                 
                 String name = attributes.getValue("Name");
@@ -132,10 +118,6 @@ public final class NpSkinImageSet {
                 int h = Integer.parseInt(attributes.getValue("Height"));
                 
                 mImages.put(name, new NpSkinImage(name, x, y, w, h));
-                
-                if (Log.isLoggable(LogTag.TAG, Log.INFO)) {
-                    Log.i(LogTag.TAG, "image read: " + name);
-                }
             }
         }
     }
