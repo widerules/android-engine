@@ -41,20 +41,18 @@ final class NpRenderer implements GLSurfaceView.Renderer {
         mGame.render(gl);
     }
     
-    public void onPause() {
+    synchronized public void onPause() {
         if (mUpdater != null) {
             mUpdater.terminate();
             mUpdater.join();
-            mUpdater = null; 
+            mUpdater = null;
         }
     }
 
-    public void onResume() {
+    synchronized public void onResume() {
         if (mUpdater == null) {
             mUpdater = new NpGameUpdateThread(mGame, mTerminator);
         }
-
-        
     }
     
     @Override
@@ -63,11 +61,14 @@ final class NpRenderer implements GLSurfaceView.Renderer {
     }
 
     @Override
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        
+    synchronized public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         NpSkin.loadScheme(gl, mAssets, mSchemeName);
         
         mGame.onSurfaceCreated(gl, config, mAssets);
+        
+        if (mUpdater == null) {
+            mUpdater = new NpGameUpdateThread(mGame, mTerminator);
+        }
         
         mUpdater.start();
     }

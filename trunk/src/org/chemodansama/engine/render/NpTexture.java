@@ -16,27 +16,14 @@ import org.chemodansama.engine.LogTag;
 import android.util.Log;
 
 final public class NpTexture {
-    
     private NpTextureHeader mHeader;
-    
     private int mTextureID = 0;
     
     public NpTexture(GL10 gl, InputStream in, boolean clampToEdge) 
             throws IOException {
         super();
         
-        if (gl == null) {
-            throw new NullPointerException("gl is null");
-        }
-        
-        if (in == null) {
-            throw new IOException("Input stream is null");
-        }
-        
-        if (!initGL10(gl, new NpTextureData(in), clampToEdge)) {
-            LogHelper.w("Texture was not initialized!" 
-                        + " Texture is in Zombie state!");
-        }
+        loadFromStream(gl, in, clampToEdge);
     }
     
     public boolean bindGL10(GL10 gl) {
@@ -77,6 +64,7 @@ final public class NpTexture {
     public int getTextureID() {
         return mTextureID;
     }
+    
     
     @Override
     public int hashCode() {
@@ -153,6 +141,22 @@ final public class NpTexture {
         return true;
     }
     
+    private void loadFromStream(GL10 gl, InputStream in, 
+            boolean clampToEdge) throws IOException {
+        if (gl == null) {
+            throw new NullPointerException("gl is null");
+        }
+        
+        if (in == null) {
+            throw new IOException("Input stream is null");
+        }
+        
+        if (!initGL10(gl, new NpTextureData(in), clampToEdge)) {
+            LogHelper.w("Texture was not initialized!" 
+                        + " Texture is in Zombie state!");
+        }
+    }
+    
     public void release(GL10 gl) {
         IntBuffer t = ByteBuffer.allocateDirect(4).asIntBuffer();
         t.put(mTextureID);
@@ -162,6 +166,13 @@ final public class NpTexture {
         
         mTextureID = 0;
         mHeader = null;
+    }
+    
+    public void reloadOnSurfaceCreated(GL10 gl, InputStream in, 
+            boolean clampToEdge) throws IOException {
+        mTextureID = 0;
+        mHeader = null;
+        loadFromStream(gl, in, clampToEdge);
     }
 }
 

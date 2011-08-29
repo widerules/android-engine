@@ -3,16 +3,12 @@ package org.chemodansama.engine.tmx;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.ListIterator;
 
-import org.chemodansama.engine.LogHelper;
-import org.chemodansama.engine.utils.NpUtils;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import android.content.res.AssetManager;
-import android.util.Log;
 import android.util.Xml;
 import android.util.Xml.Encoding;
 
@@ -134,9 +130,17 @@ public class TmxMap {
                                       attributes.getValue("value"));
                 }
             } else if (qName.equalsIgnoreCase("layer")) {
+                
+                String visible = attributes.getValue("visible");
+                
+                boolean isVisible = (visible != null) 
+                                    ? Integer.parseInt(visible) != 0 
+                                    : true;
+                
                 layer = new TmxLayer(attributes.getValue("name"), 
                                      getAttributeAsInt(attributes, "width"), 
-                                     getAttributeAsInt(attributes, "height"));
+                                     getAttributeAsInt(attributes, "height"),
+                                     isVisible);
             } else if (qName.equalsIgnoreCase("data")) {
                 
                 String compressionStr = attributes.getValue("compression");
@@ -160,20 +164,18 @@ public class TmxMap {
     private int width;
     
     public TmxMap(AssetManager assets, String fileName) 
-            throws IOException, IllegalArgumentException {
+            throws IOException {
         
         mTilesets = new ArrayList<TmxTileset>();
         mLayers = new ArrayList<TmxLayer>();
         
         InputStream is = assets.open(fileName);
-        
         try {
             Xml.parse(is, Encoding.US_ASCII, new TmxParser());
         } catch (SAXException e) {
-            String msg = "SAXException while parsing '" + fileName + "'";
-            LogHelper.e(msg);
-            throw new IOException(msg);
+            throw new IOException(e.getMessage());
         }
+        is.close();
     }
     
     public int getHeight() {
