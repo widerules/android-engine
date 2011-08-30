@@ -82,11 +82,13 @@ public final class NpSkinImageSet {
     private final class XmlImageSetReader extends DefaultHandler {
         
         private GL10 mGL = null;
+        private AssetManager mAssets;
 
-        private XmlImageSetReader(GL10 gl) {
+        private XmlImageSetReader(GL10 gl, AssetManager assets) {
             super();
             
             mGL = gl;
+            mAssets = assets;
         }
         
         @Override
@@ -98,15 +100,14 @@ public final class NpSkinImageSet {
                 
                 mName = attributes.getValue("Name");
                 
-                String imageFile = attributes.getValue("Imagefile");
+                mTextureName = attributes.getValue("Imagefile");
                 
-                if ((imageFile != null) && (mGL != null) && (mAssets != null)) {
-                    InputStream texIn;
+                if ((mTextureName != null) && (mGL != null) && (mAssets != null)) {
                     try {
-                        texIn = mAssets.open(imageFile);
+                        InputStream texIn = mAssets.open(mTextureName);
                         mTexture = new NpTexture(mGL, texIn, true);
                     } catch (IOException e) {
-                        LogHelper.e(imageFile + " was NOT loaded.");
+                        LogHelper.e(mTextureName + " was NOT loaded.");
                     }
                 }
             } else if (localName.equalsIgnoreCase("image")) {
@@ -126,9 +127,8 @@ public final class NpSkinImageSet {
     
     private HashMap<String, NpSkinImage> mImages;
     
+    private String mTextureName = null;
     private NpTexture mTexture = null;
-
-    private AssetManager mAssets = null;
     
     // initialization block goes here.
     {
@@ -137,12 +137,9 @@ public final class NpSkinImageSet {
     
     public NpSkinImageSet(GL10 gl, AssetManager assets, 
             String imageSetFileName) {
-        
-        mAssets = assets;
-        
         try {
             Xml.parse(assets.open(imageSetFileName), Encoding.US_ASCII, 
-                      new XmlImageSetReader(gl));
+                      new XmlImageSetReader(gl, assets));
         } catch (IOException e) {
             return;
         } catch (SAXException e) {
@@ -162,4 +159,32 @@ public final class NpSkinImageSet {
         return mTexture;
     }
     
+    void refreshTexture(GL10 gl, AssetManager assets) {
+        if (gl == null) {
+            LogHelper.e("Cant reload skin imageset: gl == null");
+            return;
+        }
+        
+        if (assets == null) {
+            LogHelper.e("Cant reload skin imageset: assets == null");
+            return;
+        }
+        
+        if (mTexture == null) {
+            LogHelper.e("Cant reload skin imageset: mTexture == null");
+            return;
+        }
+        
+        if (mTextureName == null) {
+            LogHelper.e("Cant reload skin imageset: mTextureName == null");
+            return;
+        }
+        
+        try {
+            InputStream in = assets.open(mTextureName);
+            mTexture.reloadOnSurfaceCreated(gl, in, true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -2,28 +2,24 @@ package org.chemodansama.engine;
 
 final class NpGameUpdateThread implements Runnable {
 
-    private Thread mThread = null;
+    private final NpGame mGame;
     
-    private NpGame mGame = null;
+    private volatile boolean mSuspended = false;
     private volatile boolean mTerminated = false;
 
-    private NpActivityTerminator mTerminator = null;
+    private final NpActivityTerminator mTerminator;
+    private final Thread mThread;
     
     public NpGameUpdateThread(NpGame g, NpActivityTerminator ft) {
         super();
         
         mTerminator = ft;
-        
         mGame = g;
-        
         mThread = new Thread(this, "updater thread");
     }
     
-    public void join() {
-        try {
-            mThread.join();
-        } catch (InterruptedException e) {
-        }
+    synchronized void resume() {
+        mSuspended = false;
     }
     
     @Override
@@ -41,15 +37,23 @@ final class NpGameUpdateThread implements Runnable {
                         mTerminator.finish();                        
                     }
                 }
+                break;
             }
             
             try {
-                Thread.sleep(10);
+                while (true) {
+                    Thread.sleep(10);
+                    synchronized (this) {
+                        if (!mSuspended) {
+                            break;
+                        }
+                    }
+                }
             } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
-    
     
     public void start() {
         if (!mThread.isAlive()) {
@@ -57,7 +61,17 @@ final class NpGameUpdateThread implements Runnable {
         }
     }
     
-    synchronized public void terminate() {
+    synchronized void suspend() {
+        mSuspended = true;
+    }
+    
+    void terminateAndJoin() {
         mTerminated = true;
+        mSuspended = false;
+        try {
+            mThread.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }
