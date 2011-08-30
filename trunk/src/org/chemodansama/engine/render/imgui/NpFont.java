@@ -6,6 +6,7 @@ import java.util.TreeMap;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.chemodansama.engine.LogHelper;
 import org.chemodansama.engine.LogTag;
 import org.chemodansama.engine.math.NpVec2i;
 import org.chemodansama.engine.render.NpTexture;
@@ -110,16 +111,17 @@ public final class NpFont {
     private final class NpGhlFontReader extends DefaultHandler {
         
         private final GL10 mGL;
+        private final AssetManager mAssets;
 
-        public NpGhlFontReader(GL10 gl) {
+        public NpGhlFontReader(GL10 gl, AssetManager assets) {
             mGL = gl;
+            mAssets = assets;
         }
         
         @Override
         public void startElement(String uri, String localName, String qName,
                 Attributes attributes) throws SAXException {
             super.startElement(uri, localName, qName, attributes);
-            
             
             if (localName.equalsIgnoreCase("description")) {
                 mSize = Integer.parseInt(attributes.getValue("size"));
@@ -130,21 +132,17 @@ public final class NpFont {
                 mXHeight = Integer.parseInt(attributes.getValue("xheight"));
                 mDescender = Integer.parseInt(attributes.getValue("descender"));
             } else if (localName.equalsIgnoreCase("texture")) {
-                String texFileName = attributes.getValue("file");
-                
+                mTextureName = attributes.getValue("file"); 
                 try {
-                    InputStream is = mAssets.open(texFileName);
-                    
-                    if (is != null) {
-                        mTex = new NpTexture(mGL, is, true);
-                    }
-                } catch (Exception e) {
+                    InputStream is = mAssets.open(mTextureName);
+                    mTexture = new NpTexture(mGL, is, true);
+                } catch (IOException e) {
                     Log.e(LogTag.TAG, 
-                          "Exc while reading font texture: " + texFileName);
+                          "Exc while reading font texture: " + mTextureName);
                 }
             } else if (localName.equalsIgnoreCase("char")) {
                 
-                NpTextureHeader h = mTex.getHeader();
+                NpTextureHeader h = mTexture.getHeader();
                 
                 NpFontCharStruct s = new NpFontCharStruct(attributes, 
                                                           h.getHeight(),
@@ -154,7 +152,7 @@ public final class NpFont {
         }
     }
     
-    final private String mName;
+    private final String mName;
     
     private String mFamily = "";
     private int mSize = 0;
@@ -165,21 +163,19 @@ public final class NpFont {
     private int mDescender = 0;
     private int mXHeight = 0;
 
-    private NpTexture mTex = null;
+    private String mTextureName = null;
+    private NpTexture mTexture = null;
+    
     private TreeMap<Character, NpFontCharStruct> mChars = 
         new TreeMap<Character, NpFontCharStruct>();
-    
-    private final AssetManager mAssets;
     
     public NpFont(GL10 gl, String name, AssetManager assets, String fileName) {
 
         mName = name;
         
-        mAssets = assets;
-        
         try {
             Xml.parse(assets.open(fileName), Encoding.US_ASCII, 
-                      new NpGhlFontReader(gl));
+                      new NpGhlFontReader(gl, assets));
         } catch (IOException e) {
             return;
         } catch (SAXException e) {
@@ -297,14 +293,43 @@ public final class NpFont {
     }
 
     public NpTexture getTexture() {
-        return mTex;
+        return mTexture;
     }
 
     public float getXHeight(float height) {
         return mXHeight;
     }
-
+    
     public boolean hasName(String name) {
         return ((mName != null) && (mName.equals(name))) ? true : false;
+    }
+    
+    void refreshTexture(GL10 gl, AssetManager assets) {
+        if (gl == null) {
+            LogHelper.e("Cant refresh font texture: gl == null");
+            return;
+        }
+        
+        if (assets == null) {
+            LogHelper.e("Cant refresh font texture: assets == null");
+            return;
+        }
+        
+        if (mTexture == null) {
+            LogHelper.e("Cant reload font texture: mTexture == null");
+            return;
+        }
+        
+        if (mTextureName == null) {
+            LogHelper.e("Cant reload font texture: mTextureName == null");
+            return;
+        }
+
+        try {
+            InputStream in = assets.open(mTextureName);
+            mTexture.reloadOnSurfaceCreated(gl, in, true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

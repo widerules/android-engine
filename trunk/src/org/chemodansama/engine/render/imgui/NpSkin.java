@@ -630,7 +630,11 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     static public boolean loadScheme(GL10 gl, AssetManager assets, 
             String schemeFileName) {
         
-        mScheme = new NpSkinScheme(gl, assets, schemeFileName);
+        if (mScheme != null) {
+            mScheme.reloadAssets(gl, assets);
+        } else { 
+            mScheme = new NpSkinScheme(gl, assets, schemeFileName);
+        }
         
         mTextureCache.setFonts(gl, mScheme.getFonts());
         
@@ -820,7 +824,6 @@ final class NpTextureCache {
     }
     
     public NpFont getActiveFont(String name) {
-        
         if ((mActiveFont != null) && (mActiveFont.hasName(name))) {
             return mActiveFont;
         } else {
@@ -829,9 +832,7 @@ final class NpTextureCache {
     }
     
     public void reset(GL10 gl) {
-        
         mPolyBuffer.flushRender(gl);
-        
         mActiveFont = null;
         mActiveTexture = null;
     }

@@ -8,6 +8,7 @@ import java.util.TreeMap;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.chemodansama.engine.LogHelper;
 import org.chemodansama.engine.LogTag;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -292,6 +293,26 @@ final public class NpSkinScheme {
             return;
         } catch (SAXException e) {
             return;
+        }
+    }
+    
+    void reloadAssets(GL10 gl, AssetManager assets) {
+        if (gl == null) {
+            LogHelper.e("Cant reload skin scheme: gl == null");
+            return;
+        }
+        
+        if (assets == null) {
+            LogHelper.e("Cant reload skin scheme: assets == null");
+            return;
+        }
+        
+        for (NpFont f: mFontsMap.values()) {
+            f.refreshTexture(gl, assets);
+        }
+        
+        for (NpSkinImageSet is : mImageSets.values()) {
+            is.refreshTexture(gl, assets);
         }
     }
     
