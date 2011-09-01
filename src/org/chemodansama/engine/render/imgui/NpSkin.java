@@ -6,6 +6,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import org.chemodansama.engine.NpHolder;
 import org.chemodansama.engine.math.NpMath;
+import org.chemodansama.engine.math.NpRect;
 import org.chemodansama.engine.math.NpVec4;
 import org.chemodansama.engine.render.NpPolyBuffer;
 import org.chemodansama.engine.render.NpTexture;
@@ -132,17 +133,16 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         NpRect r = computeTextRect(font.name, font.height, caption);
         
         if (align == ALIGN_CENTER) {
-            x -= r.getW() / 2;
+            x -= r.w / 2;
         } else if (align == ALIGN_RIGHT) {
-            x -= r.getW();
+            x -= r.w;
         };
         
-        x -= r.getX();
+        x -= r.x;
         
         drawString(caption, x, y, font.height, font.color);
         
-        return getRectWidgetRetCode(id, new NpRect(x, y, 
-                                                    r.getX(), r.getY()));
+        return getRectWidgetRetCode(id, new NpRect(x, y, r.x, r.y));
     }
     
     // bunch of parameters :E
@@ -203,14 +203,14 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             slidePos.value = NpMath.clampf(slidePos.value, 0, 1);
         }
         
-        float slideY = slidePos.value * rect.getH();
+        float slideY = slidePos.value * rect.h;
         
         getWidgetRectDefWH(state, widgetLookName, x, y + slideY, rect);
         
-        rect.setH(32);
+        rect.h = 32;
         
-        if (rect.getY() + rect.getH() > y + h) {
-            rect.setY(y + h - rect.getH());
+        if (rect.y + rect.h > y + h) {
+            rect.y = (int) (y + h - rect.h);
         }
         
         drawWidget(state, widgetLookName, rect);
@@ -248,11 +248,8 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         NpRect textRect = f.computeTextRect(font.height, caption);
 
-        int x = rect.getX() + (rect.getW() - textRect.getW()) / 2 
-                - textRect.getX();
-        
-        int y = rect.getY() 
-                + (int) ((rect.getH() + f.getXHeight(font.height)) * 0.5);
+        int x = rect.x + (rect.w - textRect.w) / 2 - textRect.x;
+        int y = rect.y + (int) ((rect.h + f.getXHeight(font.height)) * 0.5);
         
         drawString(caption, x, y, font.height, font.color);
     }
@@ -408,8 +405,8 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
                 continue;
             }
             
-            float absX = rect.getX() + relX;
-            float absY = rect.getY() + relY;
+            float absX = rect.x + relX;
+            float absY = rect.y + relY;
             
             float imageX = (float) im.getXPos() / tw;
             float imageY = 1.0f - (float) im.getYPos() / th;

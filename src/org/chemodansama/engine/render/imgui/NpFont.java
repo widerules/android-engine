@@ -8,6 +8,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import org.chemodansama.engine.LogHelper;
 import org.chemodansama.engine.LogTag;
+import org.chemodansama.engine.math.NpRect;
 import org.chemodansama.engine.math.NpVec2i;
 import org.chemodansama.engine.render.NpTexture;
 import org.chemodansama.engine.render.NpTextureHeader;

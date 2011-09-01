@@ -1,5 +1,7 @@
 package org.chemodansama.engine.render.imgui;
 
+import org.chemodansama.engine.math.NpRect;
+
 final class NpWidgetDim {
     final private NpWidgetDimType mType;
     final private float mValue;
@@ -87,10 +89,10 @@ final class NpWidgetDim {
 
         switch (mSource) {
         case HEIGHT:
-            return instanceRect.getH() * mValue;
+            return instanceRect.h * mValue;
 
         case WIDTH:
-            return instanceRect.getW() * mValue;
+            return instanceRect.w * mValue;
 
         default:
             return 0;
