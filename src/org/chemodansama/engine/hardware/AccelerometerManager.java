@@ -150,8 +150,8 @@ public class AccelerometerManager {
         }
         
         if (mSensorManager.registerListener(mSensorListener,
-                                           mSensor,
-                                           SensorManager.SENSOR_DELAY_GAME)) {
+                                            mSensor,
+                                            SensorManager.SENSOR_DELAY_GAME)) {
             mListeners.add(listener);
         }
     }
