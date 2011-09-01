@@ -3,6 +3,8 @@ package org.chemodansama.engine.render.imgui;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.chemodansama.engine.math.NpRect;
+
 final class NpWidgetStatelook {
     
     private final ArrayList<NpWidgetArea> mAreas = 
@@ -40,13 +42,13 @@ final class NpWidgetStatelook {
         float h = mClientRect.getHeight().getValue(scheme, this, instanceRect);
         
         if (invertX) {
-            x = instanceRect.getW() - x - w;
+            x = instanceRect.w - x - w;
         } 
         if (invertY) {
-            y = instanceRect.getH() - y - h;
+            y = instanceRect.h - y - h;
         }
 
-        result.set(instanceRect.getX() + x, instanceRect.getY() + y, w, h);
+        result.set(instanceRect.x + x, instanceRect.y + y, w, h);
         return result;
     }
     

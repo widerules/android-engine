@@ -122,11 +122,11 @@ public class TmxTexturePack {
                 Attributes attributes) throws SAXException {
             super.startElement(uri, localName, qName, attributes);
             
-            if ((qName == null) || (qName.equalsIgnoreCase(""))) {
+            if ((localName == null) || (localName.equalsIgnoreCase(""))) {
                 return;
             }
 
-            if (qName.equalsIgnoreCase("image")) {
+            if (localName.equalsIgnoreCase("image")) {
                 String alias = attributes.getValue("alias");
                 
                 if ((alias == null) || (alias.equalsIgnoreCase(""))) {
