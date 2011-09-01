@@ -27,12 +27,16 @@ final public class NpTexture {
     }
     
     public boolean bindGL10(GL10 gl) {
-        if (mTextureID != 0) {
-            gl.glBindTexture(GL10.GL_TEXTURE_2D, mTextureID);
-            
-            return true;
+        if (gl == null) {
+            return false;
         }
-        return false;
+        
+        if (mTextureID == 0) {
+            return false;
+        }
+        
+        gl.glBindTexture(GL10.GL_TEXTURE_2D, mTextureID);
+        return true;
     }
     
     @Override

@@ -16,20 +16,20 @@ import android.view.MotionEvent;
 
 public abstract class NpGame {
     
+    private final Activity mActivity;
+    
+    private int mHeight = 0;
+    
     private boolean mNeedSetupState = false;
     
-    private Stack<NpGameState> mStates = new Stack<NpGameState>();
+    private NpVec2 mPointerCoord = new NpVec2();
+    private boolean mPointerDown = false;
     
+    private NpVec2 mPointerOffset = new NpVec2();
+    private Stack<NpGameState> mStates = new Stack<NpGameState>();
     ArrayList<NpGameState> mStatesToDelete = new ArrayList<NpGameState>();
     
     private int mWidth = 0;
-    private int mHeight = 0;
-    
-    private boolean mPointerDown = false;
-    private NpVec2 mPointerCoord = new NpVec2();
-    private NpVec2 mPointerOffset = new NpVec2();
-    
-    private final Activity mActivity;
     
     public NpGame(Activity activity) {
         super();
@@ -155,6 +155,16 @@ public abstract class NpGame {
         mNeedSetupState = true;
     }
     
+    synchronized public final void render(GL10 gl) {
+
+        renderActiveState(gl);
+        
+        for (NpGameState s : mStatesToDelete) {
+            s.onRelease(gl);
+        }
+        mStatesToDelete.clear();
+    }
+    
     private void renderActiveState(GL10 gl) {
         if (mStates.size() <= 0) {
             return;
@@ -171,16 +181,6 @@ public abstract class NpGame {
         }
 
         s.render(gl);
-    }
-    
-    synchronized public final void render(GL10 gl) {
-
-        renderActiveState(gl);
-        
-        for (NpGameState s : mStatesToDelete) {
-            s.onRelease(gl);
-        }
-        mStatesToDelete.clear();
     }
 
     synchronized public final void setupOnSurfaceChanged(GL10 gl, int width, 
