@@ -72,6 +72,18 @@ public class TmxTileset {
         return (gid >= firstGid) && (gid < firstGid + tilesCount);
     }
     
+    public TmxTile getTile(int tileGid) {
+        
+        int tileId = tileGid - firstGid;
+        
+        for (TmxTile t : mTiles) {
+            if (t.id == tileId) {
+                return t;
+            }
+        }
+        return null;
+    }
+    
     public boolean getTileTexcoords(int tileGid, NpVec2 tc) {
         
         if (tc == null) {
