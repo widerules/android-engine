@@ -189,6 +189,20 @@ public class TmxMap {
         return ((i >= 0) && (i < mLayers.size())) ? mLayers.get(i) : null;
     }
     
+    public TmxLayer getLayer(String name) {
+        
+        if (name == null) {
+            return null;
+        }
+        
+        for (TmxLayer layer : mLayers) {
+            if (name.equalsIgnoreCase(layer.name)) {
+                return layer;
+            }
+        }
+        return null;
+    }
+    
     public Iterable<TmxLayer> getLayers() {
         return mLayers;
     }
