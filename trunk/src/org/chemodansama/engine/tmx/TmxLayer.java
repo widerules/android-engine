@@ -130,7 +130,7 @@ public class TmxLayer {
         }
     }
     
-    public int getTileId(int x, int y) {
+    public int getTileGid(int x, int y) {
         boolean coordsAreValid = (y >= 0) && (y < height) 
                                     && (x >= 0) && (x < width);
            
