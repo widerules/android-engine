@@ -32,6 +32,8 @@ public class TmxMap {
         private ArrayList<TmxTile> tsTiles = new ArrayList<TmxTile>();
         private int tsTileWidth;
         
+        private TmxObjectGroup objects = null;
+        
         public TmxParser() {
         }
         
@@ -73,6 +75,11 @@ public class TmxMap {
                 dataCompression = TmxDataCompression.NONE;
                 compressedData.setLength(0);
                 isParsingData = false;
+            } else if (localName.equalsIgnoreCase("objectgroup")) {
+                if (objects != null) {
+                    mObjectsGroups.add(objects);
+                    objects = null;
+                }
             }
         }
         
@@ -123,11 +130,14 @@ public class TmxMap {
                 tile = new TmxTile(getAttributeAsInt(attributes, "id"));
             } else if (localName.equalsIgnoreCase("property")) {
                 if (tile != null) {
-                    tile.addParam(attributes.getValue("name"), 
-                                  attributes.getValue("value"));
+                    tile.addProperty(attributes.getValue("name"), 
+                                     attributes.getValue("value"));
                 } else if (layer != null) {
                     layer.addProperty(attributes.getValue("name"), 
                                       attributes.getValue("value"));
+                } else if (objects != null) {
+                    objects.addProperty(attributes.getValue("name"), 
+                                        attributes.getValue("value"));
                 }
             } else if (localName.equalsIgnoreCase("layer")) {
                 
@@ -150,11 +160,26 @@ public class TmxMap {
                 dataEncoding = TmxDataEncoding.getFromString(encodingStr);
 
                 isParsingData = true;
+            } else if (localName.equalsIgnoreCase("objectgroup")) {
+                
+                int w = getAttributeAsInt(attributes, "width");
+                int h = getAttributeAsInt(attributes, "height");
+                
+                objects = new TmxObjectGroup(attributes.getValue("name"), w, h);
+            } else if (localName.equalsIgnoreCase("object")) {
+                if (objects != null) {
+                    int gid = getAttributeAsInt(attributes, "gid");
+                    int x = getAttributeAsInt(attributes, "x");
+                    int y = getAttributeAsInt(attributes, "y");
+                    
+                    objects.addObject(new TmxObject(gid, x, y));
+                }
             }
         }
     }
     private int height;
     private final ArrayList<TmxLayer> mLayers;
+    private final ArrayList<TmxObjectGroup> mObjectsGroups;
     private final ArrayList<TmxTileset> mTilesets;
     private int tileHeight;
     
@@ -167,6 +192,7 @@ public class TmxMap {
 
         mTilesets = new ArrayList<TmxTileset>();
         mLayers = new ArrayList<TmxLayer>();
+        mObjectsGroups = new ArrayList<TmxObjectGroup>();
         
         InputStream is = assets.open(fileName);
         try {
