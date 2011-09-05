@@ -1,36 +1,36 @@
 package org.chemodansama.engine.math;
 
 final public class NpVec2 {
-    private float[] mValues = new float[2];
+    public final float[] coords = new float[2];
     
     public NpVec2() {
-        mValues[0] = 0;
-        mValues[1] = 0;
+        coords[0] = 0;
+        coords[1] = 0;
     }
     
     public NpVec2(float x, float y) {
-        mValues[0] = x;
-        mValues[1] = y;
+        coords[0] = x;
+        coords[1] = y;
     }
     
     public float getX() {
-        return mValues[0];
+        return coords[0];
     }
     
     public float getY() {
-        return mValues[1];
+        return coords[1];
     }
     
     public void setX(float x) {
-        mValues[0] = x;
+        coords[0] = x;
     }
     
     public void setY(float y) {
-        mValues[1] = y;
+        coords[1] = y;
     }
     
     public void setValues(float x, float y) {
-        mValues[0] = x;
-        mValues[1] = y;
+        coords[0] = x;
+        coords[1] = y;
     }
 }
