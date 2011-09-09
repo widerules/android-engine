@@ -18,6 +18,14 @@ import android.util.Log;
 final public class NpTexture {
     private NpTextureHeader mHeader;
     private int mTextureID = 0;
+
+    public static void unbind(GL10 gl) {
+        if (gl == null) {
+            return;
+        }
+        
+        gl.glBindTexture(GL10.GL_TEXTURE_2D, 0);
+    }
     
     public NpTexture(GL10 gl, InputStream in, boolean clampToEdge) 
             throws IOException {
@@ -66,12 +74,6 @@ final public class NpTexture {
     }
     
     public int getTextureID() {
-        return mTextureID;
-    }
-    
-    
-    @Override
-    public int hashCode() {
         return mTextureID;
     }
     

@@ -262,6 +262,10 @@ public class TmxMap {
         return mTilesets;
     }
     
+    public Iterable<TmxObjectGroup> getObjectGroups() {
+        return mObjectsGroups;
+    }
+    
     public int getTileWidth() {
         return tileWidth;
     }
