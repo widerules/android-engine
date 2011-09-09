@@ -26,19 +26,7 @@ public class NpRenderQueue {
     
     public void executeRenderOps(GL10 gl) {
         
-        if (mROPS.size() > 0) {
-            NpRenderOp r = mROPS.get(0);
-            
-            if (r != null) {
-                r.setupGeometry(gl);
-                r.setupMaterial(gl);
-                r.setupInstance(gl);
-                
-                r.draw(gl);
-            }
-        }
-        
-        for (int i = 1; i < mROPS.size(); i++) {
+        for (int i = 0; i < mROPS.size(); i++) {
             NpRenderOp t = mROPS.get(i);
             
             if (t != null) {

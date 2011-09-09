@@ -17,7 +17,7 @@ public final class NpSurface extends GLSurfaceView {
         
         mRenderer = new NpRenderer(context.getAssets(), ft, game, schemeName);
         setRenderer(mRenderer);
-        getHolder().setFormat(PixelFormat.TRANSPARENT);        
+        getHolder().setFormat(PixelFormat.TRANSLUCENT);        
     }
     
     public boolean handleKeyEvent(int keyCode, KeyEvent event) {

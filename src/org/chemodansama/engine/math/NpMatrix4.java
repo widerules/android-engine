@@ -371,7 +371,7 @@ final public class NpMatrix4 {
     }
     
     @Override
-    protected Object clone() throws CloneNotSupportedException {
+    protected Object clone() {
 
         NpMatrix4 m = new NpMatrix4();
         toMatrix(m);
