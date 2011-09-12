@@ -45,17 +45,26 @@ class GZIPDataReader extends LayerDataReader {
         
         byte[] buf = new byte[intSize * 4];
         int[] out = new int[intSize];
-        
-        int r = gis.read(buf, 0, intSize * 4);
 
         int j = 0;
-        for (int i = 0; i < r; i += 4) {
-            out[j++] = (buf[i] & 0xFF) 
-                    | ((buf[i + 1] & 0xFF) << 8)
-                    | ((buf[i + 2] & 0xFF) << 16)
-                    | ((buf[i + 3] & 0xFF) << 24);
+        
+        while (true) {
+            int r = gis.read(buf, 0, intSize * 4);
+            
+            if (r == -1) {
+                break;
+            }
+        
+            for (int i = 0; i < r; i += 4) {
+                out[j++] = (buf[i] & 0xFF) 
+                        | ((buf[i + 1] & 0xFF) << 8)
+                        | ((buf[i + 2] & 0xFF) << 16)
+                        | ((buf[i + 3] & 0xFF) << 24);
+            }
         }
         
+        gis.close();
+                
         return out;
     }
     
@@ -113,7 +122,7 @@ public class TmxLayer {
         
         switch (compression) {
         case GZIP:
-            dr = new GZIPDataReader(decoded, width, width); 
+            dr = new GZIPDataReader(decoded, width, height); 
             break;
 
         default:

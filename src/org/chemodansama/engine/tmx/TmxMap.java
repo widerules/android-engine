@@ -193,7 +193,7 @@ public class TmxMap {
         mTilesets = new ArrayList<TmxTileset>();
         mLayers = new ArrayList<TmxLayer>();
         mObjectsGroups = new ArrayList<TmxObjectGroup>();
-        
+
         InputStream is = assets.open(fileName);
         try {
             Xml.parse(is, Encoding.US_ASCII, new TmxParser());
