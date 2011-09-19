@@ -24,50 +24,67 @@ abstract class LayerDataReader {
         mLevelHeight = levelHeight;
     }
     
-    public abstract int[] getData() throws IOException;
+    public abstract int[] getData();
 }
 
 class GZIPDataReader extends LayerDataReader {
 
-    public GZIPDataReader(byte[] compressedData, int levelWidth, int levelHeight) {
+    private final static int INT_SIZE_IN_BYTES = Integer.SIZE / 8;
+    
+    public GZIPDataReader(byte[] compressedData, int levelWidth, 
+            int levelHeight) {
         super(compressedData, levelWidth, levelHeight);
     }
 
     @Override
-    public int[] getData() throws IOException {
+    public int[] getData() {
         
-        ByteArrayInputStream bais = new ByteArrayInputStream(mCompressedData);
+        GZIPInputStream gis = null;
+        int[] out = null;
         
-        GZIPInputStream gis;
-        gis = new GZIPInputStream(bais);
-        
-        int intSize = mLevelHeight * mLevelWidth;
-        
-        byte[] buf = new byte[intSize * 4];
-        int[] out = new int[intSize];
-
-        int j = 0;
-        
-        while (true) {
-            int r = gis.read(buf, 0, intSize * 4);
+        try {
+            ByteArrayInputStream bais = 
+                    new ByteArrayInputStream(mCompressedData);
             
-            if (r == -1) {
-                break;
+            gis = new GZIPInputStream(bais);
+
+            int intSize = mLevelHeight * mLevelWidth;
+            int byteSize = intSize * INT_SIZE_IN_BYTES;
+
+            byte[] rawByteData = new byte[byteSize];
+            out = new int[intSize];
+
+            int j = 0;
+
+            while (true) {
+                int r = gis.read(rawByteData, 0, byteSize);
+
+                if (r == -1) {
+                    break;
+                }
+
+                // merge bytes to integers
+                for (int i = 0; i < r; i += 4) {
+                    out[j++] = (rawByteData[i] & 0xFF) 
+                            | ((rawByteData[i + 1] & 0xFF) << 8)
+                            | ((rawByteData[i + 2] & 0xFF) << 16)
+                            | ((rawByteData[i + 3] & 0xFF) << 24);
+                }
             }
-        
-            for (int i = 0; i < r; i += 4) {
-                out[j++] = (buf[i] & 0xFF) 
-                        | ((buf[i + 1] & 0xFF) << 8)
-                        | ((buf[i + 2] & 0xFF) << 16)
-                        | ((buf[i + 3] & 0xFF) << 24);
+        } catch (Exception e) {
+            out = null;
+            LogHelper.e("IOException on GZIP reading.");
+        } finally {
+            try {
+                if (gis != null) {
+                    gis.close();
+                }
+            } catch (IOException e) {
+                LogHelper.e("IOException on GZIP stream close().");
             }
         }
-        
-        gis.close();
-                
         return out;
     }
-    
 }
 
 public class TmxLayer {
@@ -132,11 +149,7 @@ public class TmxLayer {
             return;
         }
         
-        try {
-            mData = dr.getData();
-        } catch (IOException e) {
-            Log.e(LogTag.TAG, "Can't decompress data. Layer data is not set.");   
-        }
+        mData = dr.getData();
     }
     
     public int getTileGid(int x, int y) {

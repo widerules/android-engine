@@ -9,6 +9,9 @@ import org.chemodansama.engine.math.NpVec2;
 import android.util.Log;
 
 public class TmxTileset {
+    
+    public final static String EXT = ".tilesets";
+    
     public final int firstGid;
     public final int marging;
     public final TmxImage mImage;
