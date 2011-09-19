@@ -1,11 +1,11 @@
 package org.chemodansama.engine.render;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
+
+import org.chemodansama.engine.utils.NpByteBuffer;
 
 final public class NpPolyBuffer {
     
@@ -24,70 +24,63 @@ final public class NpPolyBuffer {
         
         mQuadsLimit = quadsLimit;
         
-        mVertArray = new float[mQuadsLimit * 4 * 3];
+        mVertArray = new float[mQuadsLimit * 4 * 2];
         mTexCoordArray = new float[mQuadsLimit * 4 * 2];
         mIndicesArray = new short[mQuadsLimit * 6];
         
-        ByteBuffer vbb = ByteBuffer.allocateDirect(mVertArray.length * 4);
-        vbb.order(ByteOrder.nativeOrder());
-        mVertBuffer = vbb.asFloatBuffer();
-
-        vbb = ByteBuffer.allocateDirect(mTexCoordArray.length * 4);
-        vbb.order(ByteOrder.nativeOrder());
-        mTexCoordBuffer = vbb.asFloatBuffer();
+        mVertBuffer = NpByteBuffer.allocateDirectNativeFloat(mVertArray.length);
         
-        vbb = ByteBuffer.allocateDirect(mIndicesArray.length * 2);
-        vbb.order(ByteOrder.nativeOrder());
-        mIndices = vbb.asShortBuffer();
+        mTexCoordBuffer = 
+                NpByteBuffer.allocateDirectNativeFloat(mTexCoordArray.length);
+        
+        mIndices = NpByteBuffer.allocateDirectNativeShort(mIndicesArray.length);
     }
     
     public void flushRender(GL10 gl) {
-        if (mQuadsCount > 0) {
-            mTexCoordBuffer.put(mTexCoordArray);
-            mTexCoordBuffer.position(0);
-
-            mVertBuffer.put(mVertArray);
-            mVertBuffer.position(0);
-            
-            mIndices.put(mIndicesArray);
-            mIndices.position(0);
-
-            // assume corresponding arrays are enabled in gl-state
-            
-            gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, mTexCoordBuffer);
-
-            gl.glVertexPointer(3, GL10.GL_FLOAT, 0, mVertBuffer);
-
-            gl.glDrawElements(GL10.GL_TRIANGLES, mQuadsCount * 6, 
-                              GL10.GL_UNSIGNED_SHORT, mIndices);
-
-            mQuadsCount = 0;
+        if (mQuadsCount == 0) {
+            return;
         }
+        
+        mTexCoordBuffer.put(mTexCoordArray);
+        mTexCoordBuffer.position(0);
+
+        mVertBuffer.put(mVertArray);
+        mVertBuffer.position(0);
+
+        mIndices.put(mIndicesArray);
+        mIndices.position(0);
+
+        // assume corresponding arrays are enabled in gl-state
+
+        gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, mTexCoordBuffer);
+
+        gl.glVertexPointer(2, GL10.GL_FLOAT, 0, mVertBuffer);
+
+        gl.glDrawElements(GL10.GL_TRIANGLES, mQuadsCount * 6, 
+                          GL10.GL_UNSIGNED_SHORT, mIndices);
+
+        mQuadsCount = 0;
     }
     
     public void pushQuad(GL10 gl, float x1, float y1, float x2, float y2,  
             float tx1, float ty1, float tx2, float ty2) {
        
-        int offs = mQuadsCount * 4 * 3; 
+        int offs = mQuadsCount * 4 * 2; 
        
         mVertArray[offs + 0] = x1;
         mVertArray[offs + 1] = y1;
-        mVertArray[offs + 2] = 0.0f;
-        offs += 3;
+        offs += 2;
         
         mVertArray[offs + 0] = x2;
         mVertArray[offs + 1] = y1;
-        mVertArray[offs + 2] = 0.0f;
-        offs += 3;
+        offs += 2;
         
         mVertArray[offs + 0] = x2;
         mVertArray[offs + 1] = y2;
-        mVertArray[offs + 2] = 0.0f;
-        offs += 3;
+        offs += 2;
         
         mVertArray[offs + 0] = x1;
         mVertArray[offs + 1] = y2;
-        mVertArray[offs + 2] = 0.0f;
         
         
         offs = mQuadsCount * 4 * 2;

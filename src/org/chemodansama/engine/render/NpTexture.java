@@ -12,6 +12,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import org.chemodansama.engine.LogHelper;
 import org.chemodansama.engine.LogTag;
+import org.chemodansama.engine.utils.NpByteBuffer;
 
 import android.util.Log;
 
@@ -101,7 +102,7 @@ final public class NpTexture {
             LogHelper.w("no mips in texture data. Interrupting.");
         }
         
-        IntBuffer textureBuf = ByteBuffer.allocateDirect(4).asIntBuffer();
+        IntBuffer textureBuf = NpByteBuffer.allocateDirectNativeInt(1);
 
         gl.glGenTextures(1, textureBuf);
 
@@ -150,11 +151,11 @@ final public class NpTexture {
     private void loadFromStream(GL10 gl, InputStream in, 
             boolean clampToEdge) throws IOException {
         if (gl == null) {
-            throw new NullPointerException("gl is null");
+            throw new IllegalArgumentException("gl is null");
         }
         
         if (in == null) {
-            throw new IOException("Input stream is null");
+            throw new IllegalArgumentException("Input stream is null");
         }
         
         if (!initGL10(gl, new NpTextureData(in), clampToEdge)) {
@@ -164,7 +165,7 @@ final public class NpTexture {
     }
     
     public void release(GL10 gl) {
-        IntBuffer t = ByteBuffer.allocateDirect(4).asIntBuffer();
+        IntBuffer t = NpByteBuffer.allocateDirectNativeInt(1);
         t.put(mTextureID);
         t.rewind();
         

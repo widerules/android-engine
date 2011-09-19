@@ -9,7 +9,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import org.chemodansama.engine.LogHelper;
 import org.chemodansama.engine.render.NpTexture;
-import org.chemodansama.engine.utils.NpByteBufferWrapper;
+import org.chemodansama.engine.utils.NpByteBuffer;
 
 class RenderOpComparator implements Comparator<Integer> {
     
@@ -64,9 +64,9 @@ public class TmxRenderQueue {
     public boolean sortOps = false;
     
     public TmxRenderQueue() {
-        mVertices  = NpByteBufferWrapper.allocateFloatBuffer(SIZE * 4 * 2);
-        mTexCoords = NpByteBufferWrapper.allocateFloatBuffer(SIZE * 4 * 2);
-        mIndicesBuffer = NpByteBufferWrapper.allocateShortBuffer(SIZE * 6);
+        mVertices  = NpByteBuffer.allocateDirectNativeFloat(SIZE * 4 * 2);
+        mTexCoords = NpByteBuffer.allocateDirectNativeFloat(SIZE * 4 * 2);
+        mIndicesBuffer = NpByteBuffer.allocateDirectNativeShort(SIZE * 6);
         mIndices   = new short[SIZE * 6]; 
         
         mRenderOps = new TmxRenderOp[SIZE];

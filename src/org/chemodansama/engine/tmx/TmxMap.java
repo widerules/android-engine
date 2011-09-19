@@ -6,7 +6,6 @@ import java.util.ArrayList;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
 import android.content.res.AssetManager;
 import android.util.Xml;
@@ -14,27 +13,17 @@ import android.util.Xml.Encoding;
 
 public class TmxMap {
 
-    private class TmxParser extends DefaultHandler {
+    private class TmxParser extends TmxTilesetParser {
        
         private final StringBuilder compressedData = new StringBuilder();
         private TmxDataCompression dataCompression;
         private TmxDataEncoding dataEncoding;
         private boolean isParsingData = false;
         private TmxLayer layer;
-        private TmxTile tile;
-        private int tsFirstgid;
-        private TmxImage tsImage;
-        private int tsMargin;
-        private String tsName;
-        
-        private int tsSpacing;
-        private int tsTileHeight;
-        private ArrayList<TmxTile> tsTiles = new ArrayList<TmxTile>();
-        private int tsTileWidth;
-        
         private TmxObjectGroup objects = null;
         
-        public TmxParser() {
+        public TmxParser(ArrayList<TmxTileset> tilesets) {
+            super(tilesets);
         }
         
         @Override
@@ -56,12 +45,7 @@ public class TmxMap {
                 return;
             }
             
-            if (localName.equalsIgnoreCase("tileset")) {
-                flushTileSet();
-            } else if (localName.equalsIgnoreCase("tile")) {
-                tsTiles.add(tile);
-                tile = null;
-            } else if (localName.equalsIgnoreCase("layer")) {
+            if (localName.equalsIgnoreCase("layer")) {
                 mLayers.add(layer);
                 layer = null;
             } else if (localName.equalsIgnoreCase("data")) {
@@ -81,14 +65,6 @@ public class TmxMap {
                     objects = null;
                 }
             }
-        }
-        
-        private void flushTileSet() {
-            mTilesets.add(new TmxTileset(tsFirstgid, tsName, 
-                                         tsTileWidth, tsTileHeight, 
-                                         tsSpacing, tsMargin, 
-                                         tsImage, tsTiles));
-            tsTiles.clear();
         }
         
         private int getAttributeAsInt(Attributes attributes, String qName) {
@@ -111,28 +87,8 @@ public class TmxMap {
                 height     = getAttributeAsInt(attributes, "height");
                 tileWidth  = getAttributeAsInt(attributes, "tilewidth");
                 tileHeight = getAttributeAsInt(attributes, "tileheight");
-            } else if (localName.equalsIgnoreCase("tileset")) {
-                tsFirstgid = getAttributeAsInt(attributes, "firstgid");
-                tsName = attributes.getValue("name");
-                tsTileHeight = getAttributeAsInt(attributes, "tileheight");
-                tsTileWidth = getAttributeAsInt(attributes, "tilewidth");
-                tsSpacing = getAttributeAsInt(attributes, "spacing");
-                tsMargin = getAttributeAsInt(attributes, "margin");
-            } else if (localName.equalsIgnoreCase("image")) {
-                
-                String source = attributes.getValue("source");
-                int trans = Integer.parseInt(attributes.getValue("trans"), 16);
-                int w = getAttributeAsInt(attributes, "width");
-                int h = getAttributeAsInt(attributes, "height");
-                
-                tsImage = new TmxImage(source, trans, w, h);
-            } else if (localName.equalsIgnoreCase("tile")) {
-                tile = new TmxTile(getAttributeAsInt(attributes, "id"));
             } else if (localName.equalsIgnoreCase("property")) {
-                if (tile != null) {
-                    tile.addProperty(attributes.getValue("name"), 
-                                     attributes.getValue("value"));
-                } else if (layer != null) {
+                if (layer != null) {
                     layer.addProperty(attributes.getValue("name"), 
                                       attributes.getValue("value"));
                 } else if (objects != null) {
@@ -194,13 +150,19 @@ public class TmxMap {
         mLayers = new ArrayList<TmxLayer>();
         mObjectsGroups = new ArrayList<TmxObjectGroup>();
 
-        InputStream is = assets.open(fileName);
+        InputStream is = null;
         try {
-            Xml.parse(is, Encoding.US_ASCII, new TmxParser());
-        } catch (SAXException e) {
-            throw new IOException(e.getMessage());
+            is = assets.open(fileName);
+            try {
+                Xml.parse(is, Encoding.US_ASCII, new TmxParser(mTilesets));
+            } catch (SAXException e) {
+                throw new IOException(e.getMessage());
+            }
+        } finally {
+            if (is != null) {
+                is.close();
+            }
         }
-        is.close();
     }
     
     public int getHeight() {

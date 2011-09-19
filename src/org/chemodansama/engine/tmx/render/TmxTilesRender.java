@@ -19,7 +19,6 @@ import android.content.res.AssetManager;
 
 public class TmxTilesRender {
     private static final int RENDER_BUFFER_SIZE = 32; // buffer size in quads.
-    private static final String TEXPACK_EXT = ".tex";
     
     private final TmxTexturePack mTextures;
     private final TmxMap mMap;
@@ -36,7 +35,7 @@ public class TmxTilesRender {
             throw new NullPointerException("texturePack == null");
         }
         
-        texturePack.addTextures(gl, assets, levelName + TEXPACK_EXT);
+        texturePack.addTextures(gl, assets, levelName + TmxTexturePack.EXT);
         mTextures = texturePack;
         
         mMap = map;

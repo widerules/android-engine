@@ -107,6 +107,8 @@ class TexturePack {
  */
 public class TmxTexturePack {
     
+    public static final String EXT = ".tex";
+    
     private class TexturePackHandler extends DefaultHandler {
         
         private final AssetManager mAssets;
