@@ -8,7 +8,7 @@ import org.chemodansama.engine.math.NpBox;
 import org.chemodansama.engine.render.NpPolyBuffer;
 import org.chemodansama.engine.tmx.TmxMap;
 
-class KdNode {
+class TmxKdNode {
     
     private final static int MAX_EXTENT = 100;
     private final static float MAX_OBJECT_SIZE = 0.25f;
@@ -23,10 +23,10 @@ class KdNode {
     }
     private TmxRenderObject[] mObjects;
     
-    private final KdNode[] mChilds = new KdNode[2];
+    private final TmxKdNode[] mChilds = new TmxKdNode[2];
     private final NpBox mBox;
     
-    public KdNode(TmxRenderObject[] objects, int[] indices) {
+    public TmxKdNode(TmxRenderObject[] objects, int[] indices) {
         
         float boxLeft   = Float.MAX_VALUE;
         float boxRight  = Float.MIN_VALUE;
@@ -114,7 +114,7 @@ class KdNode {
         pb.pushQuadWH(gl, left, bottom, right - left, 1, 0, 0, 0, 0);
         pb.pushQuadWH(gl, left, top,    right - left, 1, 0, 0, 0, 0);
 
-        for (KdNode child : mChilds) {
+        for (TmxKdNode child : mChilds) {
             if (child == null) {
                 continue;
             }
@@ -129,7 +129,7 @@ class KdNode {
             objects.add(o);
         }
 
-        for (KdNode child : mChilds) {
+        for (TmxKdNode child : mChilds) {
             if (child == null) {
                 continue;
             }
@@ -273,11 +273,11 @@ class KdNode {
         }
 
         if (leftIndices != null) {
-            mChilds[0] = new KdNode(objects, leftIndices);
+            mChilds[0] = new TmxKdNode(objects, leftIndices);
         }
         
         if (rightIndices != null) {
-            mChilds[1] = new KdNode(objects, rightIndices);
+            mChilds[1] = new TmxKdNode(objects, rightIndices);
         }
     }
     
@@ -339,17 +339,17 @@ class KdNode {
         }
         
         if (leftIndices != null) {
-            mChilds[0] = new KdNode(objects, leftIndices);
+            mChilds[0] = new TmxKdNode(objects, leftIndices);
         }
         if (rightIndices != null) {
-            mChilds[1] = new KdNode(objects, rightIndices);
+            mChilds[1] = new TmxKdNode(objects, rightIndices);
         }
     }
 }
 
 class TmxKdTree {
     
-    private final KdNode mRoot;
+    private final TmxKdNode mRoot;
     
     public TmxKdTree(TmxRenderObject[] objects, TmxMap map) {
         
@@ -366,7 +366,7 @@ class TmxKdTree {
             indices[i] = i;  
         };
         
-        mRoot = new KdNode(objects, indices);
+        mRoot = new TmxKdNode(objects, indices);
     }
     
     public void getVisibleObjects(NpBox cameraBounds, 

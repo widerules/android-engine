@@ -67,9 +67,27 @@ public class TmxMap {
             }
         }
         
+        /**
+         * @param attributes 
+         * @param qName specifies requested attribute name
+         * @return parsed int value of specified attribute 
+         *         or zero if attribute is not exists.
+         */
         private int getAttributeAsInt(Attributes attributes, String qName) {
+            return getAttributeAsInt(attributes, qName, 0);
+        }
+        
+        /**
+         * @param attributes
+         * @param qName specifies requested attribute name
+         * @param defaultValue 
+         * @return parsed int value of specified attribute 
+         *         or defaultValue if attribute is not exists.
+         */
+        private int getAttributeAsInt(Attributes attributes, String qName, 
+                int defaultValue) {
             String value = attributes.getValue(qName);
-            return (value != null) ? Integer.parseInt(value) : 0;
+            return (value != null) ? Integer.parseInt(value) : defaultValue;
         }
         
         @Override
@@ -121,7 +139,12 @@ public class TmxMap {
                 int w = getAttributeAsInt(attributes, "width");
                 int h = getAttributeAsInt(attributes, "height");
                 
-                objects = new TmxObjectGroup(attributes.getValue("name"), w, h);
+                boolean visible = 
+                        getAttributeAsInt(attributes, "visible", 1) > 0; 
+                
+                objects = new TmxObjectGroup(attributes.getValue("name"), w, h, 
+                                             visible);
+                
             } else if (localName.equalsIgnoreCase("object")) {
                 if (objects != null) {
                     int gid = getAttributeAsInt(attributes, "gid");
@@ -173,7 +196,7 @@ public class TmxMap {
         return height * tileHeight;
     }
     
-    public TmxLayer getLayer(int i) {
+    public TmxEntity getLayer(int i) {
         return ((i >= 0) && (i < mLayers.size())) ? mLayers.get(i) : null;
     }
     

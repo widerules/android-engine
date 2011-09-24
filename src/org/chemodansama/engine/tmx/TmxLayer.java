@@ -2,7 +2,6 @@ package org.chemodansama.engine.tmx;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.TreeMap;
 import java.util.zip.GZIPInputStream;
 
 import org.chemodansama.engine.LogHelper;
@@ -87,34 +86,25 @@ class GZIPDataReader extends LayerDataReader {
     }
 }
 
-public class TmxLayer {
+public class TmxLayer extends TmxEntity {
     public final String name;
     public final int width;
     public final int height;
     
     public final boolean isVisible;
     
-    private final TreeMap<String, String> mProperties;
     private int[] mData;
     
     public TmxLayer(String name, int width, int height, boolean isVisible) {
+        super();
+        
         this.height = height;
         this.width = width;
         this.name = name;
         
         this.isVisible = isVisible;
-        
-        mProperties = new TreeMap<String, String>();
     }
 
-    void addProperty(String name, String value) {
-        mProperties.put(name, value);
-    }
-    
-    public String getProperty(String name) {
-        return mProperties.get(name);
-    }
-    
     void setCompressedData(String data, TmxDataEncoding encoding, 
             TmxDataCompression compression) {
         

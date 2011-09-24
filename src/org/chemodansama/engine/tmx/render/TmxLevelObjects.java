@@ -1,6 +1,7 @@
 package org.chemodansama.engine.tmx.render;
 
 import java.util.Collection;
+import java.util.TreeMap;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -16,32 +17,118 @@ import org.chemodansama.engine.tmx.TmxTexturePack;
 import org.chemodansama.engine.tmx.TmxTileset;
 
 /* TODO:
- * 1/ Objects must be rendered by layers. 
- * 2/ Use kd-Tree for camera culling.
- * 3/ 
+ * * Objects must be rendered by layers. 
  */
 
 public class TmxLevelObjects {
-    private final TmxMap mLevel;
-    private final TmxTexturePack mTexturePack;
+    private static TreeMap<Integer, Integer> calcObjectsCountsByPlanes(TmxMap map) {
+        
+        if (map == null) {
+            throw new IllegalArgumentException("map == null");
+        }
+        
+        TreeMap<Integer, Integer> counts = 
+                new TreeMap<Integer, Integer>();
 
-    private TmxRenderObject[] mObjects = null;
+        for (TmxObjectGroup og : map.getObjectGroups()) {
+            if (!og.visible) {
+                continue;
+            }
+            int plane = getObjectGroupPlane(og);
+            
+            int newPlaneCnt = getIntValue(counts.get(plane)) 
+                              + og.getObjectsCount();
+            
+            counts.put(plane, newPlaneCnt);
+        }
+        
+        return counts;
+    }
+    private static int calcTotalObjectsCount(TreeMap<Integer, Integer> counts) {
+        
+        if (counts == null) {
+            throw new IllegalArgumentException("counts == null");
+        }
+        
+        int r = 0;
+        for (Integer i : counts.values()) {
+            r += i;
+        } 
+        return r;
+    }
+
+    /**
+     * @param i
+     * @return int value of the parameter or zero if the parameter is null
+     */
+    private static int getIntValue(Integer i) {
+        return (i == null) ? 0 : i;
+    }
     
-    private TmxKdTree mKdTree;
+    private static int getObjectGroupPlane(TmxObjectGroup og) {
+        if (og == null) {
+            return 0;
+        }
+        
+        String plane = og.getProperty("plane");
+        return (plane != null) ? Integer.parseInt(plane) : 0;
+    }
     
-    private boolean isMultiplicativeObjectsGroup(TmxObjectGroup og) {
+    private static boolean isShadowObjectsGroup(TmxObjectGroup og) {
         String isShadow = og.getProperty("isShadow");
         
         return (isShadow != null) && (Integer.parseInt(isShadow) != 0);
     }
     
+    private final TmxMap mLevel;
+    
+    private final TmxTexturePack mTexturePack;
+    
+    private TmxKdTree mKdTree = null;
+    
+    private final TreeMap<Integer, TmxRenderObject[]> mObjects = 
+            new TreeMap<Integer, TmxRenderObject[]>();
+    
+    /**
+     * Total count of render objects in the level.
+     */
+    private int mCount = 0;
+    
+    public TmxLevelObjects(TmxMap level, TmxTexturePack texturePack) {
+        
+        mLevel = level;
+        mTexturePack = texturePack;
+        
+        setupObjects();
+    }
+    
+    public void debugRender(GL10 gl, NpPolyBuffer pb) {
+        mKdTree.debugRender(gl, pb);
+    }
+    
+    public int getCount() {
+        return mCount;
+    }
+    
+    /**
+     * @param cameraBounds
+     */
+    public void getVisibleObjects(NpBox cameraBounds, 
+            Collection<TmxRenderObject> objects){
+        
+        if (objects == null) {
+            return;
+        }
+        
+        mKdTree.getVisibleObjects(cameraBounds, objects);
+    }
+    
     private void setupObjects() {
         
-        int cnt = 0;
-        for (TmxObjectGroup og : mLevel.getObjectGroups()) {
-            cnt += og.getObjectsCount();
-        }
-        mObjects = new TmxRenderObject[cnt];
+        TreeMap<Integer, Integer> counts = calcObjectsCountsByPlanes(mLevel);
+        mCount = calcTotalObjectsCount(counts);
+        
+        TmxRenderObject[] objects = new TmxRenderObject[mCount];
 
         TmxTileset ts = null;
         NpTexture texture = null;
@@ -49,15 +136,28 @@ public class TmxLevelObjects {
         NpVec2 tc = new NpVec2();
         
         int c = 0;
-        
         int w = 0;
         int h = 0;
         
         for (TmxObjectGroup og : mLevel.getObjectGroups()) {
             
-            NpBlendMode blend = (isMultiplicativeObjectsGroup(og))
-                                ? NpBlendMode.MULT
-                                : NpBlendMode.ADD;
+            if (!og.visible) {
+                continue;
+            }
+            
+            int plane = getObjectGroupPlane(og);
+            
+            TmxRenderObject[] planeObjects = mObjects.get(plane);
+            int planeCount = 0;
+            if (planeObjects == null) {
+                planeObjects = new TmxRenderObject[counts.get(plane)];
+                counts.put(plane, planeCount);
+                mObjects.put(plane, planeObjects);
+            } else {
+                planeCount = counts.get(plane);
+            }
+            
+            boolean isShadow = isShadowObjectsGroup(og);
             
             for (TmxObject o : og.getObjects()) {
                 if ((ts == null) || !ts.containsGid(o.gid)) {
@@ -86,41 +186,21 @@ public class TmxLevelObjects {
                 
                 tc.coords[1] -= ts.tileHeight;
                 
-                mObjects[c] = 
-                        new TmxRenderObject(o.x, o.y, w, -h, 
-                                            texture, 
-                                            tc.coords[0], tc.coords[1], 
-                                            ts.tileWidth, ts.tileHeight, blend);
-                c++;
+                TmxRenderObject ro = new TmxRenderObject(o.x, o.y, w, -h, 
+                                                         texture, 
+                                                         tc.coords[0], 
+                                                         tc.coords[1], 
+                                                         ts.tileWidth, 
+                                                         ts.tileHeight, 
+                                                         plane, isShadow);
+                
+                planeObjects[planeCount++] = ro;
+                objects[c++] = ro;
             }
+            
+            counts.put(plane, planeCount);
         }
         
-        mKdTree = new TmxKdTree(mObjects, mLevel);
-    }
-    
-    public TmxLevelObjects(TmxMap level, TmxTexturePack texturePack) {
-        
-        mLevel = level;
-        mTexturePack = texturePack;
-        
-        setupObjects();
-    }
-    
-    
-    public void debugRender(GL10 gl, NpPolyBuffer pb) {
-        mKdTree.debugRender(gl, pb);
-    }
-    
-    /**
-     * @param cameraBounds
-     * @return immutable collection of visible objects.
-     */
-    public void getVisibleObjects(NpBox cameraBounds, 
-            Collection<TmxRenderObject> objects){
-        mKdTree.getVisibleObjects(cameraBounds, objects);
-    }
-    
-    public int getCount() {
-        return mObjects.length;
+        mKdTree = new TmxKdTree(objects, mLevel);
     }
 }

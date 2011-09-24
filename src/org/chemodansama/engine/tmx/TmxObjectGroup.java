@@ -1,34 +1,26 @@
 package org.chemodansama.engine.tmx;
 
 import java.util.ArrayList;
-import java.util.TreeMap;
 
-public class TmxObjectGroup {
+public class TmxObjectGroup extends TmxEntity {
 
     public final String name;
     public final int width;
     public final int heigth;
+    public final boolean visible;
     
     private final ArrayList<TmxObject> mObjects = new ArrayList<TmxObject>();
-    private final TreeMap<String, String> mProperties = 
-            new TreeMap<String, String>();
     
-    public TmxObjectGroup(String name, int width, int height) {
+    public TmxObjectGroup(String name, int width, int height, boolean visible) {
+        super();
         this.name = name;
         this.width = width;
         this.heigth = height;
+        this.visible = visible;
     }
     
     void addObject(TmxObject object) {
         mObjects.add(object);
-    }
-    
-    void addProperty(String name, String value) {
-        mProperties.put(name, value);
-    }
-    
-    public String getProperty(String name) {
-        return mProperties.get(name);
     }
     
     public Iterable<TmxObject> getObjects() {
