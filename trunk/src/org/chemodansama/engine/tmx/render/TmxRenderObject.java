@@ -13,13 +13,18 @@ public class TmxRenderObject {
 
     private final float[] mCenter;
     private final float[] mExtents;
-    public final NpBlendMode blend;
+    
+    public final int plane;
+    public final boolean isShadow;
+    private final int y;
     
     public TmxRenderObject(int x, int y, int w, int h, NpTexture texture, 
-            float tx, float ty, float tw, float th, NpBlendMode blend) {
+            float tx, float ty, float tw, float th, int plane, 
+            boolean isShadow) {
 
         this.mTexture = texture;
-        this.blend = blend;
+        this.plane = plane;
+        this.isShadow = isShadow;
 
         mCenter = new float[2];
         mCenter[0] = x + w / 2;
@@ -28,6 +33,8 @@ public class TmxRenderObject {
         mExtents = new float[2];
         mExtents[0] = Math.abs(w / 2);
         mExtents[1] = Math.abs(h / 2);
+        
+        this.y = (int) (mCenter[1] + mExtents[1]);
         
         mVertices = new float[4 * 2];
         mTexCoords = new float[4 * 2];
@@ -58,8 +65,7 @@ public class TmxRenderObject {
     }
     
     public void pushRenderOp(GL10 gl, TmxRenderQueue rq) {
-        rq.addRenderOp(gl, mCenter[1] + mExtents[1], mVertices, 
-                       mTexture, mTexCoords);
+        rq.addRenderOp(gl, y, mVertices, mTexture, mTexCoords, plane, isShadow);
     }
     
     public float centerX() {

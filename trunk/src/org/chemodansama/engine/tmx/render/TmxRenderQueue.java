@@ -8,27 +8,30 @@ import java.util.Comparator;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.chemodansama.engine.LogHelper;
+import org.chemodansama.engine.NpObjectsPool;
 import org.chemodansama.engine.render.NpTexture;
 import org.chemodansama.engine.utils.NpByteBuffer;
 
-class RenderOpComparator implements Comparator<Integer> {
-    
-    private final TmxRenderOp[] mRenderOps;
-    
-    public RenderOpComparator(TmxRenderOp[] renderOps) {
-        mRenderOps = renderOps;
-    }
+class RenderOpComparator implements Comparator<TmxRenderOp> {
     
     @Override
-    public int compare(Integer object1, Integer object2) {
+    public int compare(TmxRenderOp rop1, TmxRenderOp rop2) {
         
-        int id1 = object1;
-        int id2 = object2;
+        int r = rop1.plane - rop2.plane;
+
+        if (r != 0) {
+            return r;
+        } 
+
+        if (rop1.isShadow && !rop2.isShadow) {
+            return -1;
+        }
         
-        TmxRenderOp rop1 = mRenderOps[id1];
-        TmxRenderOp rop2 = mRenderOps[id2];
+        if (!rop1.isShadow && rop2.isShadow) {
+            return 1;
+        }
         
-        return (int) Math.signum(rop1.y - rop2.y);
+        return rop1.y - rop2.y;
     }
 }
 
@@ -36,67 +39,83 @@ class TmxRenderOp {
     public float[] texCoords;
     public float[] vertices;
     public NpTexture texture;
-    public float y;
+    public int y;
+    public int plane;
+    public boolean isShadow;
 }
 
 public class TmxRenderQueue {
     
-    public final static int SIZE = 128;
+    private final int mSize;
     
     private final RenderOpComparator mComparator;
     
     private int mCount = 0;
     private final ShortBuffer mIndicesBuffer;
     
-    private final Integer[] mIntegersPool;
-    
     // renderOps pool.
     private final TmxRenderOp[] mRenderOps; 
-    private final Integer[] mRenderOpsOrder;
     private final short[] mIndices;
     
     private final FloatBuffer mTexCoords;
     private final FloatBuffer mVertices;
    
-    /**
-     * Defines whether queue must sort render ops vertically or not.
-     */
-    public boolean sortOps = false;
+    private final NpObjectsPool<TmxRenderOp> mRenderOpsPool;
     
-    public TmxRenderQueue() {
-        mVertices  = NpByteBuffer.allocateDirectNativeFloat(SIZE * 4 * 2);
-        mTexCoords = NpByteBuffer.allocateDirectNativeFloat(SIZE * 4 * 2);
-        mIndicesBuffer = NpByteBuffer.allocateDirectNativeShort(SIZE * 6);
-        mIndices   = new short[SIZE * 6]; 
+    /**
+     * @param size must be > 0
+     */
+    public TmxRenderQueue(int size) {
         
-        mRenderOps = new TmxRenderOp[SIZE];
-        mIntegersPool = new Integer[SIZE];
-        for (int i = 0; i < SIZE; i++) {
-            mRenderOps[i] = new TmxRenderOp();
-            mIntegersPool[i] = new Integer(i);
+        if (size <= 0) {
+            throw new IllegalArgumentException("size <= 0");
         }
         
-        mComparator = new RenderOpComparator(mRenderOps);
-        mRenderOpsOrder = new Integer[SIZE];
+        mSize = size;
+        
+        mRenderOpsPool = new NpObjectsPool<TmxRenderOp>(size, true) {
+            @Override
+            protected TmxRenderOp create() {
+                return new TmxRenderOp();
+            }
+        };
+        
+        mVertices  = NpByteBuffer.allocateDirectNativeFloat(size * 4 * 2);
+        mTexCoords = NpByteBuffer.allocateDirectNativeFloat(size * 4 * 2);
+        mIndicesBuffer = NpByteBuffer.allocateDirectNativeShort(size * 6);
+        mIndices   = new short[size * 6]; 
+        
+        mRenderOps = new TmxRenderOp[size];
+        for (int i = 0; i < size; i++) {
+            mRenderOps[i] = new TmxRenderOp();
+        }
+        
+        mComparator = new RenderOpComparator();
     }
     
-    public void addRenderOp(GL10 gl, float y, float[] vertices, 
-            NpTexture texture, float[] textureCoords) {
+    public void addRenderOp(GL10 gl, TmxRenderOp rop) {
+        mRenderOps[mCount] = rop;
+        mCount++;
+        if (mCount >= mSize) {
+            flush(gl);
+            LogHelper.e("FLUSH!");
+        }
+    }
+    
+    public void addRenderOp(GL10 gl, int y, float[] vertices, 
+            NpTexture texture, float[] textureCoords, int plane, 
+            boolean isShadow) {
         
-        TmxRenderOp rop = mRenderOps[mCount];
+        TmxRenderOp rop = mRenderOpsPool.getNext();
 
         rop.vertices  = vertices;
         rop.texture   = texture;
         rop.texCoords = textureCoords;
         rop.y         = y;
+        rop.plane     = plane;
+        rop.isShadow  = isShadow;
         
-        mRenderOpsOrder[mCount] = mIntegersPool[mCount];
-        
-        mCount++;
-        
-        if (mCount >= SIZE) {
-            flush(gl);
-        }
+        addRenderOp(gl, rop);
     }
     
     public void finishRender(GL10 gl) {
@@ -110,11 +129,11 @@ public class TmxRenderQueue {
             return;
         }
         
-        if (sortOps) {
-            sortOps();
-        }
+        sortOps();
         
         render(gl);
+        
+        mRenderOpsPool.rewind();
         
         mCount = 0;
     }
@@ -123,22 +142,18 @@ public class TmxRenderQueue {
         setupGLStates(gl);
     }
     
-    private NpTexture present(GL10 gl, TmxRenderOp rop, NpTexture boundTexture,
-            int quadsCount) {
+    private void present(GL10 gl, TmxRenderOp rop, int quadsCount) {
 
-        NpTexture ret = boundTexture;
-        
-        if (quadsCount == 0) {
-            return ret;
+        if (gl == null) {
+            return;
         }
         
-        if ((ret == null) || (ret != rop.texture)) {
-            ret = rop.texture;
-            if (ret != null) {
-                ret.bindGL10(gl);
-            } else {
-                NpTexture.unbind(gl);
-            }
+        if (rop == null) {
+            return;
+        }
+        
+        if (quadsCount == 0) {
+            return;
         }
         
         mVertices.position(0);
@@ -150,21 +165,54 @@ public class TmxRenderQueue {
         gl.glDrawElements(GL10.GL_TRIANGLES, quadsCount * 6, 
                           GL10.GL_UNSIGNED_SHORT, mIndicesBuffer);
        
-        return ret;
+        return;
+    }
+    
+    private static void setupRenderOp(GL10 gl, TmxRenderOp rop, 
+            boolean setupTex, boolean setupBlend) {
+        if (setupTex) {
+            if (rop.texture != null) {
+                rop.texture.bindGL10(gl);
+            } else {
+                NpTexture.unbind(gl);
+            }
+        }
+
+        if (setupBlend) {
+            if (rop.isShadow) {
+                gl.glBlendFunc(GL10.GL_DST_COLOR, GL10.GL_ZERO);
+            } else {
+                gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+            }
+        }
     }
     
     private void render(GL10 gl) {
         
         TmxRenderOp prevOp = null;
-        NpTexture boundTexture = null;
+        boolean isRenderOpBound = false;
         int quadsCount = 0;
         
         for (int i = 0; i < mCount; i++) {
-            TmxRenderOp rop = mRenderOps[mRenderOpsOrder[i]];
+            TmxRenderOp rop = mRenderOps[i];
             
-            if ((prevOp != null) && (prevOp.texture != rop.texture)) {
-                boundTexture = present(gl, prevOp, boundTexture, quadsCount);
-                quadsCount = 0;
+            if (prevOp != null) {
+                boolean needTexChange = (prevOp.texture != rop.texture);
+                boolean needBlendChange = (prevOp.isShadow != rop.isShadow);
+                
+                if (needBlendChange || needTexChange) {
+                    
+                    if (!isRenderOpBound) {
+                        setupRenderOp(gl, prevOp, true, true);
+                        isRenderOpBound = true;
+                    }
+                    
+                    present(gl, prevOp, quadsCount);
+                    
+                    setupRenderOp(gl, rop, needTexChange, needBlendChange);
+                    
+                    quadsCount = 0;
+                }
             }
             
             mVertices.put(rop.vertices);
@@ -185,7 +233,11 @@ public class TmxRenderQueue {
             quadsCount++;
         }
         
-        present(gl, prevOp, boundTexture, quadsCount);
+        present(gl, prevOp, quadsCount);
+        
+        if ((prevOp != null) && (prevOp.isShadow)) {
+            gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
+        }
     }
     
     private boolean setupGLStates(GL10 gl) {
@@ -208,7 +260,11 @@ public class TmxRenderQueue {
     }
     
     private void sortOps() {
-        Arrays.sort(mRenderOpsOrder, 0, mCount, mComparator);
+        Arrays.sort(mRenderOps, 0, mCount, mComparator);
+    }
+    
+    public int size() {
+        return mCount;
     }
 
     private void tearDownGLStates(GL10 gl) {
