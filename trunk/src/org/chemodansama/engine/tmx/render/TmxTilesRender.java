@@ -1,7 +1,6 @@
 package org.chemodansama.engine.tmx.render;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 import javax.microedition.khronos.opengles.GL10;
 
@@ -10,7 +9,6 @@ import org.chemodansama.engine.NpObjectsPool;
 import org.chemodansama.engine.math.NpBox;
 import org.chemodansama.engine.math.NpRect;
 import org.chemodansama.engine.math.NpVec2;
-import org.chemodansama.engine.render.NpPolyBuffer;
 import org.chemodansama.engine.render.NpTexture;
 import org.chemodansama.engine.tmx.TmxLayer;
 import org.chemodansama.engine.tmx.TmxMap;
@@ -20,7 +18,6 @@ import org.chemodansama.engine.tmx.TmxTileset;
 import android.content.res.AssetManager;
 
 public class TmxTilesRender {
-    private static final int RENDER_BUFFER_SIZE = 32; // buffer size in quads.
     
     private static int getLayerPlane(TmxLayer layer) {
         if (layer == null) {
@@ -30,30 +27,14 @@ public class TmxTilesRender {
         String plane = layer.getProperty("plane");
         return (plane != null) ? Integer.parseInt(plane) : 0;
     }
-    private static void setupGLStates(GL10 gl) {
-        if (gl == null) {
-            LogHelper.e("Cant setup GL states for WireLevel: gl is null");
-            return;
-        }
-
-        gl.glEnable(GL10.GL_TEXTURE_2D);
-
-        gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
-        gl.glEnableClientState(GL10.GL_VERTEX_ARRAY);
-
-        gl.glEnable(GL10.GL_BLEND);
-        gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);
-
-        gl.glColor4f(1, 1, 1, 1);
-    }
     
-    private static void tearDownGLStates(GL10 gl) {
-        if (gl == null) {
-            LogHelper.e("Cant tear down GL states for WireLevel: gl is null");
-            return;
+    private static boolean isShadowLayer(TmxLayer layer) {
+        if (layer == null) {
+            return false;
         }
-
-        gl.glDisable(GL10.GL_BLEND);
+        
+        String isShadow = layer.getProperty("isShadow");
+        return (isShadow != null) ? Integer.parseInt(isShadow) > 0 : false;
     }
     
     private final TmxTexturePack mTextures;
@@ -123,7 +104,7 @@ public class TmxTilesRender {
         
         rop.y = (int) (y + h);
         rop.texture = texture;
-        rop.isShadow = false;
+        rop.isShadow = isShadow;
         rop.plane = plane;
         
         return rop;
@@ -156,13 +137,9 @@ public class TmxTilesRender {
                                          halfWidthInTiles * 2, 
                                          halfHeightInTiles * 2);
         
-//        setupGLStates(gl);
-        
         for (TmxLayer layer : mMap.getLayers()) {
             renderLayer(gl, layer, cameraBounds, tileWidth, tileHeigth, rq);
         }
-        
-//        tearDownGLStates(gl);
     }
 
     private void renderLayer(GL10 gl, TmxLayer layer, 
@@ -182,6 +159,7 @@ public class TmxTilesRender {
         }
         
         int layerPlane = getLayerPlane(layer);
+        boolean isShadow = isShadowLayer(layer);
         
         TmxTileset ts = null;
         NpVec2 tc = new NpVec2();
@@ -224,13 +202,9 @@ public class TmxTilesRender {
                 rop = buildRenderOp(gl, texture, x * tileWidth, y * tileHeigth, 
                                     tileWidth, tileHeigth, tc.coords[0], 
                                     tc.coords[1], ts.tileWidth, -ts.tileHeight, 
-                                    false, layerPlane);
+                                    isShadow, layerPlane);
                 
                 rq.addRenderOp(gl, rop);
-                
-//                pb.pushQuadWH(gl, x * tileWidth, y * tileHeigth, 
-//                              tileWidth, tileHeigth, tc.coords[0], tc.coords[1], 
-//                              ts.tileWidth, -ts.tileHeight);
             }
         }
     }
