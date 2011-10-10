@@ -33,4 +33,9 @@ final public class NpVec2 {
         coords[0] = x;
         coords[1] = y;
     }
+    
+    public static void sub(float[] a, float[] b, float[] out) {
+        out[0] = a[0] - b[0];
+        out[1] = a[1] - b[1];
+    }
 }

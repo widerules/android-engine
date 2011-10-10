@@ -1,7 +1,9 @@
 package org.chemodansama.engine.math;
 
+import java.util.ArrayList;
+
 final public class NpMath {
-    public static final float ZERO = 0.000001f;
+    public static final float ZERO = 1.0e-06f;
     
     public static float clampf(float x, float min, float max) {
         if (x < min) {
@@ -21,6 +23,152 @@ final public class NpMath {
         } else {
             return x;
         }
+    }
+    
+    /**
+     * @param points source points. Can not be {@code null}. 
+     *               Can not contain {@code null}.
+     * @param out where to store resulting convex hull. Can not be {@code null}. 
+     * @throws IllegalArgumentException if any parameter is {@code null}. 
+     */
+    public static void constructConvexhullIndices(ArrayList<NpVec2> points, 
+            ArrayList<Integer> out) {
+        if (points == null) {
+            throw new IllegalArgumentException("points == null");
+        }
+        
+        if (out == null) {
+            throw new IllegalArgumentException("out == null");
+        }
+        
+        out.clear();
+        
+        int next = getFirstConvexhullPoint(points);
+        if (next < 0) {
+            return;
+        }
+
+        do {
+            out.add(next);
+            next = getNextConvexhullPoint(points, next);
+        } while ((out.get(0) != next) && (next != -1));
+    }
+    
+    /**
+     * @param points source points. Can not be {@code null}. 
+     *               Can not contain {@code null}.
+     * @param out where to store resulting convex hull. Can not be {@code null}. 
+     * @throws IllegalArgumentException if any parameter is {@code null}. 
+     */
+    public static void constructConvexhull(ArrayList<NpVec2> points, 
+            ArrayList<NpVec2> out) {
+        if (points == null) {
+            throw new IllegalArgumentException("points == null");
+        }
+        
+        if (out == null) {
+            throw new IllegalArgumentException("out == null");
+        }
+        
+        out.clear();
+        
+        int next = getFirstConvexhullPoint(points);
+        if (next < 0) {
+            return;
+        }
+        
+        int first = next;
+
+        do {
+            out.add(points.get(next));
+            next = getNextConvexhullPoint(points, next);
+        } while ((first != next) && (next != -1));
+    }
+    
+    /**
+     * @param points source for convex hull. Can not contain {@code null}.
+     * @param last last point added to convex hull. 
+     *              Must be within {@code 0} to {@code points.size() - 1} range.
+     * @return next point from {@code points} which belongs to convex hull, 
+     *          or {@code -1} if empty.
+     * @throws IllegalArgumentException if {@code points} is {@code null}.  
+     */
+    private static int getNextConvexhullPoint(ArrayList<NpVec2> points, 
+            int last) {
+        
+        if (points == null) {
+            throw new IllegalArgumentException();
+        }
+        
+        int size = points.size();
+        
+        if (size == 0) {
+            return -1;
+        }
+        
+        NpVec2 p = points.get(last);
+        float[] coords = p.coords;
+        
+        int ret = 0;
+        p = points.get(ret);
+        
+        float[] u = {p.coords[0] - coords[0], 
+                     p.coords[1] - coords[1]};
+
+        float[] v = new float[2];
+        
+        for (int i = 1; i < size; i++) {
+            
+            p = points.get(i);
+
+            v[0] = p.coords[0] - coords[0];
+            v[1] = p.coords[1] - coords[1];
+         
+            if ((ret == last) || (u[0] * v[1] - u[1] * v[0] < 0)) {
+                ret = i;
+                u[0] = v[0];
+                u[1] = v[1];
+            }
+        }
+        
+        return ret;
+    }
+
+    /**
+     * @param points source for convex hull. Can not be {@code null}. 
+     *               Can not contain {@code null}.
+     * @return index from 0 to {@code points.size() - 1}, such that 
+     *                  element from {@code points} at returned index belongs 
+     *                  to convex hull, or {@code -1} if empty.
+     *                  
+     * @throws IllegalArgumentException if {@code points} is {@code null}.                   
+     */
+    private static int getFirstConvexhullPoint(ArrayList<NpVec2> points) {
+
+        if (points == null) {
+            throw new IllegalArgumentException();
+        }
+        
+        int ret = -1;
+        float x = 0;
+        
+        int size = points.size();
+        
+        // return point with maximum x-axis coordinate value.
+        for (int i = 0; i < size; i++) {
+            NpVec2 p = points.get(i);
+            
+            if (p == null) {
+                continue;
+            }
+            
+            if ((p.coords[0] > x) || (ret < 0)) {
+                x = p.coords[0];
+                ret = i;
+            }
+        }
+        
+        return ret;
     }
     
     public static boolean calcLinePlaneIntersection(float[] plane0, 

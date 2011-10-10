@@ -87,9 +87,9 @@ public class TmxTileset {
         return null;
     }
     
-    public boolean getTileTexcoords(int tileGid, NpVec2 tc) {
-        
-        if (tc == null) {
+    public boolean getTileTexcoords(int tileGid, float[] tc) {
+
+        if ((tc == null) || (tc.length < 2)) {
             return false;
         }
         
@@ -104,11 +104,18 @@ public class TmxTileset {
 
         int imageH = mImage.getHeight();
         
-        float y = (float) (imageH - tileY * (tileHeightInPels + spacing)) / imageH;
-        
-        tc.setValues((float) tileX * (tileWidthInPels + spacing) / mImage.getWidth(), 
-                     y); 
+        tc[0] = (float)tileX * (tileWidthInPels + spacing) / mImage.getWidth();
+        tc[1] = (float)(imageH - tileY * (tileHeightInPels + spacing)) / imageH; 
         
         return true;
+    }
+    
+    public boolean getTileTexcoords(int tileGid, NpVec2 tc) {
+        
+        if (tc == null) {
+            return false;
+        }
+        
+        return getTileTexcoords(tileGid, tc.coords);
     }
 }

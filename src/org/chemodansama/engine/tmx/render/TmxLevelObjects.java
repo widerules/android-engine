@@ -7,7 +7,6 @@ import javax.microedition.khronos.opengles.GL10;
 
 import org.chemodansama.engine.math.NpBox;
 import org.chemodansama.engine.math.NpVec2;
-import org.chemodansama.engine.render.NpBlendMode;
 import org.chemodansama.engine.render.NpPolyBuffer;
 import org.chemodansama.engine.render.NpTexture;
 import org.chemodansama.engine.tmx.TmxMap;
@@ -16,11 +15,8 @@ import org.chemodansama.engine.tmx.TmxObjectGroup;
 import org.chemodansama.engine.tmx.TmxTexturePack;
 import org.chemodansama.engine.tmx.TmxTileset;
 
-/* TODO:
- * * Objects must be rendered by layers. 
- */
-
 public class TmxLevelObjects {
+    
     private static TreeMap<Integer, Integer> calcObjectsCountsByPlanes(TmxMap map) {
         
         if (map == null) {
@@ -44,6 +40,7 @@ public class TmxLevelObjects {
         
         return counts;
     }
+    
     private static int calcTotalObjectsCount(TreeMap<Integer, Integer> counts) {
         
         if (counts == null) {

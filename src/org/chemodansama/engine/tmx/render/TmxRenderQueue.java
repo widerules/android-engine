@@ -42,6 +42,22 @@ class TmxRenderOp {
     public int y;
     public int plane;
     public boolean isShadow;
+
+//    boolean overlaps(TmxRenderOp rop) {
+//        float x = (vertices[0 * 2 + 0] + vertices[2 * 2 + 0]) / 2;
+//        float y = (vertices[0 * 2 + 1] + vertices[2 * 2 + 1]) / 2;
+//        
+//        float ex = Math.abs((vertices[0 * 2 + 0] - vertices[2 * 2 + 0]) / 2);
+//        float ey = Math.abs((vertices[0 * 2 + 1] - vertices[2 * 2 + 1]) / 2);
+//        
+//        float rx = (rop.vertices[0 * 2 + 0] + rop.vertices[2 * 2 + 0]) / 2;
+//        float ry = (rop.vertices[0 * 2 + 1] + rop.vertices[2 * 2 + 1]) / 2;
+//        
+//        float rex = Math.abs((rop.vertices[0 * 2 + 0] - rop.vertices[2 * 2 + 0]) / 2);
+//        float rey = Math.abs((rop.vertices[0 * 2 + 1] - rop.vertices[2 * 2 + 1]) / 2);
+//        
+//        return ((Math.abs(x - rx) < ex + rex) && (Math.abs(y - ry) < ey + rey));
+//    }
 }
 
 public class TmxRenderQueue {
