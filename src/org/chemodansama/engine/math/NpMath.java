@@ -97,7 +97,7 @@ final public class NpMath {
             int last) {
         
         if (points == null) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("points == null");
         }
         
         int size = points.size();
@@ -106,25 +106,22 @@ final public class NpMath {
             return -1;
         }
         
-        NpVec2 p = points.get(last);
-        float[] coords = p.coords;
+        float[] lastCoords = points.get(last).coords;
         
-        int ret = 0;
-        p = points.get(ret);
+        int ret = -1;
         
-        float[] u = {p.coords[0] - coords[0], 
-                     p.coords[1] - coords[1]};
-
+        float[] u = new float[2];
         float[] v = new float[2];
         
-        for (int i = 1; i < size; i++) {
+        for (int i = 0; i < size; i++) {
             
-            p = points.get(i);
+            NpVec2 p = points.get(i);
 
-            v[0] = p.coords[0] - coords[0];
-            v[1] = p.coords[1] - coords[1];
+            v[0] = p.coords[0] - lastCoords[0];
+            v[1] = p.coords[1] - lastCoords[1];
          
-            if ((ret == last) || (u[0] * v[1] - u[1] * v[0] < 0)) {
+            if (((ret < 0) || (u[0] * v[1] - u[1] * v[0] < 0)) 
+                    && (v[0] * v[0] + v[1] * v[1] > ZERO)) {
                 ret = i;
                 u[0] = v[0];
                 u[1] = v[1];
@@ -156,14 +153,9 @@ final public class NpMath {
         
         // return point with maximum x-axis coordinate value.
         for (int i = 0; i < size; i++) {
-            NpVec2 p = points.get(i);
-            
-            if (p == null) {
-                continue;
-            }
-            
-            if ((p.coords[0] > x) || (ret < 0)) {
-                x = p.coords[0];
+            float[] coords = points.get(i).coords;
+            if ((coords[0] > x) || (ret < 0)) {
+                x = coords[0];
                 ret = i;
             }
         }
