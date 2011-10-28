@@ -1,14 +1,13 @@
 package org.chemodansama.engine.math;
 
 final public class NpVec4 {
-    
-    private float[] mValues = new float[4];
-    
     public static final NpVec4 iOrt4 = new NpVec4(1, 0, 0, 1);
     public static final NpVec4 jOrt4 = new NpVec4(0, 1, 0, 1);
     public static final NpVec4 kOrt4 = new NpVec4(0, 0, 1, 1);
     public static final NpVec4 ONE = new NpVec4(1, 1, 1, 1);
 
+    public final float[] coords = new float[4];
+    
     public NpVec4() {
         super();
 
@@ -61,46 +60,46 @@ final public class NpVec4 {
     }
     
     public float[] getArray() {
-        return mValues;
+        return coords;
     }
 
     public float getW() {
-        return mValues[3];
+        return coords[3];
     }
 
     public float getX() {
-        return mValues[0];
+        return coords[0];
     }
     
     public float getY() {
-        return mValues[1];
+        return coords[1];
     }
     
     public float getZ() {
-        return mValues[2];
+        return coords[2];
     }
     
     public void setX(float aX) {
-        mValues[0] = aX;
+        coords[0] = aX;
     }
     
     public void setY(float aY) {
-        mValues[1] = aY;
+        coords[1] = aY;
     }
     
     public void setZ(float aZ) {
-        mValues[2] = aZ;
+        coords[2] = aZ;
     }
     
     public void setW(float aW) {
-        mValues[3] = aW;
+        coords[3] = aW;
     }
 
     public void setValues(float aX, float aY, float aZ, float aW) {
-        mValues[0] = aX;
-        mValues[1] = aY;
-        mValues[2] = aZ;
-        mValues[3] = aW;
+        coords[0] = aX;
+        coords[1] = aY;
+        coords[2] = aZ;
+        coords[3] = aW;
     }
 
     public void setValues(NpVec4 v) {

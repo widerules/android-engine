@@ -81,7 +81,7 @@ public class TmxMap {
          * @param attributes
          * @param qName specifies requested attribute name
          * @param defaultValue 
-         * @return parsed int value of specified attribute 
+         * @return parsed {@code int} value of specified attribute 
          *         or defaultValue if attribute is not exists.
          */
         private int getAttributeAsInt(Attributes attributes, String qName, 
@@ -150,8 +150,10 @@ public class TmxMap {
                     int gid = getAttributeAsInt(attributes, "gid");
                     int x = getAttributeAsInt(attributes, "x");
                     int y = getAttributeAsInt(attributes, "y");
+                    int w = getAttributeAsInt(attributes, "width");
+                    int h = getAttributeAsInt(attributes, "height");
                     
-                    objects.addObject(new TmxObject(gid, x, y));
+                    objects.addObject(new TmxObject(gid, x, y, w, h));
                 }
             }
         }
@@ -249,6 +251,17 @@ public class TmxMap {
     
     public Iterable<TmxObjectGroup> getObjectGroups() {
         return mObjectsGroups;
+    }
+    
+    public TmxObjectGroup getObjectGroup(String name) {
+        for (TmxObjectGroup og : mObjectsGroups) {
+            String oName = og.name;
+            
+            if ((oName != null) && (oName.equals(name))) {
+                return og;
+            }
+        }
+        return null;
     }
     
     public int getTileWidth() {

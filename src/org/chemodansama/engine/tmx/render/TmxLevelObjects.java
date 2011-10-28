@@ -157,6 +157,11 @@ public class TmxLevelObjects {
             boolean isShadow = isShadowObjectsGroup(og);
             
             for (TmxObject o : og.getObjects()) {
+                
+                if (o.gid == 0) {
+                    continue;
+                }
+                
                 if ((ts == null) || !ts.containsGid(o.gid)) {
                     ts = mLevel.getTilesetByGid(o.gid);
                     

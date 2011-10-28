@@ -2,7 +2,6 @@ package org.chemodansama.engine.tmx.render;
 
 import javax.microedition.khronos.opengles.GL10;
 
-import org.chemodansama.engine.render.NpBlendMode;
 import org.chemodansama.engine.render.NpTexture;
 
 public class TmxRenderObject {

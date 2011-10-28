@@ -81,11 +81,19 @@ public final class NpSkinImageSet {
     }
     private final class XmlImageSetReader extends DefaultHandler {
         
-        private GL10 mGL = null;
-        private AssetManager mAssets;
+        private final GL10 mGL;
+        private final AssetManager mAssets;
 
         private XmlImageSetReader(GL10 gl, AssetManager assets) {
             super();
+            
+            if (gl == null) {
+                throw new IllegalArgumentException("gl == null");
+            }
+            
+            if (assets == null) {
+                throw new IllegalArgumentException("assets == null");
+            }
             
             mGL = gl;
             mAssets = assets;
@@ -99,15 +107,15 @@ public final class NpSkinImageSet {
             if (localName.equalsIgnoreCase("imageset")) {
                 
                 mName = attributes.getValue("Name");
-                
                 mTextureName = attributes.getValue("Imagefile");
                 
-                if ((mTextureName != null) && (mGL != null) && (mAssets != null)) {
+                if (mTextureName != null) {
                     try {
-                        InputStream texIn = mAssets.open(mTextureName);
-                        mTexture = new NpTexture(mGL, texIn, true);
+                        mTexture = new NpTexture(mGL, mTextureName, mAssets, 
+                                                 true);
                     } catch (IOException e) {
-                        LogHelper.e(mTextureName + " was NOT loaded.");
+                        LogHelper.e("IOException in NpTexture(" + mTextureName 
+                                    + ")");
                     }
                 }
             } else if (localName.equalsIgnoreCase("image")) {
