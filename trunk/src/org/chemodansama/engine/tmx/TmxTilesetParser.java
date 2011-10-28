@@ -19,6 +19,7 @@ public class TmxTilesetParser extends DefaultHandler {
     private int tsTileWidth;
     
     private final ArrayList<TmxTileset> mTilesets;
+    private boolean parsingTileset = false;
     
     public TmxTilesetParser(ArrayList<TmxTileset> tilesets) {
         
@@ -38,6 +39,7 @@ public class TmxTilesetParser extends DefaultHandler {
                                          tsSpacing, tsMargin, 
                                          tsImage, tsTiles));
             tsTiles.clear();
+            parsingTileset = false;
         } if (localName.equalsIgnoreCase("tile")) {
             tsTiles.add(tile);
             tile = null;
@@ -59,14 +61,17 @@ public class TmxTilesetParser extends DefaultHandler {
             tsTileWidth = getAttributeAsInt(attributes, "tilewidth");
             tsSpacing = getAttributeAsInt(attributes, "spacing");
             tsMargin = getAttributeAsInt(attributes, "margin");
+            
+            parsingTileset = true;
+            
         } else if (localName.equalsIgnoreCase("image")) {
-            
-            String source = attributes.getValue("source");
-            int trans = Integer.parseInt(attributes.getValue("trans"), 16);
-            int w = getAttributeAsInt(attributes, "width");
-            int h = getAttributeAsInt(attributes, "height");
-            
-            tsImage = new TmxImage(source, trans, w, h);
+            if (parsingTileset) {
+                String source = attributes.getValue("source");
+                int trans = Integer.parseInt(attributes.getValue("trans"), 16);
+                int w = getAttributeAsInt(attributes, "width");
+                int h = getAttributeAsInt(attributes, "height");
+                tsImage = new TmxImage(source, trans, w, h);
+            }
         } else if (localName.equalsIgnoreCase("tile")) {
             tile = new TmxTile(getAttributeAsInt(attributes, "id"));
         } else if (localName.equalsIgnoreCase("property")) {

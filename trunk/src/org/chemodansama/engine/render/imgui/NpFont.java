@@ -135,11 +135,10 @@ public final class NpFont {
             } else if (localName.equalsIgnoreCase("texture")) {
                 mTextureName = attributes.getValue("file"); 
                 try {
-                    InputStream is = mAssets.open(mTextureName);
-                    mTexture = new NpTexture(mGL, is, true);
+                    mTexture = new NpTexture(mGL, mTextureName, mAssets, true);
                 } catch (IOException e) {
                     Log.e(LogTag.TAG, 
-                          "Exc while reading font texture: " + mTextureName);
+                          "IOException NpTexture(" + mTextureName + ")");
                 }
             } else if (localName.equalsIgnoreCase("char")) {
                 

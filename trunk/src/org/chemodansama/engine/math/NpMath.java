@@ -109,22 +109,21 @@ final public class NpMath {
         float[] lastCoords = points.get(last).coords;
         
         int ret = -1;
-        
-        float[] u = new float[2];
-        float[] v = new float[2];
+        float ux = 0;
+        float uy = 0;
         
         for (int i = 0; i < size; i++) {
             
-            NpVec2 p = points.get(i);
+            float[] coords = points.get(i).coords;
 
-            v[0] = p.coords[0] - lastCoords[0];
-            v[1] = p.coords[1] - lastCoords[1];
+            float vx = coords[0] - lastCoords[0];
+            float vy = coords[1] - lastCoords[1];
          
-            if (((ret < 0) || (u[0] * v[1] - u[1] * v[0] < 0)) 
-                    && (v[0] * v[0] + v[1] * v[1] > ZERO)) {
+            if (((ret < 0) || (ux * vy - uy * vx < 0)) 
+                    && (vx * vx + vy * vy > ZERO)) {
                 ret = i;
-                u[0] = v[0];
-                u[1] = v[1];
+                ux = vx;
+                uy = vy;
             }
         }
         

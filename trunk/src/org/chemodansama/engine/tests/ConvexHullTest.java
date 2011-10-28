@@ -1,7 +1,5 @@
 package org.chemodansama.engine.tests;
 
-import static org.junit.Assert.*;
-
 import java.util.ArrayList;
 import java.util.Random;
 
