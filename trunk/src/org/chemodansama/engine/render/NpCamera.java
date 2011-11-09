@@ -172,8 +172,6 @@ public final class NpCamera {
         computeProj();
         computeViewProj();
 
-        
-        
         mDirty = false;
     }
 

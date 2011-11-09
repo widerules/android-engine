@@ -16,17 +16,17 @@ class TmxKdNode {
     private final static int LOW_LIMIT = 3;
     private final static int EMPTY_COST = 90000;
     
-    private static boolean mustBeLocalObject(TmxRenderObject o, 
+    private static boolean mustBeLocalObject(TmxMapObjectRenderer o, 
             float boxWidth, float boxHeight) {
         return (o.extentsX() * 2 > MAX_OBJECT_SIZE * boxWidth) 
                 && (o.extentsY() * 2 > MAX_OBJECT_SIZE * boxHeight);
     }
-    private TmxRenderObject[] mObjects;
+    private TmxMapObjectRenderer[] mObjects;
     
     private final TmxKdNode[] mChilds = new TmxKdNode[2];
     private final NpBox mBox;
     
-    public TmxKdNode(TmxRenderObject[] objects, int[] indices) {
+    public TmxKdNode(TmxMapObjectRenderer[] objects, int[] indices) {
         
         float boxLeft   = Float.MAX_VALUE;
         float boxRight  = Float.MIN_VALUE;
@@ -35,7 +35,7 @@ class TmxKdNode {
         float boxBottom = Float.MAX_VALUE;
         
         for (int i : indices) {
-            TmxRenderObject o = objects[i];
+            TmxMapObjectRenderer o = objects[i];
             
             if (o == null) {
                 continue;
@@ -69,11 +69,11 @@ class TmxKdNode {
         setupChilds(objects, indices, boxLeft, boxRight, boxBottom, boxTop);
     }
     
-    private int countBottom(float border, TmxRenderObject[] objects, 
+    private int countBottom(float border, TmxMapObjectRenderer[] objects, 
             int[] indices) {
         int r = 0;
         for (int i : indices) {
-            TmxRenderObject o = objects[i];
+            TmxMapObjectRenderer o = objects[i];
             
             if (o == null) {
                 continue;
@@ -86,11 +86,11 @@ class TmxKdNode {
         return r;
     }
     
-    private int countLeft(float border, TmxRenderObject[] objects, 
+    private int countLeft(float border, TmxMapObjectRenderer[] objects, 
             int[] indices) {
         int r = 0;
         for (int i : indices) {
-            TmxRenderObject o = objects[i];
+            TmxMapObjectRenderer o = objects[i];
             
             if (o == null) {
                 continue;
@@ -124,8 +124,8 @@ class TmxKdNode {
     }
     
     public void getVisibleObjects(NpBox cameraBounds, 
-            Collection<TmxRenderObject> objects) {
-        for (TmxRenderObject o : mObjects) {
+            Collection<TmxMapObjectRenderer> objects) {
+        for (TmxMapObjectRenderer o : mObjects) {
             objects.add(o);
         }
 
@@ -140,7 +140,7 @@ class TmxKdNode {
         }
     }
     
-    private void setupChilds(TmxRenderObject[] objects, int[] indices,  
+    private void setupChilds(TmxMapObjectRenderer[] objects, int[] indices,  
             float boxLeft, float boxRight, float boxBottom, float boxTop) {
         
         float boxWidth = boxRight - boxLeft;
@@ -148,11 +148,11 @@ class TmxKdNode {
         
         if (((boxWidth < MAX_EXTENT) && (boxHeight < MAX_EXTENT)) 
                 || (indices.length <= LOW_LIMIT)) {
-            mObjects = new TmxRenderObject[indices.length];
+            mObjects = new TmxMapObjectRenderer[indices.length];
 
             int cnt = 0;
             for (int i : indices) {
-                TmxRenderObject o = objects[i];
+                TmxMapObjectRenderer o = objects[i];
                 
                 if (o == null) {
                     continue;
@@ -168,7 +168,7 @@ class TmxKdNode {
         int childsCnt = 0;
         
         for (int i : indices) {
-            TmxRenderObject o = objects[i];
+            TmxMapObjectRenderer o = objects[i];
             
             if (o == null) {
                 continue;
@@ -181,14 +181,14 @@ class TmxKdNode {
             }
         }
         
-        mObjects = new TmxRenderObject[localCnt];
+        mObjects = new TmxMapObjectRenderer[localCnt];
         int[] childIndices = new int[childsCnt];
         
         localCnt = 0;
         childsCnt = 0;
         
         for (int i : indices) {
-            TmxRenderObject o = objects[i];
+            TmxMapObjectRenderer o = objects[i];
             
             if (o == null) {
                 continue;
@@ -210,7 +210,7 @@ class TmxKdNode {
         }
     }
     
-    private void splitLeftRight(TmxRenderObject[] objects, 
+    private void splitLeftRight(TmxMapObjectRenderer[] objects, 
             float boxLeft, float boxRight, float boxHeight, int[] indices) {
 
         int n = indices.length;
@@ -257,7 +257,7 @@ class TmxKdNode {
         int rightCount = 0;
         
         for (int i : indices) {
-            TmxRenderObject o = objects[i];
+            TmxMapObjectRenderer o = objects[i];
             
             if (o == null) {
                 continue;
@@ -281,7 +281,7 @@ class TmxKdNode {
         }
     }
     
-    private void splitTopBottom(TmxRenderObject[] objects, 
+    private void splitTopBottom(TmxMapObjectRenderer[] objects, 
             float boxBottom, float boxTop, float boxWidth, int[] indices) {
 
         int n = indices.length;
@@ -323,7 +323,7 @@ class TmxKdNode {
         }
         int r = 0;
         for (int i : indices) {
-            TmxRenderObject o = objects[i];
+            TmxMapObjectRenderer o = objects[i];
             
             if (o == null) {
                 continue;
@@ -351,7 +351,7 @@ class TmxKdTree {
     
     private final TmxKdNode mRoot;
     
-    public TmxKdTree(TmxRenderObject[] objects, TmxMap map) {
+    public TmxKdTree(TmxMapObjectRenderer[] objects, TmxMap map) {
         
         if (objects == null) {
             mRoot = null;
@@ -370,7 +370,7 @@ class TmxKdTree {
     }
     
     public void getVisibleObjects(NpBox cameraBounds, 
-            Collection<TmxRenderObject> objects) {
+            Collection<TmxMapObjectRenderer> objects) {
         
         if (mRoot == null) {
             return;

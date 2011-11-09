@@ -12,13 +12,14 @@ public class TmxTilesetParser extends DefaultHandler {
     private TmxImage tsImage;
     private int tsMargin;
     private String tsName;
+    private String tsImageName;
     
     private int tsSpacing;
     private int tsTileHeight;
     private ArrayList<TmxTile> tsTiles = new ArrayList<TmxTile>();
     private int tsTileWidth;
     
-    private final ArrayList<TmxTileset> mTilesets;
+    protected final ArrayList<TmxTileset> mTilesets;
     private boolean parsingTileset = false;
     
     public TmxTilesetParser(ArrayList<TmxTileset> tilesets) {
@@ -34,7 +35,7 @@ public class TmxTilesetParser extends DefaultHandler {
     public void endElement(String uri, String localName, String qName)
             throws SAXException {
         if (localName.equalsIgnoreCase("tileset")) {
-            mTilesets.add(new TmxTileset(tsFirstgid, tsName, 
+            mTilesets.add(new TmxTileset(tsFirstgid, tsName, tsImageName, 
                                          tsTileWidth, tsTileHeight, 
                                          tsSpacing, tsMargin, 
                                          tsImage, tsTiles));
@@ -61,6 +62,10 @@ public class TmxTilesetParser extends DefaultHandler {
             tsTileWidth = getAttributeAsInt(attributes, "tilewidth");
             tsSpacing = getAttributeAsInt(attributes, "spacing");
             tsMargin = getAttributeAsInt(attributes, "margin");
+            tsImageName = attributes.getValue("image");
+            if ((tsImageName == null) || (tsImageName.equalsIgnoreCase(""))) {
+                tsImageName = tsName;
+            }
             
             parsingTileset = true;
             

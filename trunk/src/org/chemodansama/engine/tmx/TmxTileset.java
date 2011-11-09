@@ -29,13 +29,16 @@ public class TmxTileset {
     
     public final int widthInTiles;
     public final int heightInTiles;
+
+    public final String imageName;
     
-    public TmxTileset(int firstGid, String name, int tileWidthInPels, 
-            int tileHeightInPels,
+    public TmxTileset(int firstGid, String name, String imageName, 
+            int tileWidthInPels, int tileHeightInPels,
             int spacing, int marging, TmxImage image, 
             Collection<TmxTile> tiles) {
         this.firstGid = firstGid;
         this.name = name;
+        this.imageName = imageName;
         this.tileWidthInPels = tileWidthInPels;
         this.tileHeightInPels = tileHeightInPels;
         this.spacing = spacing;

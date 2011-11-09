@@ -7,6 +7,7 @@ import javax.microedition.khronos.opengles.GL10;
 
 import org.chemodansama.engine.LogHelper;
 import org.chemodansama.engine.render.NpTexture;
+import org.chemodansama.engine.render.NpTexturePack;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -75,7 +76,7 @@ public class TmxTexturePack {
         }
     }
     
-    private final TexturePack mTextureHolder = new TexturePack();
+    private final NpTexturePack mTextureHolder = new NpTexturePack();
     
     public TmxTexturePack() {
     }

@@ -153,7 +153,7 @@ public class TmxMap {
                     int w = getAttributeAsInt(attributes, "width");
                     int h = getAttributeAsInt(attributes, "height");
                     
-                    objects.addObject(new TmxObject(gid, x, y, w, h));
+                    objects.addObject(new TmxMapObject(gid, x, y, w, h));
                 }
             }
         }

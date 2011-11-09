@@ -9,7 +9,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-public class NpSpriteAnimationReader extends DefaultHandler {
+class NpSpriteAnimationReader extends DefaultHandler {
     
     private Collection<NpSpriteAnimation> mAnimations;
     
@@ -31,17 +31,18 @@ public class NpSpriteAnimationReader extends DefaultHandler {
         }
         
         if (!localName.equalsIgnoreCase("animation")) {
-            return true;
+            return false;
         }
         
-        String name = attributes.getValue("alias");
+        String name = attributes.getValue("name");
+        String tileset = attributes.getValue("tileset");
         int fps = getAttributeAsInt(attributes, "fps");
         int verticalOrigin = getAttributeAsInt(attributes, "verticalOrigin");
         int[] sequence = readIntArray(attributes.getValue("sequence"));
 
         if ((fps != 0) && (sequence != null)) {
-            animations.add(new NpSpriteAnimation(name, fps, verticalOrigin, 
-                                                 sequence));
+            animations.add(new NpSpriteAnimation(name, tileset, fps, 
+                                                 verticalOrigin, sequence));
         }
         
         return true;

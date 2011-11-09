@@ -7,24 +7,24 @@ import javax.microedition.khronos.opengles.GL10;
 import org.chemodansama.engine.tmx.TmxTileset;
 import org.chemodansama.engine.tmx.render.TmxRenderQueue;
 
-public class NpSprite {
+public class NpAnimatedSprite {
     
     private final static float[] VERTS = 
         {-0.5f, 0, 0.5f, 0, 0.5f, -1, -0.5f, -1};
     
     public interface NpSpriteListener {
-        void loopEnd(NpSprite s);
+        void loopEnd(NpAnimatedSprite s);
     }
     
     private final float[] mVertices = new float[4 * 2];
     private final float[] mTexCoords = new float[4 * 2];
     
     private final int level;
-    public final NpSpriteTemplate template;
+    public final NpSpriteAnimationTemplate template;
     private final long mFrameDelay;
 
     private final ArrayList<NpSpriteListener> mListeners = 
-            new ArrayList<NpSprite.NpSpriteListener>();
+            new ArrayList<NpAnimatedSprite.NpSpriteListener>();
     
     private boolean mActive = true;
     private boolean mLooped = false;
@@ -34,7 +34,8 @@ public class NpSprite {
     public float x;
     public float y;
 
-    public NpSprite(NpSpriteTemplate template, int level, float x, float y) {
+    public NpAnimatedSprite(NpSpriteAnimationTemplate template, int level, 
+            float x, float y) {
         if (template == null) {
             throw new IllegalArgumentException("template == null");
         }
@@ -49,8 +50,8 @@ public class NpSprite {
                       : 1;
     }
     
-    public NpSprite(NpSpriteTemplate template, int level, float x, float y, 
-            boolean looped) {
+    public NpAnimatedSprite(NpSpriteAnimationTemplate template, int level, 
+            float x, float y, boolean looped) {
         this(template, level, x, y);
         this.mLooped = looped;
     }

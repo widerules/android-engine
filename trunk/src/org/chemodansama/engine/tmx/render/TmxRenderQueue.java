@@ -262,6 +262,8 @@ public class TmxRenderQueue {
             return false;
         }
 
+        gl.glEnable(GL10.GL_BLEND);
+        
         gl.glEnable(GL10.GL_TEXTURE_2D);
 
         gl.glEnableClientState(GL10.GL_TEXTURE_COORD_ARRAY);

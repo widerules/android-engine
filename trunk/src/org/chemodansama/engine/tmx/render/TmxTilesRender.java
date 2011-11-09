@@ -17,7 +17,7 @@ import org.chemodansama.engine.tmx.TmxTileset;
 
 import android.content.res.AssetManager;
 
-public class TmxTilesRender {
+public class TmxTilesRender extends TmxRenderObject {
     
     private static int getLayerPlane(TmxLayer layer) {
         if (layer == null) {
@@ -38,14 +38,16 @@ public class TmxTilesRender {
     }
     
     private final TmxTexturePack mTextures;
-    
     private final TmxMap mMap;
-    
     private final NpObjectsPool<TmxRenderOp> mRenderOpsPool;
+
+    private NpBox mCameraBounds = null;
     
-    public TmxTilesRender(GL10 gl, AssetManager assets, 
+    public TmxTilesRender(GL10 gl, TmxRenderQueue rq, AssetManager assets, 
             TmxTexturePack texturePack, TmxMap map, 
             String levelName) throws IOException {
+        
+        super(rq);
         
         if (map == null) {
             throw new NullPointerException("map == null");
@@ -73,7 +75,7 @@ public class TmxTilesRender {
         mMap = map;
     }
     
-    public TmxRenderOp buildRenderOp(GL10 gl, NpTexture texture,  
+    private TmxRenderOp buildRenderOp(GL10 gl, NpTexture texture,  
             float x, float y, float w, float h, 
             float tx, float ty, float tw, float th, boolean isShadow, int plane) {
         TmxRenderOp rop = mRenderOpsPool.getNext();
@@ -109,14 +111,10 @@ public class TmxTilesRender {
         
         return rop;
     }
-    
-    public void flushRender() {
-        mRenderOpsPool.rewind();
-    }
 
-    public void render(GL10 gl, NpBox camera, TmxRenderQueue rq) {
-        
-        if (camera == null) {
+    @Override
+    public synchronized void draw(GL10 gl) {
+        if (mCameraBounds == null) {
             LogHelper.e("Cant render: camera is null");
             return;
         }
@@ -126,11 +124,11 @@ public class TmxTilesRender {
         int tileWidth = mMap.getTileWidth(); 
         int tileHeigth = mMap.getTileHeight();
         
-        int halfWidthInTiles = (int) camera.extents[0] / tileWidth + 1;
-        int halfHeightInTiles = (int) camera.extents[1] / tileHeigth + 1;
+        int halfWidthInTiles = (int) mCameraBounds.extents[0] / tileWidth + 1;
+        int halfHeightInTiles = (int) mCameraBounds.extents[1] / tileHeigth + 1;
         
-        int cameraX = (int) camera.center[0] / tileWidth;
-        int cameraY = (int) camera.center[1] / tileHeigth;
+        int cameraX = (int) mCameraBounds.center[0] / tileWidth;
+        int cameraY = (int) mCameraBounds.center[1] / tileHeigth;
         
         NpRect cameraBounds = new NpRect(cameraX - halfWidthInTiles, 
                                          cameraY - halfHeightInTiles,  
@@ -138,13 +136,14 @@ public class TmxTilesRender {
                                          halfHeightInTiles * 2);
         
         for (TmxLayer layer : mMap.getLayers()) {
-            renderLayer(gl, layer, cameraBounds, tileWidth, tileHeigth, rq);
+            renderLayer(gl, layer, cameraBounds, tileWidth, tileHeigth);
         }
+        
+        mRenderOpsPool.rewind();
     }
-
+    
     private void renderLayer(GL10 gl, TmxLayer layer, 
-            NpRect cameraBounds, int tileWidth, int tileHeigth, 
-            TmxRenderQueue rq) {
+            NpRect cameraBounds, int tileWidth, int tileHeigth) {
         
         if ((layer == null) || !layer.isVisible) {
             return;
@@ -186,8 +185,8 @@ public class TmxTilesRender {
                 }
                 
                 if ((texture == null) || (textureName == null) 
-                        || !textureName.equals(ts.name)) {
-                    textureName = ts.name;
+                        || !textureName.equals(ts.imageName)) {
+                    textureName = ts.imageName;
                     texture = mTextures.getTexture(textureName);
                     
                     if (texture == null) {
@@ -204,8 +203,16 @@ public class TmxTilesRender {
                                     tc.coords[1], ts.tileWidth, -ts.tileHeight, 
                                     isShadow, layerPlane);
                 
-                rq.addRenderOp(gl, rop);
+                mRq.addRenderOp(gl, rop);
             }
         }
+    }
+
+    public synchronized void setCameraBounds(NpBox bounds) {
+        mCameraBounds = bounds;
+    }
+
+    @Override
+    public void update(long deltaTime) {
     }
 }
