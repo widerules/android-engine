@@ -1,5 +1,6 @@
 package org.chemodansama.engine.tmx.render;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.TreeMap;
 
@@ -10,12 +11,12 @@ import org.chemodansama.engine.math.NpVec2;
 import org.chemodansama.engine.render.NpPolyBuffer;
 import org.chemodansama.engine.render.NpTexture;
 import org.chemodansama.engine.tmx.TmxMap;
-import org.chemodansama.engine.tmx.TmxObject;
+import org.chemodansama.engine.tmx.TmxMapObject;
 import org.chemodansama.engine.tmx.TmxObjectGroup;
 import org.chemodansama.engine.tmx.TmxTexturePack;
 import org.chemodansama.engine.tmx.TmxTileset;
 
-public class TmxLevelObjects {
+public class TmxLevelObjects extends TmxRenderObject {
     
     private static TreeMap<Integer, Integer> calcObjectsCountsByPlanes(TmxMap map) {
         
@@ -77,21 +78,25 @@ public class TmxLevelObjects {
         return (isShadow != null) && (Integer.parseInt(isShadow) != 0);
     }
     
+    private final Collection<TmxMapObjectRenderer> mVisibleObjectsBuffer = 
+            new ArrayList<TmxMapObjectRenderer>();
     private final TmxMap mLevel;
-    
     private final TmxTexturePack mTexturePack;
-    
     private TmxKdTree mKdTree = null;
-    
-    private final TreeMap<Integer, TmxRenderObject[]> mObjects = 
-            new TreeMap<Integer, TmxRenderObject[]>();
+    private final TreeMap<Integer, TmxMapObjectRenderer[]> mObjects = 
+            new TreeMap<Integer, TmxMapObjectRenderer[]>();
+            
+            
     
     /**
      * Total count of render objects in the level.
      */
     private int mCount = 0;
+    private NpBox mCameraBounds;
     
-    public TmxLevelObjects(TmxMap level, TmxTexturePack texturePack) {
+    public TmxLevelObjects(TmxRenderQueue rq, TmxMap level, 
+            TmxTexturePack texturePack) {
+        super(rq);
         
         mLevel = level;
         mTexturePack = texturePack;
@@ -111,7 +116,7 @@ public class TmxLevelObjects {
      * @param cameraBounds
      */
     public void getVisibleObjects(NpBox cameraBounds, 
-            Collection<TmxRenderObject> objects){
+            Collection<TmxMapObjectRenderer> objects){
         
         if (objects == null) {
             return;
@@ -125,7 +130,7 @@ public class TmxLevelObjects {
         TreeMap<Integer, Integer> counts = calcObjectsCountsByPlanes(mLevel);
         mCount = calcTotalObjectsCount(counts);
         
-        TmxRenderObject[] objects = new TmxRenderObject[mCount];
+        TmxMapObjectRenderer[] objects = new TmxMapObjectRenderer[mCount];
 
         TmxTileset ts = null;
         NpTexture texture = null;
@@ -144,10 +149,10 @@ public class TmxLevelObjects {
             
             int plane = getObjectGroupPlane(og);
             
-            TmxRenderObject[] planeObjects = mObjects.get(plane);
+            TmxMapObjectRenderer[] planeObjects = mObjects.get(plane);
             int planeCount = 0;
             if (planeObjects == null) {
-                planeObjects = new TmxRenderObject[counts.get(plane)];
+                planeObjects = new TmxMapObjectRenderer[counts.get(plane)];
                 counts.put(plane, planeCount);
                 mObjects.put(plane, planeObjects);
             } else {
@@ -156,7 +161,7 @@ public class TmxLevelObjects {
             
             boolean isShadow = isShadowObjectsGroup(og);
             
-            for (TmxObject o : og.getObjects()) {
+            for (TmxMapObject o : og.getObjects()) {
                 
                 if (o.gid == 0) {
                     continue;
@@ -174,12 +179,12 @@ public class TmxLevelObjects {
                 }
                 
                 if ((texture == null) || (textureName == null) 
-                        || (textureName != ts.name)) {
-                    texture = mTexturePack.getTexture(ts.name);
+                        || (textureName != ts.imageName)) {
+                    texture = mTexturePack.getTexture(ts.imageName);
                     if (texture == null) {
                         continue;
                     }
-                    textureName = ts.name;
+                    textureName = ts.imageName;
                 }
                 
                 if (!ts.getTileTexcoords(o.gid, tc)) {
@@ -188,7 +193,7 @@ public class TmxLevelObjects {
                 
                 tc.coords[1] -= ts.tileHeight;
                 
-                TmxRenderObject ro = new TmxRenderObject(o.x, o.y, w, -h, 
+                TmxMapObjectRenderer ro = new TmxMapObjectRenderer(o.x, o.y, w, -h, 
                                                          texture, 
                                                          tc.coords[0], 
                                                          tc.coords[1], 
@@ -204,5 +209,26 @@ public class TmxLevelObjects {
         }
         
         mKdTree = new TmxKdTree(objects, mLevel);
+    }
+
+    @Override
+    public void draw(GL10 gl) {
+        mVisibleObjectsBuffer.clear();
+        
+        getVisibleObjects(mCameraBounds, mVisibleObjectsBuffer);
+
+        for (TmxMapObjectRenderer o : mVisibleObjectsBuffer) {
+            o.pushRenderOp(gl, mRq);
+        }
+    }
+
+    public synchronized void setCameraBounds(NpBox bounds) {
+        mCameraBounds = bounds;
+    }
+
+    @Override
+    public void update(long deltaTime) {
+        // TODO Auto-generated method stub
+        
     }
 }

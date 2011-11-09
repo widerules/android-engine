@@ -52,7 +52,7 @@ public abstract class NpGame {
         return mPointerOffset.getY();
     }
     
-    public final int getStatesCount() {
+    synchronized public final int getStatesCount() {
         return mStates.size();
     }
     

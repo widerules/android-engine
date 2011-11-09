@@ -1,4 +1,4 @@
-package org.chemodansama.engine.tmx;
+package org.chemodansama.engine.render;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,9 +7,6 @@ import java.util.TreeMap;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.chemodansama.engine.LogHelper;
-import org.chemodansama.engine.render.NpPvrTextureData;
-import org.chemodansama.engine.render.NpTexture;
-import org.chemodansama.engine.render.NpTextureData;
 
 import android.content.res.AssetManager;
 import android.util.Pair;
@@ -18,14 +15,14 @@ import android.util.Pair;
  * TexturePack - generic texture pack for gl-android-application. 
  *
  */
-public class TexturePack {
+public class NpTexturePack {
     // clamp to edge is set by default.
     private final static boolean CLAMP_TO_EDGE = true;
     
     // <Alias, <Filename, Texture>>
     private final TreeMap<String, Pair<String, NpTexture>> mTextures; 
 
-    public TexturePack() {
+    public NpTexturePack() {
         mTextures = new TreeMap<String, Pair<String, NpTexture>>();
     } 
     

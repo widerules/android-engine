@@ -9,7 +9,7 @@ public class TmxObjectGroup extends TmxEntity {
     public final int heigth;
     public final boolean visible;
     
-    private final ArrayList<TmxObject> mObjects = new ArrayList<TmxObject>();
+    private final ArrayList<TmxMapObject> mObjects = new ArrayList<TmxMapObject>();
     
     public TmxObjectGroup(String name, int width, int height, boolean visible) {
         super();
@@ -19,11 +19,11 @@ public class TmxObjectGroup extends TmxEntity {
         this.visible = visible;
     }
     
-    void addObject(TmxObject object) {
+    void addObject(TmxMapObject object) {
         mObjects.add(object);
     }
     
-    public Iterable<TmxObject> getObjects() {
+    public Iterable<TmxMapObject> getObjects() {
         return mObjects;
     }
     
