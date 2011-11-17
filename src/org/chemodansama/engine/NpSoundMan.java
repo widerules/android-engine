@@ -10,12 +10,47 @@ import android.app.Activity;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.SoundPool;
+import android.media.SoundPool.OnLoadCompleteListener;
 import android.util.Log;
 
+class NpSoundStruct {
+    final int soundId;
+    int status = 1;
+    
+    public NpSoundStruct(int soundId) {
+        this.soundId = soundId;
+    }
+    
+    boolean isLoaded() {
+        return status == 0;
+    }
+}
 
-public class NpSoundMan {
+class SoundPoolMap {
+    private final HashMap<Integer, NpSoundStruct> mMapByResourceId = 
+            new HashMap<Integer, NpSoundStruct>();
+    private final HashMap<Integer, NpSoundStruct> mMapBySoundId = 
+            new HashMap<Integer, NpSoundStruct>();
+    
+    public NpSoundStruct getByResourceId(int resourceId) {
+        return mMapByResourceId.get(resourceId);
+    }
+    
+    public NpSoundStruct getBySoundId(int soundId) {
+        return mMapBySoundId.get(soundId);
+    }
+    
+    public void add(int resourceId, int soundId) {
+        NpSoundStruct ss = new NpSoundStruct(soundId);
+        mMapByResourceId.put(resourceId, ss);
+        mMapBySoundId.put(soundId, ss);
+    }
+}
+
+public class NpSoundMan implements OnLoadCompleteListener {
+    
     private SoundPool mSoundPool;
-    private HashMap<Integer, Integer> mSoundPoolMap;
+    private final SoundPoolMap mSoundPoolMap = new SoundPoolMap();
     private AudioManager mAudioManager;
     private Activity mActivity;
     
@@ -35,12 +70,13 @@ public class NpSoundMan {
     private NpSoundMan(Activity activity) {
         mActivity = activity;
         mSoundPool = new SoundPool(4, AudioManager.STREAM_MUSIC, 0);
-        mSoundPoolMap = new HashMap<Integer, Integer>();
+        mSoundPool.setOnLoadCompleteListener(this);
+        
         mAudioManager = (AudioManager) mActivity.getSystemService(Context.AUDIO_SERVICE);
         mSoundEnabled = loadSetting(activity, SOUND_SETTINGS);
     }
     
-    private boolean loadSetting(Context context, String fileName) {
+    private static boolean loadSetting(Context context, String fileName) {
         try {
             FileInputStream in = context.openFileInput(fileName);
 
@@ -85,28 +121,52 @@ public class NpSoundMan {
         mSoundEnabled ^= true;
     }
     
-    public void addSound(int SoundID) {
-        if (!mSoundPoolMap.containsKey(SoundID)) {
-            try {
-                int r = mSoundPool.load(mActivity, SoundID, 1);
-                mSoundPoolMap.put(SoundID, r);
-            } catch (Exception e) {
-                Log.e(LogTag.TAG, e.getMessage());
-            }
+    public void addSound(int resourceId) {
+        
+        NpSoundStruct ss = mSoundPoolMap.getByResourceId(resourceId);
+        if (ss != null) {
+            return;
+        }
+        
+        try {
+            int soundId = mSoundPool.load(mActivity, resourceId, 1);
+            mSoundPoolMap.add(resourceId, soundId);
+        } catch (Exception e) {
+            Log.e(LogTag.TAG, e.getMessage());
         }
     }
     
-    private void playSound(int index, final int looped, final double volume) {
+    public void onLoadComplete(SoundPool soundPool, int sampleId, int status) {
+        NpSoundStruct ss = mSoundPoolMap.getBySoundId(sampleId);
+        if (ss == null) {
+            return;
+        }
+        
+        ss.status = status;
+        if (!ss.isLoaded()) {
+            LogHelper.e("Sample " + sampleId + " failed to load with status = " 
+                        + status);
+        }
+    }
+    
+    private void playSound(int resourceId, final int looped, 
+            final double volume) {
         
         if (!mSoundEnabled) {
             return;
         }
         
-        final Integer soundID = mSoundPoolMap.get(index);
-        
-        if (soundID == null) {
+        NpSoundStruct ss = mSoundPoolMap.getByResourceId(resourceId);
+        if (ss == null){
             return;
         }
+        
+        if (!ss.isLoaded()) {
+            LogHelper.i("sample is not loaded");
+            return;
+        }
+        
+        final int soundId = ss.soundId;
         
         mActivity.runOnUiThread(new Runnable() {
             @Override
@@ -118,7 +178,7 @@ public class NpSoundMan {
                 
                 streamVolume *= volume;
                 
-                mSoundPool.play(soundID, streamVolume, streamVolume, 1, looped, 
+                mSoundPool.play(soundId, streamVolume, streamVolume, 1, looped, 
                                 1f);        
             }
         });

@@ -5,6 +5,7 @@ import java.nio.ShortBuffer;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.chemodansama.engine.LogHelper;
 import org.chemodansama.engine.utils.NpByteBuffer;
 
 final public class NpPolyBuffer {
@@ -60,6 +61,41 @@ final public class NpPolyBuffer {
                           GL10.GL_UNSIGNED_SHORT, mIndices);
 
         mQuadsCount = 0;
+    }
+    
+    public void pushQuad(GL10 gl, float[] vertices, int verticesOffset, 
+            float[] texcoords, int texcoordsOffset) {
+        if ((vertices == null) || (vertices.length - verticesOffset < 8)) {
+            LogHelper.e("invalid vertices");
+            return;
+        }
+        
+        if ((texcoords == null) || (texcoords.length - texcoordsOffset < 8)) {
+            LogHelper.e("invalid texcoords");
+            return;
+        }
+        
+        int offs = mQuadsCount * 4 * 2; 
+        
+        System.arraycopy(vertices, verticesOffset, mVertArray, offs, 8);
+        System.arraycopy(texcoords, texcoordsOffset, mTexCoordArray, offs, 8);
+        
+        offs = mQuadsCount * 6;
+        int i = mQuadsCount * 4;
+        
+        mIndicesArray[offs + 0] = (short) i;
+        mIndicesArray[offs + 1] = (short) (i + 1);
+        mIndicesArray[offs + 2] = (short) (i + 2);
+        
+        mIndicesArray[offs + 3] = (short) i;
+        mIndicesArray[offs + 4] = (short) (i + 2);
+        mIndicesArray[offs + 5] = (short) (i + 3);
+        
+        mQuadsCount++;
+        
+        if (mQuadsCount >= mQuadsLimit) {
+            flushRender(gl);
+        }
     }
     
     public void pushQuad(GL10 gl, float x1, float y1, float x2, float y2,  

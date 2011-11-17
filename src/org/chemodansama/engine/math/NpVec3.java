@@ -133,7 +133,4 @@ public final class NpVec3 {
             r[rOffset++] = v1[v1Offset++] - v2[v2Offset++];
         }
     }
-    
-    private NpVec3() {
-    }
 }

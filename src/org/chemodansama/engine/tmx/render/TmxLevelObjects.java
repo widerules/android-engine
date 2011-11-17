@@ -7,9 +7,9 @@ import java.util.TreeMap;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.chemodansama.engine.math.NpBox;
-import org.chemodansama.engine.math.NpVec2;
 import org.chemodansama.engine.render.NpPolyBuffer;
 import org.chemodansama.engine.render.NpTexture;
+import org.chemodansama.engine.render.NpTopdownCamera;
 import org.chemodansama.engine.tmx.TmxMap;
 import org.chemodansama.engine.tmx.TmxMapObject;
 import org.chemodansama.engine.tmx.TmxObjectGroup;
@@ -92,16 +92,24 @@ public class TmxLevelObjects extends TmxRenderObject {
      * Total count of render objects in the level.
      */
     private int mCount = 0;
+    private NpTopdownCamera mCamera = null;
     private NpBox mCameraBounds;
     
     public TmxLevelObjects(TmxRenderQueue rq, TmxMap level, 
-            TmxTexturePack texturePack) {
+            TmxTexturePack texturePack, NpTopdownCamera camera) {
         super(rq);
         
         mLevel = level;
         mTexturePack = texturePack;
         
         setupObjects();
+        
+        setCamera(camera);
+    }
+    
+    public TmxLevelObjects(TmxRenderQueue rq, TmxMap level, 
+            TmxTexturePack texturePack) {
+        this(rq, level, texturePack, null);
     }
     
     public void debugRender(GL10 gl, NpPolyBuffer pb) {
@@ -135,11 +143,8 @@ public class TmxLevelObjects extends TmxRenderObject {
         TmxTileset ts = null;
         NpTexture texture = null;
         String textureName = null;
-        NpVec2 tc = new NpVec2();
         
         int c = 0;
-        int w = 0;
-        int h = 0;
         
         for (TmxObjectGroup og : mLevel.getObjectGroups()) {
             
@@ -173,9 +178,6 @@ public class TmxLevelObjects extends TmxRenderObject {
                     if (ts == null) {
                         continue;
                     }
-                    
-                    w = ts.tileWidthInPels;
-                    h = ts.tileHeightInPels;
                 }
                 
                 if ((texture == null) || (textureName == null) 
@@ -187,19 +189,9 @@ public class TmxLevelObjects extends TmxRenderObject {
                     textureName = ts.imageName;
                 }
                 
-                if (!ts.getTileTexcoords(o.gid, tc)) {
-                    continue;
-                }
-                
-                tc.coords[1] -= ts.tileHeight;
-                
-                TmxMapObjectRenderer ro = new TmxMapObjectRenderer(o.x, o.y, w, -h, 
-                                                         texture, 
-                                                         tc.coords[0], 
-                                                         tc.coords[1], 
-                                                         ts.tileWidth, 
-                                                         ts.tileHeight, 
-                                                         plane, isShadow);
+                TmxMapObjectRenderer ro = new TmxMapObjectRenderer(o, texture, 
+                                                                   ts, plane, 
+                                                                   isShadow);
                 
                 planeObjects[planeCount++] = ro;
                 objects[c++] = ro;
@@ -222,13 +214,18 @@ public class TmxLevelObjects extends TmxRenderObject {
         }
     }
 
-    public synchronized void setCameraBounds(NpBox bounds) {
-        mCameraBounds = bounds;
+    public synchronized void setCamera(NpTopdownCamera camera) {
+        mCamera = camera;
+        updateCameraBounds();
     }
 
+    private void updateCameraBounds() {
+        mCameraBounds = (mCamera != null) ? mCamera.getBounds() : null;
+    }
+    
     @Override
-    public void update(long deltaTime) {
-        // TODO Auto-generated method stub
-        
+    public boolean update(long deltaTime) {
+        updateCameraBounds();
+        return true;
     }
 }
