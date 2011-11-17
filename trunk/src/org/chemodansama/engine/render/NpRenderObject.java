@@ -11,5 +11,5 @@ public interface NpRenderObject {
     /**
      * @param deltaTime time delta in milliseconds.
      */
-    public void update(long deltaTime);
+    public boolean update(long deltaTime);
 }

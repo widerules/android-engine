@@ -10,6 +10,7 @@ import org.chemodansama.engine.math.NpBox;
 import org.chemodansama.engine.math.NpRect;
 import org.chemodansama.engine.math.NpVec2;
 import org.chemodansama.engine.render.NpTexture;
+import org.chemodansama.engine.render.NpTopdownCamera;
 import org.chemodansama.engine.tmx.TmxLayer;
 import org.chemodansama.engine.tmx.TmxMap;
 import org.chemodansama.engine.tmx.TmxTexturePack;
@@ -41,12 +42,13 @@ public class TmxTilesRender extends TmxRenderObject {
     private final TmxMap mMap;
     private final NpObjectsPool<TmxRenderOp> mRenderOpsPool;
 
+    private NpTopdownCamera mCamera = null;
     private NpBox mCameraBounds = null;
     
     public TmxTilesRender(GL10 gl, TmxRenderQueue rq, AssetManager assets, 
             TmxTexturePack texturePack, TmxMap map, 
-            String levelName) throws IOException {
-        
+            String levelName, NpTopdownCamera camera) throws IOException {
+
         super(rq);
         
         if (map == null) {
@@ -73,6 +75,14 @@ public class TmxTilesRender extends TmxRenderObject {
         mTextures = texturePack;
         
         mMap = map;
+        
+        setCamera(camera);
+    }
+    
+    public TmxTilesRender(GL10 gl, TmxRenderQueue rq, AssetManager assets, 
+            TmxTexturePack texturePack, TmxMap map, 
+            String levelName) throws IOException {
+        this(gl, rq, assets, texturePack, map, levelName, null);
     }
     
     private TmxRenderOp buildRenderOp(GL10 gl, NpTexture texture,  
@@ -208,11 +218,18 @@ public class TmxTilesRender extends TmxRenderObject {
         }
     }
 
-    public synchronized void setCameraBounds(NpBox bounds) {
-        mCameraBounds = bounds;
+    public synchronized void setCamera(NpTopdownCamera camera) {
+        mCamera = camera;
+        updateCameraBounds();
     }
 
+    private void updateCameraBounds() {
+        mCameraBounds = (mCamera != null) ? mCamera.getBounds() : null;
+    }
+    
     @Override
-    public void update(long deltaTime) {
+    public boolean update(long deltaTime) {
+        updateCameraBounds();
+        return true;
     }
 }
