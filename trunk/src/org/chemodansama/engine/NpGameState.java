@@ -14,13 +14,21 @@ public class NpGameState {
     private int mSurfaceHeight = 0;
     
     protected AssetManager mAssets;
-    final protected NpGame mGame;
+    protected final NpGame mGame;
     
-    protected NpGameState(NpGame g, GL10 gl, AssetManager assets) {
+    protected NpGameState(NpGame game, GL10 gl, AssetManager assets) {
         super();
         
+        if (game == null) {
+            throw new IllegalArgumentException("game == null");
+        }
+        
+        if (assets == null) {
+            throw new IllegalArgumentException("assets == null");
+        }
+        
         mAssets = assets;
-        mGame = g;
+        mGame = game;
     }
     
     protected boolean handleKeyEvent(int keyCode, KeyEvent event) {
@@ -58,14 +66,16 @@ public class NpGameState {
     }
     
     /** setupOnSurfaceChanged - called when surface has changed its size 
-     *                          or state pops up at the head 
+     *                          or state pops up to the head 
      *                          of the game-states stack
      * @param gl
      * @param width
      * @param height
      */
     protected void setupOnSurfaceChanged(GL10 gl, int width, int height) {
-        gl.glViewport(0, 0, width, height);
+        if (gl != null) {
+            gl.glViewport(0, 0, width, height);
+        }
         
         mSurfaceWidth = width; 
         mSurfaceHeight = height;

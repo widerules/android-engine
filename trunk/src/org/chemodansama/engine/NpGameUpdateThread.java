@@ -10,32 +10,32 @@ final class NpGameUpdateThread implements Runnable {
     private final NpActivityTerminator mTerminator;
     private final Thread mThread;
     
-    public NpGameUpdateThread(NpGame g, NpActivityTerminator ft) {
+    public NpGameUpdateThread(NpGame game, NpActivityTerminator ft) {
         super();
         
+        if (game == null) {
+            throw new IllegalArgumentException("game == null");
+        }
+        
         mTerminator = ft;
-        mGame = g;
+        mGame = game;
         mThread = new Thread(this, "updater thread");
     }
     
-    synchronized void resume() {
+    void resume() {
         mSuspended = false;
     }
     
     @Override
     public void run() {
         while (true) {
-            synchronized (this) {
-                if (mTerminated) {
-                    break;
-                }
+            if (mTerminated) {
+                break;
             }
             
-            if ((mGame != null) && mGame.update()) {
-                synchronized (this) {
-                    if (mTerminator != null) {
-                        mTerminator.finish();                        
-                    }
+            if (mGame.update()) {
+                if (mTerminator != null) {
+                    mTerminator.finish();                        
                 }
                 break;
             }
@@ -43,10 +43,8 @@ final class NpGameUpdateThread implements Runnable {
             try {
                 while (true) {
                     Thread.sleep(10);
-                    synchronized (this) {
-                        if (!mSuspended) {
-                            break;
-                        }
+                    if (!mSuspended) {
+                        break;
                     }
                 }
             } catch (InterruptedException e) {
@@ -61,7 +59,7 @@ final class NpGameUpdateThread implements Runnable {
         }
     }
     
-    synchronized void suspend() {
+    void suspend() {
         mSuspended = true;
     }
     
