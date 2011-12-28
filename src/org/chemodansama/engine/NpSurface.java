@@ -40,8 +40,8 @@ public final class NpSurface extends GLSurfaceView {
     
     @Override
     public void onResume() {
-        mRenderer.onResume();
         super.onResume();
+        mRenderer.onResume();
     }
     
     @Override

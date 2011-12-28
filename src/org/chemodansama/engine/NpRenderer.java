@@ -43,11 +43,11 @@ final class NpRenderer implements GLSurfaceView.Renderer {
         mGame.render(gl);
     }
     
-    synchronized void onPause() {
+    void onPause() {
         mUpdater.suspend();
     }
 
-    synchronized void onResume() {
+    void onResume() {
         mUpdater.resume();
     }
     
@@ -57,7 +57,7 @@ final class NpRenderer implements GLSurfaceView.Renderer {
     }
 
     @Override
-    synchronized public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
         NpSkin.loadScheme(gl, mAssets, mSchemeName);
         
         mGame.onSurfaceCreated(gl, config, mAssets);

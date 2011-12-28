@@ -73,7 +73,6 @@ public abstract class NpGame {
     }
     
     synchronized public final boolean onKeyEvent(int keyCode, KeyEvent event) {
-        
         if (mStates.size() > 0) {
             return mStates.peek().handleKeyEvent(keyCode, event); 
         } else {        
