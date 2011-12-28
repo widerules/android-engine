@@ -1,5 +1,7 @@
 package org.chemodansama.engine.render.imgui;
 
+import java.util.ArrayList;
+
 import org.chemodansama.engine.math.NpRect;
 
 final class NpWidgetDim {
@@ -8,7 +10,7 @@ final class NpWidgetDim {
     final private NpWidgetDimSource mSource;
     final private String mArea;
     
-    private NpWidgetDimOp mOp = null;
+    private final ArrayList<NpWidgetDimOp> mOp = new ArrayList<NpWidgetDimOp>();
     
     /**
      * Creates Dim with absolute DimType
@@ -48,8 +50,13 @@ final class NpWidgetDim {
       mValue = 0;
     }
     
-    void setOperator(NpWidgetDimOp op) {
-        mOp = op;
+    NpWidgetDimOp addOp(NpWidgetDimOp op) {
+        if (op == null) {
+            return null;
+        }
+        
+        mOp.add(op);
+        return op;
     }
     
     private int getBaseImageValue(NpSkinScheme skinScheme, 
@@ -168,32 +175,32 @@ final class NpWidgetDim {
         }
     }
     
-    private float computeSubValue(NpSkinScheme skinScheme,
-            NpWidgetStatelook stateLook, NpRect instanceRect) {
-        if (mOp == null) {
+    private static float computeSubValue(NpWidgetDimOp op,
+            NpSkinScheme skinScheme, NpWidgetStatelook stateLook,
+            NpRect instanceRect) {
+        if (op == null || op.getDim() == null) {
             return 0;
         }
-        
-        return mOp.getDim().getValue(skinScheme, stateLook, 
-                                     instanceRect);
+
+        return op.getDim().getValue(skinScheme, stateLook, instanceRect);
     }
-    
-    private float computeSubValue(NpSkinScheme skinScheme,
-            NpWidgetStatelook stateLook, String areaName) {
-        if (mOp == null) {
+
+    private static float computeSubValue(NpWidgetDimOp op,
+            NpSkinScheme skinScheme, NpWidgetStatelook stateLook,
+            String areaName) {
+        if (op == null || op.getDim() == null) {
             return 0;
         }
-        
-        return mOp.getDim().getValue(skinScheme, stateLook, 
-                                     areaName);
+
+        return op.getDim().getValue(skinScheme, stateLook, areaName);
     }
     
-    private float execOp(float baseValue, float subValue) {
+    private static float execOp(NpWidgetDimOp op, float baseValue, float subValue) {
         float r = baseValue;
         
-        if (mOp != null) {
+        if (op != null) {
             
-            switch (mOp.getOpType()) {
+            switch (op.getOpType()) {
             case ADD:
                 r += subValue;
                 break;
@@ -218,43 +225,33 @@ final class NpWidgetDim {
         return r;
     }
     
-    private float applyOp(float baseValue, NpSkinScheme skinScheme,
-            NpWidgetStatelook stateLook, NpRect instanceRect) {
-        return execOp(baseValue, 
-                      computeSubValue(skinScheme, stateLook, instanceRect));
-    }
-    
-    private float applyOp(float baseValue, NpSkinScheme skinScheme,
-            NpWidgetStatelook stateLook, String areaName) {
-        return execOp(baseValue, 
-                      computeSubValue(skinScheme, stateLook, areaName));
-    }
-    
-    
     public float getValue(NpSkinScheme skinScheme, NpWidgetStatelook stateLook,
             NpRect instanceRect) {
-        
-        // base value for this dimension, with no applied operation yet
+
         float r = getBaseValue(skinScheme, stateLook, instanceRect);
 
-        // applying specified operation for this dim
-        r = applyOp(r, skinScheme, stateLook, instanceRect);
-        
+        for (NpWidgetDimOp op : mOp) {
+            r = execOp(op, r,
+                       computeSubValue(op, skinScheme, stateLook, 
+                                       instanceRect));
+        }
+
         return r;
     }
-    
-    /** getValue - get value, based on area name, 
-     *             which is supposed to be equal to its image name 
+
+    /**
+     * getValue - get value, based on area name, which is supposed to be equal
+     * to its image name
      */
     public float getValue(NpSkinScheme skinScheme, NpWidgetStatelook stateLook,
             String areaName) {
-        
-        // base value for this dimension, with no applied operation yet
         float r = getBaseValue(skinScheme, stateLook, areaName);
 
-        // applying specified operation for this dim
-        r = applyOp(r, skinScheme, stateLook, areaName);
-        
+        for (NpWidgetDimOp op : mOp) {
+            r = execOp(op, r,
+                       computeSubValue(op, skinScheme, stateLook, areaName));
+        }
+
         return r;
     }
 }

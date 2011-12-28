@@ -21,6 +21,7 @@ public class TmxMap {
         private boolean isParsingData = false;
         private TmxLayer layer;
         private TmxObjectGroup objects = null;
+        private TmxMapObject object = null;
         
         public TmxParser(ArrayList<TmxTileset> tilesets) {
             super(tilesets);
@@ -64,6 +65,8 @@ public class TmxMap {
                     mObjectsGroups.add(objects);
                     objects = null;
                 }
+            } else if (localName.equals("object")) {
+                object = null;
             }
         }
         
@@ -106,13 +109,18 @@ public class TmxMap {
                 tileWidth  = getAttributeAsInt(attributes, "tilewidth");
                 tileHeight = getAttributeAsInt(attributes, "tileheight");
             } else if (localName.equalsIgnoreCase("property")) {
-                if (layer != null) {
-                    layer.addProperty(attributes.getValue("name"), 
-                                      attributes.getValue("value"));
-                } else if (objects != null) {
-                    objects.addProperty(attributes.getValue("name"), 
-                                        attributes.getValue("value"));
+                
+                TmxEntity e = null;
+                
+                e = (layer != null) ? layer : e;
+                e = (objects != null) ? objects : e;
+                e = (object != null) ? object : e;
+                
+                if (e != null) {
+                    e.addProperty(attributes.getValue("name"), 
+                                  attributes.getValue("value"));
                 }
+                
             } else if (localName.equalsIgnoreCase("layer")) {
                 
                 String visible = attributes.getValue("visible");
@@ -152,8 +160,21 @@ public class TmxMap {
                     int y = getAttributeAsInt(attributes, "y");
                     int w = getAttributeAsInt(attributes, "width");
                     int h = getAttributeAsInt(attributes, "height");
+                    String type = attributes.getValue("type");
+                    String name = attributes.getValue("name");
                     
-                    objects.addObject(new TmxMapObject(gid, x, y, w, h));
+                    if (gid != 0) {
+                        for (TmxTileset ts : mTilesets) {
+                            if (ts.containsGid(gid)) {
+                                w = ts.tileWidthInPels;
+                                h = ts.tileHeightInPels;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    object = new TmxMapObject(name, gid, x, y, w, h, type); 
+                    objects.addObject(object);
                 }
             }
         }

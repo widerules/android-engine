@@ -189,9 +189,7 @@ public final class NpFont {
         float ky = height / mSize;
         
         for (int i = 0; i < s.length(); i++) {
-            
             NpFontCharStruct c = getChar(s.charAt(i));
-            
             if (c == null) {
                 continue;
             }
@@ -215,33 +213,18 @@ public final class NpFont {
         if ((s == null) || (s.length() == 0)) {
             return r;
         }
-        
-        if (s.length() == 1) {
-            NpFontCharStruct c = getChar(s.charAt(0));
+
+        NpFontCharStruct c = getChar(s.charAt(0));
+        if (c != null) {
+            x = ky * c.getRenderRect().getX();
             
-            if (c != null) {
-                r.set(ky * c.getRenderRect().getX(), 
-                      ky * c.getRenderRect().getY(), 
-                      ky * c.getRenderRect().getW(), 
-                      ky * c.getRenderRect().getH());
-            }
-            
-            return r;
-        } else if (s.length() > 1) {
-            NpFontCharStruct c = getChar(s.charAt(0));
-            
-            if (c != null) {
-                x = ky * c.getRenderRect().getX();
-                y = ky * c.getRenderRect().getY();
-                w = ky * (c.getAdvance() - c.getRenderRect().getX());
-                h = ky * c.getRenderRect().getH();
-            }
+            w += ky * c.getAdvance();
+            h = ky * c.getRenderRect().getH();
+            y = ky * c.getRenderRect().getY();
         }
         
-        for (int i = 1; i < s.length() - 1; i++) {
-            
-            NpFontCharStruct c = getChar(s.charAt(i));
-            
+        for (int i = 1; i < s.length(); i++) {
+            c = getChar(s.charAt(i));
             if (c == null) {
                 continue;
             }
@@ -250,18 +233,42 @@ public final class NpFont {
             h = Math.max(h, ky * c.getRenderRect().getH());
             y = Math.min(y, ky * c.getRenderRect().getY());
         }
-        
-        NpFontCharStruct c = getChar(s.charAt(s.length() - 1));
-        
-        if (c != null) {
-            w += ky * (c.getRenderRect().getX() + c.getRenderRect().getW());
-            h = Math.max(h, ky * c.getRenderRect().getH());
-            y = Math.min(y, ky * c.getRenderRect().getY());
-        }
- 
         r.set(x, y, w, h);
         
         return r;
+    }
+    
+    public float computeTextWidth(float height, String s) {
+        return (s != null) ? computeTextWidth(height, s, 0, s.length()) : 0;
+    }
+    
+    public float computeTextWidth(float height, String s, int from, int len) {
+        
+        if ((s == null) || (s.length() == 0)) {
+            return 0;
+        }
+         
+        if (len <= 0) {
+            return 0;
+        }
+        
+        from = Math.max(0, from);
+        from = Math.min(from, s.length() - 1);
+        
+        len = Math.min(len, s.length() - from);
+        
+        float w = 0;
+        float ky = height / mSize;
+
+        for (int i = 0; i < len; i++) {
+            NpFontCharStruct c = getChar(s.charAt(from + i));
+            if (c == null) {
+                continue;
+            }
+            
+            w += ky * c.getAdvance();
+        }
+        return w;
     }
     
     public int getAscender() {

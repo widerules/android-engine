@@ -2,6 +2,7 @@ package org.chemodansama.engine.render.imgui;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.TreeMap;
@@ -126,7 +127,6 @@ final public class NpSkinScheme {
                 throws SAXException {
             super.endElement(uri, localName, qName);
             
-            // quite readable, isn't it? >_<
             if (localName.equalsIgnoreCase("WidgetLook") 
                     && (mWidgetName != null)) {
                 
@@ -183,6 +183,39 @@ final public class NpSkinScheme {
             mDim = null;
             mCurrentDim = null;
             mCurrentOp = null;
+        }
+        
+        private Collection<NpWidgetArea> constructAreaList(String name, 
+                                                           String layout, 
+                                                           String filter) {
+            if (layout == null) {
+                layout = "grid";
+            }
+            
+            if (layout.equalsIgnoreCase("grid")) {
+                return new AreaListGrid().constructAreas(name, filter);
+            } else {
+                return null;
+            }
+        }
+        
+        private Collection<NpWidgetImage> constructImageList(String layout, 
+                                                             String area, 
+                                                             String imageset, 
+                                                             String image) {
+            ArrayList<NpWidgetImage> r = new ArrayList<NpWidgetImage>();
+
+            if (layout == null) {
+                layout = "grid";
+            }
+            
+            if (layout.equalsIgnoreCase("grid")) {
+                for (int i = 0; i < 9; i++) {
+                    r.add(new NpWidgetImage(area + i, imageset, image + i));
+                }
+            }
+            
+            return r;
         }
         
         @Override
@@ -243,6 +276,12 @@ final public class NpSkinScheme {
                 String heightScaleStr = attributes.getValue("HeightScale"); 
                 mAreaHeightScale = NpWidgetScale.parseStr(heightScaleStr);
                 
+            } else if (localName.equalsIgnoreCase("AreaList")) {
+                String name = attributes.getValue("Name");
+                String layout = attributes.getValue("Layout");
+                String filter = attributes.getValue("Filter");
+                
+                mWidgetAreas.addAll(constructAreaList(name, layout, filter));
             } else if (localName.equalsIgnoreCase("dim")) {
 
                 mCurrentDim = createWidgetDim(attributes);
@@ -260,7 +299,7 @@ final public class NpSkinScheme {
 
                     mCurrentOp = new NpWidgetDimOp(t);
 
-                    mCurrentDim.setOperator(mCurrentOp);
+                    mCurrentDim.addOp(mCurrentOp);
                 }
             } else if (localName.equalsIgnoreCase("image")) {
                 String area     = attributes.getValue("Area");
@@ -268,6 +307,14 @@ final public class NpSkinScheme {
                 String image    = attributes.getValue("Image");
                 
                 mWidgetImages.add(new NpWidgetImage(area, imageset, image));
+            } else if (localName.equalsIgnoreCase("imagelist")) {
+                String area     = attributes.getValue("Area");
+                String imageset = attributes.getValue("Imageset");
+                String image    = attributes.getValue("Image");
+                String layout   = attributes.getValue("Layout");
+                
+                mWidgetImages.addAll(constructImageList(layout, area, imageset, 
+                                                        image));
             }
         }
     }
@@ -331,4 +378,97 @@ final public class NpSkinScheme {
     public NpWidgetlook getWidget(String widgetName) {
         return mWidgetlook.get(widgetName);
     }
+}
+
+abstract class AreaListLayout {
+    public abstract Collection<NpWidgetArea> constructAreas(String name, 
+                                                            String filter);
+}
+
+class AreaListGrid extends AreaListLayout {
+
+    private Collection<NpWidgetArea> constructAreas(String name, 
+                                                    NpWidgetScale scale) {
+        
+        ArrayList<NpWidgetArea> r = new ArrayList<NpWidgetArea>();
+
+        NpWidgetDim lx = new NpWidgetDim(0);
+        NpWidgetDim mx = new NpWidgetDim(name + "0", NpWidgetDimSource.WIDTH);
+        NpWidgetDim rx = new NpWidgetDim(1, NpWidgetDimSource.WIDTH);
+        rx.addOp(new NpWidgetDimOp(NpWidgetDimOpType.SUBTRACT))
+            .setDim(new NpWidgetDim(name + "2", NpWidgetDimSource.WIDTH));
+        
+        NpWidgetDim lw = mx;
+        
+        NpWidgetDim mw = new NpWidgetDim(1, NpWidgetDimSource.WIDTH);
+        mw.addOp(new NpWidgetDimOp(NpWidgetDimOpType.SUBTRACT))
+            .setDim(new NpWidgetDim(name + "0", NpWidgetDimSource.WIDTH));
+        mw.addOp(new NpWidgetDimOp(NpWidgetDimOpType.SUBTRACT))
+            .setDim(new NpWidgetDim(name + "2", NpWidgetDimSource.WIDTH));
+        
+        NpWidgetDim rw = new NpWidgetDim(name + "2", NpWidgetDimSource.WIDTH);
+            
+        NpWidgetDim ty = new NpWidgetDim(0);
+        NpWidgetDim my = new NpWidgetDim(name + "0", NpWidgetDimSource.HEIGHT);
+        NpWidgetDim by = new NpWidgetDim(1, NpWidgetDimSource.HEIGHT);
+        by.addOp(new NpWidgetDimOp(NpWidgetDimOpType.SUBTRACT))
+            .setDim(new NpWidgetDim(name + "6", NpWidgetDimSource.HEIGHT));
+        
+        NpWidgetDim th = my;
+        NpWidgetDim mh = new NpWidgetDim(1, NpWidgetDimSource.HEIGHT);
+        mh.addOp(new NpWidgetDimOp(NpWidgetDimOpType.SUBTRACT))
+            .setDim(new NpWidgetDim(name + "0", NpWidgetDimSource.HEIGHT));
+        mh.addOp(new NpWidgetDimOp(NpWidgetDimOpType.SUBTRACT))
+            .setDim(new NpWidgetDim(name + "6", NpWidgetDimSource.HEIGHT));
+        NpWidgetDim bh = new NpWidgetDim(name + "6", NpWidgetDimSource.HEIGHT);
+
+        r.add(new NpWidgetArea(name + "0", lx, ty, lw, th, 
+                               NpWidgetScale.STRETCH, NpWidgetScale.STRETCH));
+        
+        r.add(new NpWidgetArea(name + "1", mx, ty, mw, th, 
+                               scale, NpWidgetScale.STRETCH));
+        
+        r.add(new NpWidgetArea(name + "2", rx, ty, rw, th, 
+                               NpWidgetScale.STRETCH, NpWidgetScale.STRETCH));
+
+        
+        r.add(new NpWidgetArea(name + "3", lx, my, lw, mh, 
+                               NpWidgetScale.STRETCH, scale));
+        
+        r.add(new NpWidgetArea(name + "4", mx, my, mw, mh, 
+                               scale, scale));
+        
+        r.add(new NpWidgetArea(name + "5", rx, my, rw, mh, 
+                               NpWidgetScale.STRETCH, scale));
+        
+                
+        r.add(new NpWidgetArea(name + "6", lx, by, lw, bh, 
+                               NpWidgetScale.STRETCH, NpWidgetScale.STRETCH));
+        
+        r.add(new NpWidgetArea(name + "7", mx, by, mw, bh, 
+                               scale, NpWidgetScale.STRETCH));
+        
+        r.add(new NpWidgetArea(name + "8", rx, by, rw, bh, 
+                               NpWidgetScale.STRETCH, NpWidgetScale.STRETCH));
+        
+        return r;
+    }
+
+    @Override
+    public Collection<NpWidgetArea> constructAreas(String name, String filter) {
+        
+        if (filter == null) {
+            filter = "scale";
+        }
+        
+        if (filter.equalsIgnoreCase("scale")) {
+            return constructAreas(name, NpWidgetScale.STRETCH);
+        } else if (filter.equalsIgnoreCase("repeat")){
+            return constructAreas(name, NpWidgetScale.REPEAT);
+        } else {
+            // just dont return null.
+            return new ArrayList<NpWidgetArea>();            
+        }
+    }
+    
 }

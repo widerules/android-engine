@@ -2,6 +2,7 @@ package org.chemodansama.engine.tmx;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.zip.GZIPInputStream;
 
 import org.chemodansama.engine.LogHelper;
@@ -52,25 +53,28 @@ class GZIPDataReader extends LayerDataReader {
 
             byte[] rawByteData = new byte[byteSize];
             out = new int[intSize];
+            Arrays.fill(out, 0);
 
             int j = 0;
+            int byteNum = 0;
 
             while (true) {
                 int r = gis.read(rawByteData, 0, byteSize);
-
                 if (r == -1) {
                     break;
                 }
-
+                
                 // merge bytes to integers
-                for (int i = 0; i < r; i += 4) {
-                    out[j++] = (rawByteData[i] & 0xFF) 
-                            | ((rawByteData[i + 1] & 0xFF) << 8)
-                            | ((rawByteData[i + 2] & 0xFF) << 16)
-                            | ((rawByteData[i + 3] & 0xFF) << 24);
+                for (int i = 0; i < r; i++) {
+                    out[j] = out[j] | ((rawByteData[i] & 0xFF) << (byteNum * 8));
+                    byteNum++;
+                    if (byteNum > 3) {
+                        byteNum = 0;
+                        j++;
+                    }
                 }
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             out = null;
             LogHelper.e("IOException on GZIP reading.");
         } finally {
@@ -135,7 +139,6 @@ public class TmxLayer extends TmxEntity {
         default:
             Log.e(LogTag.TAG, 
                   "Unsupported compression: " + compression.toString());
-            
             return;
         }
         
@@ -145,7 +148,12 @@ public class TmxLayer extends TmxEntity {
     public int getTileGid(int x, int y) {
         boolean coordsAreValid = (y >= 0) && (y < height) 
                                     && (x >= 0) && (x < width);
-           
+
+        if (mData == null) {
+            LogHelper.e(name + " has null data.");
+            return 0;
+        }
+        
         return (coordsAreValid) ? mData[y * width + x] : 0;
     }
 }

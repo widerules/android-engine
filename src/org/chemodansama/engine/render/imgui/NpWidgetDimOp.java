@@ -13,8 +13,9 @@ class NpWidgetDimOp {
         return mOpType;
     }
     
-    void setDim(NpWidgetDim dim) {
+    NpWidgetDim setDim(NpWidgetDim dim) {
         mDim = dim;
+        return dim;
     }
     
     NpWidgetDim getDim() {

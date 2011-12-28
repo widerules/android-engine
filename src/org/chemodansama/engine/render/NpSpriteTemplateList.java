@@ -9,6 +9,7 @@ import java.util.TreeMap;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.chemodansama.engine.LogHelper;
+import org.chemodansama.engine.NpGlContextAsset;
 import org.chemodansama.engine.tmx.TmxTileset;
 import org.chemodansama.engine.tmx.TmxTilesetParser;
 import org.xml.sax.Attributes;
@@ -166,7 +167,7 @@ class NpSpriteTemplateListParser extends TmxTilesetParser {
     }
 }
 
-public class NpSpriteTemplateList {
+public class NpSpriteTemplateList implements NpGlContextAsset {
     private final TreeMap<String, NpSpriteAnimationTemplate> mTemplates = 
             new TreeMap<String, NpSpriteAnimationTemplate>();
     
@@ -242,12 +243,9 @@ public class NpSpriteTemplateList {
         }
     }
     
+    @Override
     public void refreshContextAssets(GL10 gl, AssetManager assets) {
         mTextures.refreshContextAssets(gl, assets);
-    }
-    
-    public void releaseContextAssets(GL10 gl) {
-        mTextures.release(gl);
     }
     
     public NpSpriteAnimationTemplate getAnimation(String name) {
@@ -261,5 +259,10 @@ public class NpSpriteTemplateList {
             }
         }
         return null;
+    }
+
+    @Override
+    public void releaseAssets(GL10 gl) {
+        mTextures.release(gl);
     }
 }

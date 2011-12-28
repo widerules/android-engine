@@ -55,7 +55,7 @@ final class NpGameUpdateThread implements Runnable {
         }
     }
     
-    public void start() {
+    void start() {
         if (!mThread.isAlive()) {
             mThread.start();
         }

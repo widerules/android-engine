@@ -6,6 +6,7 @@ import java.io.InputStream;
 import javax.microedition.khronos.opengles.GL10;
 
 import org.chemodansama.engine.LogHelper;
+import org.chemodansama.engine.NpGlContextAsset;
 import org.chemodansama.engine.render.NpTexture;
 import org.chemodansama.engine.render.NpTexturePack;
 import org.xml.sax.Attributes;
@@ -19,7 +20,7 @@ import android.util.Xml.Encoding;
 /**
  * TmxTexturePack - wrapper for TexturePack. Provides input from xml file.
  */
-public class TmxTexturePack {
+public class TmxTexturePack implements NpGlContextAsset {
     
     public static final String EXT = ".tex";
     
@@ -125,11 +126,13 @@ public class TmxTexturePack {
         super.finalize();
     }
     
-    public boolean refreshContextAssets(GL10 gl, AssetManager assets) {
-        return mTextureHolder.refreshContextAssets(gl, assets);
+    @Override
+    public void refreshContextAssets(GL10 gl, AssetManager assets) {
+        mTextureHolder.refreshContextAssets(gl, assets);
     }
     
-    public void release(GL10 gl) {
-        mTextureHolder.release(gl);
+    @Override
+    public void releaseAssets(GL10 gl) {
+        mTextureHolder.release(gl);        
     }
 }

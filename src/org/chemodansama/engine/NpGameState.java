@@ -75,11 +75,11 @@ public class NpGameState {
         
     }
 
-    protected final int getSurfaceWidth() {
+    public final int getSurfaceWidth() {
         return mSurfaceWidth;
     }
 
-    protected final int getSurfaceHeight() {
+    public final int getSurfaceHeight() {
         return mSurfaceHeight;
     }
 }

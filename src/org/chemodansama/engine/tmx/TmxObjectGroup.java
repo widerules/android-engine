@@ -6,7 +6,7 @@ public class TmxObjectGroup extends TmxEntity {
 
     public final String name;
     public final int width;
-    public final int heigth;
+    public final int height;
     public final boolean visible;
     
     private final ArrayList<TmxMapObject> mObjects = new ArrayList<TmxMapObject>();
@@ -15,7 +15,7 @@ public class TmxObjectGroup extends TmxEntity {
         super();
         this.name = name;
         this.width = width;
-        this.heigth = height;
+        this.height = height;
         this.visible = visible;
     }
     

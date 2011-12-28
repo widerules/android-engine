@@ -18,4 +18,9 @@ public class TmxEntity {
     public String getProperty(String name) {
         return mProperties.get(name);
     }
+    
+    public int getPropertyAsInt(String name, int defaultValue) {
+        String s = getProperty(name);
+        return (s != null) ? Integer.parseInt(s) : defaultValue;
+    }
 }
