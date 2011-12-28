@@ -84,6 +84,39 @@ public final class NpSkinImageSet {
         private final GL10 mGL;
         private final AssetManager mAssets;
 
+        private HashMap<String, NpSkinImage> constructImageList(String name,
+                String layout, int x, int y,  int w, int h,  int cx, int cy, 
+                int cw, int ch) {
+            HashMap<String, NpSkinImage> r = new HashMap<String, NpSkinImage>();
+            
+            if ((name == null) || (layout == null)) {
+                return r;
+            }
+            
+            if (layout.equalsIgnoreCase("grid")) {
+                r.put(name + "0", new NpSkinImage(name, x, y, cx, cy));
+                r.put(name + "1", new NpSkinImage(name, x + cx, y, cw, cy));
+                r.put(name + "2", new NpSkinImage(name, x + cx + cw, y,
+                                                  w - cx - cw, cy));
+                
+                r.put(name + "3", new NpSkinImage(name, x, y + cy, cx, ch));
+                r.put(name + "4", new NpSkinImage(name, x + cx, y + cy, 
+                                                  cw, ch));
+                r.put(name + "5", new NpSkinImage(name, x + cx + cw, y + cy, 
+                                                  w - cx - cw, ch));
+                
+                r.put(name + "6", new NpSkinImage(name, x, y + cy + ch, cx, 
+                                                  h - cy - ch));
+                r.put(name + "7", new NpSkinImage(name, x + cx, y + cy + ch, 
+                                                  cw, h - cy - ch));
+                r.put(name + "8", new NpSkinImage(name, x + cx + cw, 
+                                                  y + cy + ch, w - cx - cw, 
+                                                  h - cy - ch));
+            }
+
+            return r;
+        }
+        
         private XmlImageSetReader(GL10 gl, AssetManager assets) {
             super();
             
@@ -127,6 +160,23 @@ public final class NpSkinImageSet {
                 int h = Integer.parseInt(attributes.getValue("Height"));
                 
                 mImages.put(name, new NpSkinImage(name, x, y, w, h));
+            } else if (localName.equalsIgnoreCase("imagelist")) {
+                
+                String name = attributes.getValue("Name");
+                String layout = attributes.getValue("Layout");
+                
+                int x = Integer.parseInt(attributes.getValue("XPos"));
+                int y = Integer.parseInt(attributes.getValue("YPos"));
+                int w = Integer.parseInt(attributes.getValue("Width"));
+                int h = Integer.parseInt(attributes.getValue("Height"));
+                
+                int cx = Integer.parseInt(attributes.getValue("ClientX"));
+                int cy = Integer.parseInt(attributes.getValue("ClientY"));
+                int cw = Integer.parseInt(attributes.getValue("ClientW"));
+                int ch = Integer.parseInt(attributes.getValue("ClientH"));
+                
+                mImages.putAll(constructImageList(name, layout, x, y, w, h, 
+                                                  cx, cy, cw, ch));
             }
         }
     }

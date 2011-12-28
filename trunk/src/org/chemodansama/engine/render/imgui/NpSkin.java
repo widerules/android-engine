@@ -1,5 +1,6 @@
 package org.chemodansama.engine.render.imgui;
 
+import java.util.Collection;
 import java.util.HashMap;
 
 import javax.microedition.khronos.opengles.GL10;
@@ -43,32 +44,16 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         return (f != null) ? f.computeTextHeight(font.height, "A") : 0;
     }
     
-    public static void enableScaling(float hscale, float vscale) {
-        mScaling = true;
-        mHScale = hscale;
-        mVScale = vscale;
+    public static NpRect computeTextRect(String fontName, float height, 
+            String text) {
+        NpFont f = getFont(fontName);
+        return (f != null) ? f.computeTextRect(height, text) : new NpRect(); 
     }
     
     public static void disableScaling() {
         mScaling = false;
         mHScale = 1;
         mVScale = 1;
-    }
-    
-    public static float getFontAscender(NpFontParams font) {
-        NpFont f = getFont(font.name);
-        return (f != null) ? f.getAscender() * font.height / f.getSize() : 0;
-    }
-    
-    public static float getFontXHeight(NpFontParams font) {
-        NpFont f = getFont(font.name);
-        return (f != null) ? f.getXHeight(font.height) : 0;
-    }
-    
-    public static NpRect computeTextRect(String fontName, float height, 
-            String text) {
-        NpFont f = getFont(fontName);
-        return (f != null) ? f.computeTextRect(height, text) : new NpRect(); 
     }
     
     static public int doButton(int id, String widgetLookName, 
@@ -88,6 +73,22 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         return getRectWidgetRetCode(id, rect);
     }
     
+    static public int doButton(int id, String widgetLookName, 
+            String caption, NpFontParams font, NpRect rect, NpVec4 color) {
+        NpWidgetStatelook sl = drawWidget(getWidgetState(id), widgetLookName, rect, 
+                                          color, false, false);
+        
+        NpRect clientRect;
+        if (sl == null) {
+            clientRect = rect;
+        } else {
+            clientRect = sl.computeClientRect(mScheme, rect, false, false);
+        }
+        
+        drawButtonText(id, caption, font, clientRect);
+        return getRectWidgetRetCode(id, rect);
+    }
+    
     static public int doButtonEx(int id, String widgetLookName, 
             String caption, NpFontParams font, NpRect rect, 
             boolean invertX, boolean invertY) {
@@ -99,22 +100,6 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             clientRect = rect;
         } else {
             clientRect = sl.computeClientRect(mScheme, rect, invertX, invertY);
-        }
-        
-        drawButtonText(id, caption, font, clientRect);
-        return getRectWidgetRetCode(id, rect);
-    }
-    
-    static public int doButton(int id, String widgetLookName, 
-            String caption, NpFontParams font, NpRect rect, NpVec4 color) {
-        NpWidgetStatelook sl = drawWidget(getWidgetState(id), widgetLookName, rect, 
-                                          color, false, false);
-        
-        NpRect clientRect;
-        if (sl == null) {
-            clientRect = rect;
-        } else {
-            clientRect = sl.computeClientRect(mScheme, rect, false, false);
         }
         
         drawButtonText(id, caption, font, clientRect);
@@ -137,7 +122,6 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         } else if (align == ALIGN_RIGHT) {
             x -= r.w;
         };
-        
         x -= r.x;
         
         drawString(caption, x, y, font.height, font.color);
@@ -154,13 +138,6 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         return 0;
     }
     
-    static public int doRectWidgetEx(int id, NpWidgetState state, 
-            String widgetLookName, NpRect rect, 
-            boolean invertX, boolean invertY, NpVec4 color) {
-        drawWidget(state, widgetLookName, rect, color, invertX, invertY);
-        return getRectWidgetRetCode(id, rect);
-    }
-    
     static public int doRectWidget(int id, NpWidgetState state, 
             String widgetLookName, NpRect rect) {
         drawWidget(state, widgetLookName, rect);
@@ -172,13 +149,20 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         return getRectWidgetRetCode(id, rect);
     }
     
+    static public int doRectWidgetEx(int id, NpWidgetState state, 
+            String widgetLookName, NpRect rect, 
+            boolean invertX, boolean invertY, NpVec4 color) {
+        drawWidget(state, widgetLookName, rect, color, invertX, invertY);
+        return getRectWidgetRetCode(id, rect);
+    }
+    
     static public int doRectWidgetEx(int id, String widgetLookName, NpRect rect,
             boolean invertX, boolean invertY, NpVec4 color) {
         drawWidget(getWidgetState(id), widgetLookName, rect, color, 
                    invertX, invertY);
         return getRectWidgetRetCode(id, rect);
     }
-        
+    
     static public int doVertSlider(int id, String widgetLookName,
             float x, float y, float h, NpHolder<Float> slidePos) {
 
@@ -217,7 +201,6 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         return r;
     }
-    
     
     static private void drawButtonText(int id,
             String caption, NpFontParams font, NpRect rect) {
@@ -276,7 +259,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
                                  tx, ty, tx + tw, ty + th);
         }
     }
-    
+        
     static public void drawString(String s, int x, int y, 
             float fontSize, NpVec4 fontColor) {
         
@@ -310,7 +293,6 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         for (int i = 0; i < s.length(); i++) {
             
             NpFontCharStruct cs = f.getChar(s.charAt(i));
-            
             if (cs == null) {
                 continue;
             }
@@ -336,7 +318,8 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
 
         gl.glPopMatrix();
     }
-
+    
+    
     static private NpWidgetStatelook drawWidget(NpWidgetState state, 
             String widgetName, NpRect rect) {
         return drawWidget(state, widgetName, rect, NpVec4.ONE, false, false);
@@ -353,13 +336,11 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         }
         
         NpWidgetlook widget = mScheme.getWidget(widgetName);
-        
         if (widget == null) {
             return null;
         }
         
         NpWidgetStatelook stateLook = widget.getStateLook(state);
-        
         if (stateLook == null) {
             return null;
         }
@@ -370,25 +351,21 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         for (NpWidgetArea area : stateLook.getAreas()) {
             
             NpWidgetImage image = stateLook.findImageByArea(area.getName());
-            
             if (image == null) {
                 continue;
             }
             
             NpSkinImageSet imageSet = mScheme.getImageSet(image.getImageset());
-            
             if (imageSet == null) {
                 continue;
             }
             
             NpSkinImageSet.NpSkinImage im = imageSet.getImage(image.getImage());
-            
             if (im == null) {
                 continue;
             }
             
             NpTexture texture = imageSet.getTexture();
-            
             if (texture == null) {
                 continue;
             }
@@ -460,13 +437,19 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         }
         
         return stateLook;
-    }    
+    }
+    
+    public static void enableScaling(float hscale, float vscale) {
+        mScaling = true;
+        mHScale = hscale;
+        mVScale = vscale;
+    }
     
     static void finish() {
         mPolyBuffer.flushRender(mGL);
         mGL = null;
     }
-    
+
     private static NpFont getFont(String name) {
         NpFont f = null;
         
@@ -475,6 +458,16 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         }
         
         return f;
+    }
+    
+    public static float getFontAscender(NpFontParams font) {
+        NpFont f = getFont(font.name);
+        return (f != null) ? f.getAscender() * font.height / f.getSize() : 0;
+    }    
+    
+    public static float getFontXHeight(NpFontParams font) {
+        NpFont f = getFont(font.name);
+        return (f != null) ? f.getXHeight(font.height) : 0;
     }
     
     static public boolean getImageRect(String widgetName, 
@@ -514,7 +507,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
 
         return true;
     }
-
+    
     static private int getRectWidgetRetCode(int id, NpRect rect) {
         
         boolean r;
@@ -530,9 +523,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         int ret = 0;
         
         if (NpGuiState.getMouseDown()) {
-            
             if (r) {
-               
                 if ((NpGuiState.getHotItem() == id) 
                         && (NpGuiState.mActiveItem == 0)) {
                 
@@ -544,16 +535,12 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
             } else {
                 if (NpGuiState.getHotItem() == id) {
                     NpGuiState.setHotItem(0);
-                    
                     ret |= GUI_RETURN_FLAG_MOUSE_MOVED_OUT;
                 }
             }
         } else {
-            
             if (NpGuiState.mActiveItem == id) {
-
                 NpGuiState.mActiveItem = 0;
-                
                 if (NpGuiState.getHotItem() == id) {
                     NpGuiState.setHotItem(0);
                     ret |= GUI_RETURN_FLAG_CLICKED;
@@ -573,7 +560,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         return ret;
     }
-    
+
     static private boolean getWidgetRectDefW(NpWidgetState state, 
             String widgetName, float x, float y, float h, NpRect out) {
         NpWidgetlook look = mScheme.getWidget(widgetName);
@@ -717,6 +704,39 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
                    imageX, imageY, imageW, texCeil);
     }
     
+    public static String truncate(NpFontParams font, int maxWidth, 
+            String s) {
+        if (font == null) {
+            throw new IllegalArgumentException("font == null");
+        }
+        
+        NpFont f = getFont(font.name);
+        if (f == null) {
+            return null;
+        }
+        
+        return new WordWrapper(f, font.height, maxWidth, s).truncate();
+    }
+    
+    public static void wordWrap(NpFontParams font, float maxWidth, 
+            String text, Collection<String> dest) {
+        
+        if (font == null) {
+            throw new IllegalArgumentException("font == null");
+        }
+        
+        if (text == null) {
+            throw new IllegalArgumentException("text == null");
+        }
+
+        NpFont f = getFont(font.name);
+        if (f == null) {
+            return;
+        }
+        
+        new WordWrapper(f, font.height, maxWidth, text).wrap(' ', dest);
+    }
+    
     private NpSkin() {
         
     }
@@ -837,5 +857,117 @@ final class NpTextureCache {
     public void setFonts(GL10 gl, HashMap<String, NpFont> fonts) {
         reset(gl);
         mFontsMap = fonts;
+    }
+}
+
+class WordWrapper {
+    
+    private final String s;
+    private final NpFont font;
+    private final float height;
+    private final float maxWidth;
+
+    public WordWrapper(NpFont font, float height, float maxWidth, String s) {
+        if (s == null) {
+            throw new IllegalArgumentException("s == null");
+        }
+        
+        if (font == null) {
+            throw new IllegalArgumentException("font == null");
+        }
+        
+        if (maxWidth <= 0) {
+            throw new IllegalArgumentException("maxWidth <= 0");
+        }
+        
+        this.font = font;
+        this.height = height;
+        this.s = s;
+        this.maxWidth = maxWidth;
+    }
+
+    public String truncate() {
+        int t = truncate(0, s.length() - 1);
+        if (t < 0) {
+            return null;
+        }
+        
+        return s.substring(0, t + 1);
+    }
+    
+    private int truncate(int from, int right) {
+        
+        int len = right - from + 1;
+        if (len <= 0) {
+            return -1;
+        }
+        
+        float w = font.computeTextWidth(height, s, from, 1);
+        if (w > maxWidth) {
+            return -1;
+        }
+        
+        w = font.computeTextWidth(height, s, from, len);
+        if (w <= maxWidth) {
+            return right;
+        }
+        
+        int left = from;
+        while (right - left > 1) {
+            int m = (left + right) / 2;
+            w = font.computeTextWidth(height, s, from, m - from + 1);
+            if (w <= maxWidth) {
+                left = m;
+            } else {
+                right = m;
+            }
+        }
+        
+        if (left == right) {
+            return left;
+        } else {
+            w = font.computeTextWidth(height, s, from, right - from + 1);
+            return (w <= maxWidth) ? right : left;
+        }
+    }
+    
+    public void wrap(char separator, Collection<String> dest) {
+        
+        if (dest == null) {
+            throw new IllegalArgumentException("out == null");
+        }
+        
+        int left = 0;
+        int end = s.length() - 1;
+        
+        while (true) {
+            int t = truncate(left, end);
+            if (t < left) {
+                break;
+            }
+
+            // look for a first separator from the end.
+            int separatorPos = t;
+
+            if (t != end) {
+                for (int i = t; i >= left; i--) {
+                    if (s.charAt(i) == separator) {
+                        separatorPos = i;
+                        break;
+                    }
+                }
+            }
+            
+            // if not empty string, add it.
+            if ((separatorPos > left) || (s.charAt(left) != separator)) {
+                dest.add(s.substring(left, separatorPos + 1));
+            }
+            
+            if (separatorPos == end) {
+                break;
+            }
+            
+            left = separatorPos + 1;
+        }
     }
 }

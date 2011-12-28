@@ -199,7 +199,11 @@ public abstract class NpGame {
         mStates.clear();
     }
     
-    synchronized public final boolean update() {
+    /**
+     * @return {@code true} if can shut down application.
+     *         {@code false} otherwise. 
+     */
+    synchronized final boolean update() {
 
         boolean r = false;
 

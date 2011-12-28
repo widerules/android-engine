@@ -20,7 +20,7 @@ final class NpRenderer implements GLSurfaceView.Renderer {
     
     private final NpGameUpdateThread mUpdater;
     
-    public NpRenderer(AssetManager assets, NpActivityTerminator ft, 
+    NpRenderer(AssetManager assets, NpActivityTerminator ft, 
             NpGame game, String schemeName) {
         super();
         
@@ -43,11 +43,11 @@ final class NpRenderer implements GLSurfaceView.Renderer {
         mGame.render(gl);
     }
     
-    synchronized public void onPause() {
+    synchronized void onPause() {
         mUpdater.suspend();
     }
 
-    synchronized public void onResume() {
+    synchronized void onResume() {
         mUpdater.resume();
     }
     
@@ -74,7 +74,7 @@ final class NpRenderer implements GLSurfaceView.Renderer {
         return mGame.onKeyEvent(keyCode, event);
     }
     
-    public boolean onBackPressed() {
+    boolean onBackPressed() {
         return mGame.onBackPressed();
     }
 }
