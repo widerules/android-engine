@@ -72,6 +72,25 @@ public final class NpSkin implements NpAlignConsts {
         return doButton(id, widgetLookName, caption, font, rect, WHITE_COLOR);
     }
     
+    static public int doButton(String widgetLookName, 
+            String caption, NpFontParams font, NpRect rect) {
+        return doButton(NpWidgetIdGen.nextId(), widgetLookName, caption, font, 
+                        rect);
+    }
+
+    static public int doButton(String widgetLookName, 
+            String caption, NpFontParams font, NpRect rect, NpVec4 color) {
+        return doButton(NpWidgetIdGen.nextId(), widgetLookName, caption, font, 
+                        rect, color);
+    }
+    
+    static public int doButton(boolean condition, String widgetLookName, 
+            String caption, NpFontParams font, NpRect rect, NpVec4 color) {
+        return (condition) ? doButton(NpWidgetIdGen.nextId(), widgetLookName,
+                                      caption, font, rect, color) 
+                           : doDummy();
+    }
+    
     static public int doButton(int id, String widgetLookName, 
             String caption, NpFontParams font, NpRect rect, NpVec4 color) {
         NpWidgetStatelook sl = drawWidget(getWidgetState(id), widgetLookName, 
@@ -199,15 +218,37 @@ public final class NpSkin implements NpAlignConsts {
         return getRectWidgetRetCode(id, rect);
     }
     
+    static public int doRectWidget(String widgetLookName, NpRect rect) {
+        int id = NpWidgetIdGen.nextId();
+        drawWidget(getWidgetState(id), widgetLookName, rect);
+        return getRectWidgetRetCode(id, rect);
+    }
+    
     static public int doRectWidgetEx(int id, NpWidgetState state, 
             String widgetLookName, NpRect rect, 
             boolean invertX, boolean invertY, NpVec4 color) {
         drawWidget(state, widgetLookName, rect, color, invertX, invertY);
         return getRectWidgetRetCode(id, rect);
     }
+
+    static public int doRectWidgetEx(NpWidgetState state, 
+            String widgetLookName, NpRect rect, 
+            boolean invertX, boolean invertY, NpVec4 color) {
+        int id = NpWidgetIdGen.nextId();
+        drawWidget(state, widgetLookName, rect, color, invertX, invertY);
+        return getRectWidgetRetCode(id, rect);
+    }
     
     static public int doRectWidgetEx(int id, String widgetLookName, NpRect rect,
             boolean invertX, boolean invertY, NpVec4 color) {
+        drawWidget(getWidgetState(id), widgetLookName, rect, color, 
+                   invertX, invertY);
+        return getRectWidgetRetCode(id, rect);
+    }
+    
+    static public int doRectWidgetEx(String widgetLookName, NpRect rect,
+            boolean invertX, boolean invertY, NpVec4 color) {
+        int id = NpWidgetIdGen.nextId();
         drawWidget(getWidgetState(id), widgetLookName, rect, color, 
                    invertX, invertY);
         return getRectWidgetRetCode(id, rect);
