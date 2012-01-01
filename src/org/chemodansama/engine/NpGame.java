@@ -20,7 +20,7 @@ public abstract class NpGame {
     
     private int mHeight = 0;
     
-    private boolean mNeedSetupState = false;
+    private boolean mNeedSetupStateSurfaceSize = false;
     
     private NpVec2 mPointerCoord = new NpVec2();
     private boolean mPointerDown = false;
@@ -141,6 +141,7 @@ public abstract class NpGame {
         
         if (mStates.size() > 0) {
             mStates.peek().onForeground();
+            mNeedSetupStateSurfaceSize = true;
         }
     }
     
@@ -151,7 +152,7 @@ public abstract class NpGame {
         
         mStates.push(state);
         
-        mNeedSetupState = true;
+        mNeedSetupStateSurfaceSize = true;
     }
     
     synchronized public final void render(GL10 gl) {
@@ -175,8 +176,9 @@ public abstract class NpGame {
             return;
         }
 
-        if (mNeedSetupState) {
+        if (mNeedSetupStateSurfaceSize) {
             s.setupOnSurfaceChanged(gl, mWidth, mHeight);
+            mNeedSetupStateSurfaceSize = false;
         }
 
         s.render(gl);
