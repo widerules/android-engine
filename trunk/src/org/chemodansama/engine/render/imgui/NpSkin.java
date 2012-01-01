@@ -1,5 +1,7 @@
 package org.chemodansama.engine.render.imgui;
 
+import static org.chemodansama.engine.render.imgui.NpGuiReturnConsts.clicked;
+
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -23,8 +25,10 @@ import android.content.res.AssetManager;
  *          gapi state (no texture bindings or other state changes between 
  *          prepare() and finish() calls).
  */
-public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
+public final class NpSkin implements NpAlignConsts {
 
+    private final static NpVec4 WHITE_COLOR = new NpVec4(1, 1, 1, 1);
+    
     private static NpPolyBuffer mPolyBuffer;
     private static NpSkinScheme mScheme = null;
     private static NpTextureCache mTextureCache = null;
@@ -35,7 +39,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     private static float mVScale = 1;
     
     static {
-        mPolyBuffer = new NpPolyBuffer(16);
+        mPolyBuffer = new NpPolyBuffer(64);
         mTextureCache = new NpTextureCache(mPolyBuffer);
     }
     
@@ -56,27 +60,22 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         mVScale = 1;
     }
     
+    static public int doButton(boolean condition, String widgetLookName, 
+            String caption, NpFontParams font, NpRect rect) {
+        return (condition) ? doButton(NpWidgetIdGen.nextId(), widgetLookName, 
+                                      caption, font, rect) 
+                           : doDummy();
+    }
+    
     static public int doButton(int id, String widgetLookName, 
             String caption, NpFontParams font, NpRect rect) {
-        
-        NpWidgetStatelook sl = drawWidget(getWidgetState(id), widgetLookName, rect);
-        
-        NpRect clientRect;
-        if (sl == null) {
-            clientRect = rect;
-        } else {
-            clientRect = sl.computeClientRect(mScheme, rect, false, false);
-        }
-        
-        drawButtonText(id, caption, font, clientRect);
-        
-        return getRectWidgetRetCode(id, rect);
+        return doButton(id, widgetLookName, caption, font, rect, WHITE_COLOR);
     }
     
     static public int doButton(int id, String widgetLookName, 
             String caption, NpFontParams font, NpRect rect, NpVec4 color) {
-        NpWidgetStatelook sl = drawWidget(getWidgetState(id), widgetLookName, rect, 
-                                          color, false, false);
+        NpWidgetStatelook sl = drawWidget(getWidgetState(id), widgetLookName, 
+                                          rect, color, false, false);
         
         NpRect clientRect;
         if (sl == null) {
@@ -87,13 +86,21 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         drawButtonText(id, caption, font, clientRect);
         return getRectWidgetRetCode(id, rect);
+    }
+    
+    static public int doButtonEx(boolean condition, String widgetLookName, 
+            String caption, NpFontParams font, NpRect rect, 
+            boolean invertX, boolean invertY) {
+        return (condition) ? doButtonEx(widgetLookName, caption, font, 
+                                        rect, invertX, invertY) 
+                           : doDummy();
     }
     
     static public int doButtonEx(int id, String widgetLookName, 
             String caption, NpFontParams font, NpRect rect, 
             boolean invertX, boolean invertY) {
-        NpWidgetStatelook sl = drawWidget(getWidgetState(id), widgetLookName, rect, 
-                                          NpVec4.ONE, invertX, invertY);
+        NpWidgetStatelook sl = drawWidget(getWidgetState(id), widgetLookName, 
+                                          rect, NpVec4.ONE, invertX, invertY);
         
         NpRect clientRect;
         if (sl == null) {
@@ -104,6 +111,36 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         drawButtonText(id, caption, font, clientRect);
         return getRectWidgetRetCode(id, rect);
+    }
+    
+    static public int doButtonEx(String widgetLookName, 
+            String caption, NpFontParams font, NpRect rect, 
+            boolean invertX, boolean invertY) {
+        return doButtonEx(NpWidgetIdGen.nextId(), widgetLookName, caption, font, 
+                          rect, invertX, invertY);
+    }
+    
+    static public int doDummy() {
+        NpWidgetIdGen.nextId();
+        return NpGuiReturnConsts.GUI_RETURN_FLAG_NORMAL;
+    }
+    
+    static public int doLabel(boolean condition, int x, int y, 
+            String caption, NpFontParams font) {
+        return (condition) ? doLabel(NpWidgetIdGen.nextId(), x, y, caption, 
+                                     font, ALIGN_LEFT) 
+                           : doDummy();
+    }
+
+    static public int doLabel(boolean condition, int x, int y, 
+            String caption, NpFontParams font, byte align) {
+        return (condition) ? doLabel(x, y, caption, font, align) 
+                           : doDummy();
+    }
+
+    static public int doLabel(int id, int x, int y, 
+            String caption, NpFontParams font) {
+        return doLabel(id, x, y, caption, font, ALIGN_LEFT);
     }
     
     static public int doLabel(int id, int x, int y, 
@@ -129,13 +166,20 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         return getRectWidgetRetCode(id, new NpRect(x, y, r.x, r.y));
     }
     
-    // bunch of parameters :E
-    static public int doLabel(int id, int x, int y, 
-            String caption, NpFontParams font, int maxWidth, 
-            NpHolder<Integer> outHeight) {
-
-        
-        return 0;
+    static public int doLabel(int x, int y, 
+            String caption, NpFontParams font) {
+        return doLabel(NpWidgetIdGen.nextId(), x, y, caption, font, ALIGN_LEFT);
+    }
+    
+    static public int doLabel(int x, int y, 
+            String caption, NpFontParams font, byte align) {
+        return doLabel(NpWidgetIdGen.nextId(), x, y, caption, font, align);
+    }
+    
+    static public int doRectWidget(boolean condition, NpWidgetState state, 
+            String widgetLookName, NpRect rect) {
+        return (condition) ? doRectWidget(state, widgetLookName, rect) 
+                           : doDummy();
     }
     
     static public int doRectWidget(int id, NpWidgetState state, 
@@ -144,6 +188,12 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         return getRectWidgetRetCode(id, rect);
     }
     
+    static public int doRectWidget(NpWidgetState state, 
+            String widgetLookName, NpRect rect) {
+        drawWidget(state, widgetLookName, rect);
+        return getRectWidgetRetCode(NpWidgetIdGen.nextId(), rect);
+    }
+
     static public int doRectWidget(int id, String widgetLookName, NpRect rect) {
         drawWidget(getWidgetState(id), widgetLookName, rect);
         return getRectWidgetRetCode(id, rect);
@@ -166,7 +216,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     static public int doVertSlider(int id, String widgetLookName,
             float x, float y, float h, NpHolder<Float> slidePos) {
 
-        int r = GUI_RETURN_FLAG_NORMAL;
+        int r = NpGuiReturnConsts.GUI_RETURN_FLAG_NORMAL;
         
         String bgName = widgetLookName + "Bg";
         
@@ -180,9 +230,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         
         drawWidget(state, bgName, rect);
         
-        r = getRectWidgetRetCode(id, rect);
-        
-        if ((r & GUI_RETURN_FLAG_ACTIVE) > 0) {
+        if (clicked(getRectWidgetRetCode(id, rect))) {
             slidePos.value = (float)(NpGuiState.getMouseY() - y) / h;
             slidePos.value = NpMath.clampf(slidePos.value, 0, 1);
         }
@@ -260,7 +308,7 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
         }
     }
         
-    static public void drawString(String s, int x, int y, 
+    static private void drawString(String s, int x, int y, 
             float fontSize, NpVec4 fontColor) {
         
         GL10 gl = mGL; 
@@ -510,55 +558,17 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     
     static private int getRectWidgetRetCode(int id, NpRect rect) {
         
-        boolean r;
+        boolean over;
         
         if (mScaling) {
-            r = rect.overlapsPoint((int) (NpGuiState.getMouseX() / mHScale), 
+            over = rect.overlapsPoint((int) (NpGuiState.getMouseX() / mHScale), 
                                    (int) (NpGuiState.getMouseY() / mVScale));
         } else {
-            r = rect.overlapsPoint(NpGuiState.getMouseX(), 
+            over = rect.overlapsPoint(NpGuiState.getMouseX(), 
                                    NpGuiState.getMouseY());    
         }
         
-        int ret = 0;
-        
-        if (NpGuiState.getMouseDown()) {
-            if (r) {
-                if ((NpGuiState.getHotItem() == id) 
-                        && (NpGuiState.mActiveItem == 0)) {
-                
-                    NpGuiState.mActiveItem = id;
-                    ret |= GUI_RETURN_FLAG_MOUSE_MOVED_IN;
-                }
-                
-                NpGuiState.setHotItem(id);
-            } else {
-                if (NpGuiState.getHotItem() == id) {
-                    NpGuiState.setHotItem(0);
-                    ret |= GUI_RETURN_FLAG_MOUSE_MOVED_OUT;
-                }
-            }
-        } else {
-            if (NpGuiState.mActiveItem == id) {
-                NpGuiState.mActiveItem = 0;
-                if (NpGuiState.getHotItem() == id) {
-                    NpGuiState.setHotItem(0);
-                    ret |= GUI_RETURN_FLAG_CLICKED;
-                }
-            }
-        }
-        
-        ret |= GUI_RETURN_FLAG_NORMAL;
-
-        if (NpGuiState.getHotItem() == id) {
-            ret |= GUI_RETURN_FLAG_HOT;
-        } 
-
-        if (NpGuiState.mActiveItem == id) {
-            ret |= GUI_RETURN_FLAG_ACTIVE;
-        }
-        
-        return ret;
+        return NpGuiState.doWidgetLogic(id, over);
     }
 
     static private boolean getWidgetRectDefW(NpWidgetState state, 
@@ -602,9 +612,9 @@ public final class NpSkin implements NpGuiReturnConsts, NpAlignConsts {
     }
     
     static public NpWidgetState getWidgetState(int id) {
-        if (NpGuiState.mActiveItem == id) {
+        if (NpGuiState.isActive(id)) {
             return NpWidgetState.WS_PUSHED; 
-        } else if (NpGuiState.getHotItem() == id) {
+        } else if (NpGuiState.isHot(id)) {
             return NpWidgetState.WS_HOVER;
         } else {
             return NpWidgetState.WS_NORMAL;
@@ -860,6 +870,11 @@ final class NpTextureCache {
     }
 }
 
+/**
+ * Utility class for strings truncation purposes: 
+ * able to truncate string to a given width, or split string into a collection 
+ * of string, each one of which fits given width.
+ */
 class WordWrapper {
     
     private final String s;
@@ -867,6 +882,15 @@ class WordWrapper {
     private final float height;
     private final float maxWidth;
 
+    /**
+     * @param font font to render. 
+     * @param height font's height.
+     * @param maxWidth maximum allowed width. Must be greater than zero.
+     * @param s source string to deal with.
+     * @throws IllegalArgumentException if {@code font == null} 
+     *                                  or {@code s == null}
+     *                                  or {@code maxWidth <= 0}.
+     */
     public WordWrapper(NpFont font, float height, float maxWidth, String s) {
         if (s == null) {
             throw new IllegalArgumentException("s == null");
@@ -886,6 +910,9 @@ class WordWrapper {
         this.maxWidth = maxWidth;
     }
 
+    /**
+     * @return String truncated to given width.
+     */
     public String truncate() {
         int t = truncate(0, s.length() - 1);
         if (t < 0) {
@@ -895,9 +922,18 @@ class WordWrapper {
         return s.substring(0, t + 1);
     }
     
-    private int truncate(int from, int right) {
+    /**
+     * Computes index within range {@code [from, to]}. 
+     * 
+     * @param from range left-bound.  
+     * @param to range right-bound.
+     * @return {@code -1}, if no substring within given range fits given width.
+     *         <br>or {@code index} within {@code [from, to]}, 
+     *         such that {@code s.substring(from, index) < maxWidth}.  
+     */
+    private int truncate(int from, int to) {
         
-        int len = right - from + 1;
+        int len = to - from + 1;
         if (len <= 0) {
             return -1;
         }
@@ -909,28 +945,37 @@ class WordWrapper {
         
         w = font.computeTextWidth(height, s, from, len);
         if (w <= maxWidth) {
-            return right;
+            return to;
         }
         
+        // binary search goes here.
         int left = from;
-        while (right - left > 1) {
-            int m = (left + right) / 2;
+        while (to - left > 1) {
+            int m = (left + to) / 2;
             w = font.computeTextWidth(height, s, from, m - from + 1);
             if (w <= maxWidth) {
                 left = m;
             } else {
-                right = m;
+                to = m;
             }
         }
         
-        if (left == right) {
+        if (left == to) {
             return left;
         } else {
-            w = font.computeTextWidth(height, s, from, right - from + 1);
-            return (w <= maxWidth) ? right : left;
+            w = font.computeTextWidth(height, s, from, to - from + 1);
+            return (w <= maxWidth) ? to : left;
         }
     }
     
+    /**
+     * Splits given string by given maxWidth into a collection of strings.
+     *  
+     * @param separator preferable character to split on.
+     * @param dest destination collection of String's, 
+     *             where the result will be stored.
+     * @throws IllegalArgumentException if dest is {@code null}.
+     */
     public void wrap(char separator, Collection<String> dest) {
         
         if (dest == null) {
@@ -946,9 +991,9 @@ class WordWrapper {
                 break;
             }
 
-            // look for a first separator from the end.
             int separatorPos = t;
 
+            // look for a first separator from the end.
             if (t != end) {
                 for (int i = t; i >= left; i--) {
                     if (s.charAt(i) == separator) {

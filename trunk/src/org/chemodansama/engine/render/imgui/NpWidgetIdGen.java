@@ -2,14 +2,13 @@ package org.chemodansama.engine.render.imgui;
 
 final public class NpWidgetIdGen {
     
-    static int mID = 1;
+    static int mId = 1;
     
-    static public int getNewID() {
-        mID++;
-        return mID;
+    static public int nextId() {
+        return mId++;
     }
     
     static void reset() {
-        mID = 1;
+        mId = 1;
     }
 }
