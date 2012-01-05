@@ -1,7 +1,6 @@
 package org.chemodansama.engine.render.imgui;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 
 import javax.microedition.khronos.opengles.GL10;
@@ -218,29 +217,13 @@ public final class NpSkinImageSet {
     }
     
     void refreshTexture(GL10 gl, AssetManager assets) {
-        if (gl == null) {
-            LogHelper.e("Cant reload skin imageset: gl == null");
-            return;
-        }
-        
-        if (assets == null) {
-            LogHelper.e("Cant reload skin imageset: assets == null");
-            return;
-        }
-        
         if (mTexture == null) {
             LogHelper.e("Cant reload skin imageset: mTexture == null");
             return;
         }
         
-        if (mTextureName == null) {
-            LogHelper.e("Cant reload skin imageset: mTextureName == null");
-            return;
-        }
-        
         try {
-            InputStream in = assets.open(mTextureName);
-            mTexture.reloadOnSurfaceCreated(gl, in, true);
+            mTexture.refreshContextAssets(gl, assets);
         } catch (IOException e) {
             e.printStackTrace();
         }

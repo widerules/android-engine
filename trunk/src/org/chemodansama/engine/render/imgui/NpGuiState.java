@@ -23,7 +23,8 @@ public final class NpGuiState {
         mHotItemTemp = 0;
         
         if (!mMouseDown) {
-            mActiveItem = 0;
+            setActive(0);
+            setHot(0);
         }
 
         NpSkin.finish();
@@ -128,7 +129,7 @@ public final class NpGuiState {
         mActiveItem = id;
     }
 
-    static void setHotItem(int id) {
+    static void setHot(int id) {
         mHotItemTemp = id;
     }
 
@@ -136,35 +137,32 @@ public final class NpGuiState {
 
         int ret = 0;
 
-        if (NpGuiState.isMouseDown()) {
+        if (isMouseDown()) {
             if (over) {
-                if (NpGuiState.isHot(id) && !NpGuiState.isAnyActive()) {
-                    NpGuiState.setActive(id);
+                if (isHot(id) && !isAnyActive()) {
+                    setActive(id);
                     ret |= NpGuiReturnConsts.GUI_RETURN_FLAG_MOUSE_MOVED_IN;
                 }
-                NpGuiState.setHotItem(id);
+                setHot(id);
             } else {
-                if (NpGuiState.isHot(id)) {
-                    NpGuiState.setHotItem(0);
+                if (isHot(id)) {
+                    setHot(0);
                     ret |= NpGuiReturnConsts.GUI_RETURN_FLAG_MOUSE_MOVED_OUT;
                 }
             }
         } else {
-            if (NpGuiState.isActive(id)) {
-                if (NpGuiState.isHot(id)) {
-                    NpGuiState.setHotItem(0);
-                    ret |= NpGuiReturnConsts.GUI_RETURN_FLAG_CLICKED;
-                }
+            if (isActive(id) && isHot(id)) {
+                ret |= NpGuiReturnConsts.GUI_RETURN_FLAG_CLICKED;
             }
         }
 
         ret |= NpGuiReturnConsts.GUI_RETURN_FLAG_NORMAL;
 
-        if (NpGuiState.isHot(id)) {
+        if (isHot(id)) {
             ret |= NpGuiReturnConsts.GUI_RETURN_FLAG_HOT;
         }
 
-        if (NpGuiState.isActive(id)) {
+        if (isActive(id)) {
             ret |= NpGuiReturnConsts.GUI_RETURN_FLAG_ACTIVE;
         }
 

@@ -1,6 +1,7 @@
 package org.chemodansama.engine;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Stack;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -31,10 +32,18 @@ public abstract class NpGame {
     
     private int mWidth = 0;
     
+    private final Collection<Iterable<? extends NpGlContextAsset>> mContextAssets = 
+            new ArrayList<Iterable<? extends NpGlContextAsset>>();
+    private volatile boolean mPendingRelease = false;
+    
     public NpGame(Activity activity) {
         super();
         
         mActivity = activity;
+    }
+    
+    public void addContextAssetsCollection(Iterable<? extends NpGlContextAsset> assets) {
+        mContextAssets.add(assets);
     }
     
     public abstract NpGameState constructInitialState(NpGame g, GL10 gl, 
@@ -163,6 +172,16 @@ public abstract class NpGame {
             s.onRelease(gl);
         }
         mStatesToDelete.clear();
+        
+        if (mPendingRelease) {
+            for (Iterable<? extends NpGlContextAsset> assets : mContextAssets) {
+                for (NpGlContextAsset asset : assets) {
+                    asset.releaseAssets(gl);
+                }
+            }
+            mContextAssets.clear();
+            mPendingRelease = false;
+        }
     }
     
     private void renderActiveState(GL10 gl) {
@@ -198,6 +217,8 @@ public abstract class NpGame {
     public final void shutDown() {
         mStatesToDelete.addAll(mStates);
         mStates.clear();
+        
+        mPendingRelease = true;
     }
     
     /**

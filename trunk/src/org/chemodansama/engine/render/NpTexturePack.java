@@ -1,12 +1,10 @@
 package org.chemodansama.engine.render;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.Iterator;
 import java.util.TreeMap;
 
 import javax.microedition.khronos.opengles.GL10;
-
-import org.chemodansama.engine.LogHelper;
 
 import android.content.res.AssetManager;
 import android.util.Pair;
@@ -15,7 +13,7 @@ import android.util.Pair;
  * TexturePack - generic texture pack for gl-android-application. 
  *
  */
-public class NpTexturePack {
+public class NpTexturePack implements Iterable<NpTexture> {
     // clamp to edge is set by default.
     private final static boolean CLAMP_TO_EDGE = true;
     
@@ -59,16 +57,7 @@ public class NpTexturePack {
             return true;
         }
         
-        InputStream in = assets.open(file);
-
-        NpTextureData td = null;
-        if (file.endsWith("pvr")) {
-            td = new NpPvrTextureData(in);
-        } else {
-            td = new NpTextureData(in);
-        }
-        
-        NpTexture texture = new NpTexture(gl, td, CLAMP_TO_EDGE);
+        NpTexture texture = new NpTexture(gl, file, assets, CLAMP_TO_EDGE);
         
         mTextures.put(alias, 
                       new Pair<String, NpTexture>(file, texture));
@@ -82,13 +71,10 @@ public class NpTexturePack {
         }
         
         for (Pair<String, NpTexture> p : mTextures.values()) {
-            InputStream in;
             try {
-                in = assets.open(p.first);
-                p.second.reloadOnSurfaceCreated(gl, in, CLAMP_TO_EDGE);
-                in.close();
+                p.second.refreshContextAssets(gl, assets);
             } catch (IOException e) {
-                LogHelper.e("cant reload texture " + p.first);
+                e.printStackTrace();
             }
         }
         
@@ -97,8 +83,32 @@ public class NpTexturePack {
     
     public void release(GL10 gl) {
         for (Pair<String, NpTexture> t : mTextures.values()) {
-            t.second.release(gl);
+            t.second.releaseAssets(gl);
         }
         mTextures.clear();
+    }
+
+    @Override
+    public Iterator<NpTexture> iterator() {
+        final Iterator<Pair<String, NpTexture>> values = 
+                mTextures.values().iterator();
+        
+        return new Iterator<NpTexture>() {
+            @Override
+            public void remove() {
+                values.remove();
+            }
+            
+            @Override
+            public NpTexture next() {
+                return values.next().second;
+            }
+            
+            @Override
+            public boolean hasNext() {
+                return values.hasNext();
+            }
+        };
+        
     }
 }

@@ -464,8 +464,8 @@ public final class NpSkin implements NpAlignConsts {
             float w = area.getWidth().getValue(mScheme, stateLook, rect);
             float h = area.getHeight().getValue(mScheme, stateLook, rect);
             
-            int tw = texture.getHeader().getWidth();
-            int th = texture.getHeader().getHeight();
+            int tw = texture.getWidth();
+            int th = texture.getHeight();
             
             if (!mTextureCache.activateTexture(gl, texture)) {
                 continue;

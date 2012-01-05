@@ -22,9 +22,12 @@ public class TmxMap {
         private TmxLayer layer;
         private TmxObjectGroup objects = null;
         private TmxMapObject object = null;
+
+        private final TmxEntity mMap;
         
-        public TmxParser(ArrayList<TmxTileset> tilesets) {
+        public TmxParser(ArrayList<TmxTileset> tilesets, TmxEntity map) {
             super(tilesets);
+            mMap = map;
         }
         
         @Override
@@ -110,7 +113,7 @@ public class TmxMap {
                 tileHeight = getAttributeAsInt(attributes, "tileheight");
             } else if (localName.equalsIgnoreCase("property")) {
                 
-                TmxEntity e = null;
+                TmxEntity e = mMap;
                 
                 e = (layer != null) ? layer : e;
                 e = (objects != null) ? objects : e;
@@ -189,6 +192,9 @@ public class TmxMap {
     private String version = "";
     
     private int width;
+    private final TmxEntity mMapProperties;
+    
+    public final String soundTrack;
     
     public TmxMap(AssetManager assets, String fileName) throws IOException {
 
@@ -196,11 +202,14 @@ public class TmxMap {
         mLayers = new ArrayList<TmxLayer>();
         mObjectsGroups = new ArrayList<TmxObjectGroup>();
 
+        mMapProperties = new TmxEntity();
+        
         InputStream is = null;
         try {
             is = assets.open(fileName);
             try {
-                Xml.parse(is, Encoding.US_ASCII, new TmxParser(mTilesets));
+                Xml.parse(is, Encoding.US_ASCII, new TmxParser(mTilesets, 
+                                                               mMapProperties));
             } catch (SAXException e) {
                 throw new IOException(e.getMessage());
             }
@@ -209,6 +218,12 @@ public class TmxMap {
                 is.close();
             }
         }
+        
+        soundTrack = mMapProperties.getProperty("soundtrack");
+    }
+    
+    public String getProperty(String name) {
+        return mMapProperties.getProperty(name);
     }
     
     public int getHeight() {
