@@ -1,7 +1,6 @@
 package org.chemodansama.engine.render.imgui;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.TreeMap;
 
 import javax.microedition.khronos.opengles.GL10;
@@ -11,7 +10,6 @@ import org.chemodansama.engine.LogTag;
 import org.chemodansama.engine.math.NpRect;
 import org.chemodansama.engine.math.NpVec2i;
 import org.chemodansama.engine.render.NpTexture;
-import org.chemodansama.engine.render.NpTextureHeader;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -142,11 +140,9 @@ public final class NpFont {
                 }
             } else if (localName.equalsIgnoreCase("char")) {
                 
-                NpTextureHeader h = mTexture.getHeader();
-                
                 NpFontCharStruct s = new NpFontCharStruct(attributes, 
-                                                          h.getHeight(),
-                                                          h.getWidth());
+                                                          mTexture.getHeight(),
+                                                          mTexture.getWidth());
                 mChars.put(s.getCode(), s); 
             }
         }
@@ -312,29 +308,13 @@ public final class NpFont {
     }
     
     void refreshTexture(GL10 gl, AssetManager assets) {
-        if (gl == null) {
-            LogHelper.e("Cant refresh font texture: gl == null");
-            return;
-        }
-        
-        if (assets == null) {
-            LogHelper.e("Cant refresh font texture: assets == null");
-            return;
-        }
-        
         if (mTexture == null) {
             LogHelper.e("Cant reload font texture: mTexture == null");
             return;
         }
-        
-        if (mTextureName == null) {
-            LogHelper.e("Cant reload font texture: mTextureName == null");
-            return;
-        }
 
         try {
-            InputStream in = assets.open(mTextureName);
-            mTexture.reloadOnSurfaceCreated(gl, in, true);
+            mTexture.refreshContextAssets(gl, assets);
         } catch (IOException e) {
             e.printStackTrace();
         }
