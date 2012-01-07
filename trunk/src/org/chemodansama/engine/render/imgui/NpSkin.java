@@ -7,6 +7,7 @@ import java.util.HashMap;
 
 import javax.microedition.khronos.opengles.GL10;
 
+import org.chemodansama.engine.LogHelper;
 import org.chemodansama.engine.NpHolder;
 import org.chemodansama.engine.math.NpMath;
 import org.chemodansama.engine.math.NpRect;
@@ -193,6 +194,23 @@ public final class NpSkin implements NpAlignConsts {
     static public int doLabel(int x, int y, 
             String caption, NpFontParams font, byte align) {
         return doLabel(NpWidgetIdGen.nextId(), x, y, caption, font, align);
+    }
+
+    static public void doRect(NpRect r, NpVec4 color) {
+        if (mGL == null) {
+            LogHelper.e("mGL == null");
+            return;
+        }
+        
+        mTextureCache.activateTextureNoRet(mGL, null);
+        
+        if (color == null) {
+            color = WHITE_COLOR;
+        }
+        
+        mGL.glColor4f(color.coords[0], color.coords[1], color.coords[2], 
+                      color.coords[3]);
+        drawRectWH(r.x, r.y, r.w, r.h, 0, 0, 0, 0);
     }
     
     static public int doRectWidget(boolean condition, NpWidgetState state, 
@@ -844,20 +862,15 @@ final class NpTextureCache {
      *         otherwise returns false
      */
     public boolean activateTexture(GL10 gl, NpTexture texture) {
-
-        if (doActivateTexture(gl, texture)) {
-            mActiveFont = null;
-        }
-
+        doActivateTexture(gl, texture);
+        mActiveFont = null;
         return (mActiveTexture != null) ? 
-                mActiveTexture.equalsToTexture(texture) : false;
+                mActiveTexture.equalsToTexture(texture) : true;
     }
     
     public void activateTextureNoRet(GL10 gl, NpTexture texture) {
-        
-        if (doActivateTexture(gl, texture)) {
-            mActiveFont = null;
-        }
+        doActivateTexture(gl, texture);
+        mActiveFont = null;
     }
     
     /**
@@ -867,24 +880,15 @@ final class NpTextureCache {
      * @return returns true if texture activating has occurred, 
      *         otherwise returns false
      */
-    private boolean doActivateTexture(GL10 gl, NpTexture texture) {
-
+    private void doActivateTexture(GL10 gl, NpTexture texture) {
+        // flush buffered quads on each texture change
+        mPolyBuffer.flushRender(gl);
         if (texture == null) {
-            return false;
-        }
-        
-        if (!texture.equalsToTexture(mActiveTexture)) {
-            
-            // flush buffered quads on each texture change
-            mPolyBuffer.flushRender(gl);
-            
+            NpTexture.unbind(gl);
+        } else if (!texture.equalsToTexture(mActiveTexture)) {
             texture.bindGL10(gl);
-            mActiveTexture = texture;
-            
-            return true;
         }
-        
-        return false;
+        mActiveTexture = texture;
     }
     
     public NpFont getActiveFont() {

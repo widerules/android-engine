@@ -1,5 +1,7 @@
 package org.chemodansama.engine;
 
+import java.util.ArrayList;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -9,12 +11,26 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 public class NpGameState {
+
+    protected abstract class OnRenderAction {
+        abstract protected void perform(GL10 gl);
+    }
     
     private int mSurfaceWidth = 0;
     private int mSurfaceHeight = 0;
     
     protected AssetManager mAssets;
     protected final NpGame mGame;
+    
+    private final ArrayList<OnRenderAction> mOnRenderActions = 
+            new ArrayList<NpGameState.OnRenderAction>();
+    
+    protected void addOnRenderAction(OnRenderAction action) {
+        if (action == null) {
+            return;
+        }
+        mOnRenderActions.add(action);
+    }
     
     protected NpGameState(NpGame game, GL10 gl, AssetManager assets) {
         super();
@@ -62,7 +78,10 @@ public class NpGameState {
     }
     
     protected void render(GL10 gl) {
-        
+        for (OnRenderAction a : mOnRenderActions) {
+            a.perform(gl);
+        }
+        mOnRenderActions.clear();
     }
     
     /** setupOnSurfaceChanged - called when surface has changed its size 

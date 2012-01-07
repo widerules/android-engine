@@ -160,7 +160,7 @@ public abstract class NpGame {
         }
         
         mStates.push(state);
-        
+        state.onForeground();
         mNeedSetupStateSurfaceSize = true;
     }
     
